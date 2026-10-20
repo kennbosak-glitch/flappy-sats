@@ -6,7 +6,7 @@
 <title>FLAPPY SATS — ESCAPE FIAT TRASH</title>
 <meta name="description" content="FLAPPY SATS — trash-world flappy. Escape fiat trash. Sponsored by the people, priced in Bitcoin Cash.">
 <meta name="theme-color" content="#0a0f0a">
-<!-- FLAPPY SATS v16.1 — score lives in the sky strip ABOVE the billboard plate (never on the sponsor window), toast band BELOW the plate; sponsor panel gains a live CoinGecko rate + BIP21 wallet pay link + runtime QR (vendored qrcode.js); every user-visible DEMO string is now BETA (storage keys/identifiers untouched); the leaderboard records PLAYERS — one row per username, best score only, self-healing on load. (v16: Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
+<!-- FLAPPY SATS v16.2 — THE GASLIGHT RAMP: the cosmetic scroll layers (far/mid parallax + the zombie crowd's treadmill) accelerate with the score and converge to full speed by pipe 100 while the pipes and the sim NEVER change; + THE FREE FLIGHT EGG: 10 flap inputs at score 0 make the bird invincible for the run — pipes turn SOLID on a treadmill world (faces stop you, tops carry you left, only the left edge can end it) and the run earns NOTHING (no sats, no board, no stats). (v16.1: score lives in the sky strip ABOVE the billboard plate (never on the sponsor window), toast band BELOW the plate; sponsor panel gains a live CoinGecko rate + BIP21 wallet pay link + runtime QR (vendored qrcode.js); every user-visible DEMO string is now BETA (storage keys/identifiers untouched); the leaderboard records PLAYERS — one row per username, best score only, self-healing on load. v16: Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -276,7 +276,7 @@
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.1 • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.2 • Trash world bg • Scrap pipes • Neon #00FF88<br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -470,6 +470,16 @@
     <p>After paying, DM <b>@KennethBosak</b> or <b>@Skynetonx</b> — we match your payment
        on-chain and take your ad image (wide banner). Your slot goes live the same day.</p>
 
+    <h3>NO AD IMAGE?</h3>
+    <p>No designer? No problem. Copy this prompt, paste it into your favorite AI,
+       answer its 3 quick questions — it builds your ad at the exact billboard size.</p>
+    <div class="copyrow">
+      <button class="btn ghost" id="btnSpAiPrompt">🤖 USE AI — COPY THE AD PROMPT</button>
+    </div>
+    <p id="spAiDone" style="display:none;font-size:13px;color:#9fd4b2"></p>
+    <p id="spAiHint" style="display:none;font-size:13px;color:#9fd4b2">Clipboard is blocked here — copy the prompt from this box instead:</p>
+    <textarea id="spAiFallback" readonly rows="7" style="display:none;width:100%;box-sizing:border-box;background:#0a140d;color:#d8ffe6;border:1px solid var(--neon-dim);border-radius:8px;padding:10px;font:12px 'JetBrains Mono',monospace"></textarea>
+
     <h3>THE RULES</h3>
     <p>Creative is reviewed before it displays. Keep it clean. Payment is final.</p>
 
@@ -510,7 +520,13 @@ const POPICOIN_CONFIG = {
   /* POPICOIN signature layer on top of the original flight model:
      pipes with idx >= 20 wave (sine + dust telegraph). Set false for
      the pure original pipe behavior. The flight model is unaffected. */
-  WAVE_PIPES: true
+  WAVE_PIPES: true,
+  /* v16.2 — THE GASLIGHT RAMP (Kenn): master switch for the cosmetic
+     scroll ramp. ON: the far/mid parallax layers and the zombie
+     crowd's treadmill accelerate with the score (progress = score /
+     100) and converge to full speed by pipe 100 — the pipes and the
+     sim NEVER change speed. OFF restores the exact v16.1 layers. */
+  GASLIGHT_RAMP: true
 };
 
 /* v16 — sponsor slots sold so far (baked at build time; Skynet bumps
@@ -735,7 +751,11 @@ const game = {
   particles: [],
   score: 0, t: 0, spawnCounter: 0,
   warmup: 0, pauseSteps: 0, hoverTheta: 0, landOff: 0,
-  flashT: -1, deathT: 0, deathByPipe: false
+  flashT: -1, deathT: 0, deathByPipe: false,
+  /* v16.2 FREE FLIGHT egg state (per run): taps counts flap inputs at
+     score 0; at 10 the run turns invincible + worthless (see the
+     FREE FLIGHT section at ffResolve) */
+  ff: { taps: 0, active: false }
 };
 const perfStats = { steps: 0, frames: 0 };
 
@@ -812,6 +832,7 @@ function resetGame() {
   game.particles = [];
   game.score = 0; game.t = 0; game.warmup = 0; game.pauseSteps = 0;
   game.hoverTheta = 0; game.flashT = -1; game.deathT = 0; game.deathByPipe = false;
+  game.ff.taps = 0; game.ff.active = false;   // v16.2: Free Flight re-arms every run
   game.phase = "ready";
   if (window.Eggs) Eggs.onRunStart();    // v16: per-run egg state resets (phase mode persists)
 }
@@ -845,8 +866,15 @@ function startDeath(byPipe) {
   game.flashT = 0;                       // white flash starts now (spec §6)
   if (!byPipe) { game.bird.v = 0; game.bird.g = 0; }  // ground hit: already down
   sfx("hit");
-  if (window.Eggs) Eggs.onDeath();       // v16: 21 Club session death count + Flippening disarm
-  if (typeof Player !== "undefined") Player.onRunEnd(game.score);
+  /* v16.2 IRON RULE: a FREE FLIGHT run earns NOTHING and counts
+     NOTHING — no Player credit, no 21 Club death, no Flippening
+     bookkeeping. The only Free Flight death (carried off the left
+     edge) arrives here like any other; the gates below are what
+     make it leave no trace. */
+  if (!game.ff.active) {
+    if (window.Eggs) Eggs.onDeath();     // v16: 21 Club session death count + Flippening disarm
+    if (typeof Player !== "undefined") Player.onRunEnd(game.score);
+  }
 }
 
 /* medals — original thresholds (spec §6), POPICOIN badge styling */
@@ -870,11 +898,13 @@ function showGameOver() {
     game.score >= 5  ? "The yard claims another coin. Dust yourself off." :
                        "Straight into the scrap. It happens to every coin once.";
   renderMedals(game.score);
-  Leaderboard.render(game.score);
+  // v16.2: a FREE FLIGHT run is displayed but NEVER recorded — the
+  // board paints as it stands and the local best is not written.
+  Leaderboard.render(game.score, { record: !game.ff.active });
   let best = 0;
   try { best = parseInt(localStorage.getItem("popicoin_best_v1") || "0", 10) || 0; } catch (e) {}
   const bn = document.getElementById("bestNote");
-  if (game.score > best) {
+  if (!game.ff.active && game.score > best) {
     try { localStorage.setItem("popicoin_best_v1", String(game.score)); } catch (e) {}
     bn.textContent = "★ NEW BEST — " + game.score + " pipes";
   } else {
@@ -903,6 +933,18 @@ function doFlap() {
 function flap() {
   if (game.state !== "play") return;
   if (window.Eggs) Eggs.onFlap();        // v16: Flippening double-tap observer (observes only — every flap still flaps)
+  /* v16.2 FREE FLIGHT trigger (Kenn's egg): 10 flap inputs while the
+     score is still 0 — before pipe 1 is cleared — turn the run
+     invincible (see ffResolve). Observed only, exactly like the
+     Flippening: every flap still flaps. Once pipe 1 falls (score > 0)
+     the window is closed for the run. */
+  if (!game.ff.active && game.score === 0 && (game.phase === "ready" || game.phase === "flying")) {
+    game.ff.taps++;
+    if (game.ff.taps >= 10) {
+      game.ff.active = true;
+      if (window.Eggs) Eggs.toast("✦ FREE FLIGHT — NOTHING COUNTS, NOTHING CAN KILL YOU");
+    }
+  }
   if (game.phase === "ready") {          // first flap: hover → physics, warm-up starts
     game.phase = "flying";
     game.warmup = 66;
@@ -958,6 +1000,63 @@ function stepBirdPhysics() {
   if (b.angle < ROT_MIN) b.angle = ROT_MIN;
   if (b.angle > ROT_MAX) b.angle = ROT_MAX;
 }
+
+/* ================= FREE FLIGHT (v16.2, Kenn's egg) =================
+   Trigger: 10 flap inputs at score 0 (counted in flap()). For the
+   rest of the run the bird CANNOT die by impact — but the pipes are
+   SOLID, not ghosts (Kenn's corrected model): a pipe's leading face
+   stops the bird, a pipe top is a floor it can stand on, an
+   underside bonks it back down. And the world is a TREADMILL:
+   anything the bird rests on or against — pipe face, pipe top, the
+   ground itself — carries it LEFT at scroll speed. The ONLY death
+   in Free Flight is being carried fully off the left edge of the
+   screen (hitbox x + HIT < 0): a normal game over that still earns
+   NOTHING (the credit/board/stats gates live in startDeath,
+   showGameOver and the Eggs.onPipeCleared hook). The ceiling never
+   kills (the stock behaviour: no ceiling, flaps ignored above it).
+   The display score may tick for fun; nothing from the run persists.
+   The bird draws translucent so spectators can see the state. */
+function ffGroundCarry() {
+  const b = game.bird;
+  if (b.y >= GROUND_Y - HIT) {
+    b.y = GROUND_Y - HIT; if (b.v > 0) b.v = 0;
+    b.x -= SCROLL;                       // the treadmill drags a resting bird left
+  }
+}
+function ffResolve() {
+  const b = game.bird;
+  for (const p of game.pipes) {
+    if (p.x >= b.x + HIT || p.x + PIPE_WU <= b.x) continue;
+    const g = p.effGap;
+    /* resting contact: a pipe top flush under the bird still counts
+       as standing on it — the top carries the bird left with the
+       pipe, step after step, until the pipe slides out from under */
+    if (b.v >= 0) {
+      for (const rT of [g, g - GAP_H - 320]) {
+        if (b.y + HIT <= rT && b.y + HIT >= rT - SCROLL) {
+          b.y = rT - HIT; b.v = 0; b.x -= SCROLL;
+        }
+      }
+    }
+    /* penetration: push the bird out of each pipe rect along the
+       smallest penetration — top = land (+ ride the top), underside
+       = bonk, leading face = stop (the pipe's own leftward motion
+       then carries the bird), back = squeezed out behind */
+    for (let s = 0; s < 2; s++) {
+      const rT = s ? g : g - GAP_H - 320;
+      const rB = s ? g + 320 : g - GAP_H;
+      if (b.y >= rB || b.y + HIT <= rT) continue;
+      const penTop = b.y + HIT - rT, penBot = rB - b.y;
+      const penL = b.x + HIT - p.x, penR = p.x + PIPE_WU - b.x;
+      const m = Math.min(penTop, penBot, penL, penR);
+      if (m === penTop) { b.y = rT - HIT; if (b.v > 0) b.v = 0; }
+      else if (m === penBot) { b.y = rB; if (b.v < 0) b.v = 0; }
+      else if (m === penL) { b.x = p.x - HIT; }
+      else { b.x = p.x + PIPE_WU; }
+    }
+  }
+  ffGroundCarry();
+}
 function step() {
   perfStats.steps++;
   game.bird.wingT++;
@@ -996,7 +1095,11 @@ function step() {
     game.warmup--;
     if (game.warmup === 0) armPipes();
     stepBirdPhysics();
-    if (b.y > GROUND_Y - HIT) { b.y = GROUND_Y - HIT; startDeath(false); }
+    if (game.ff.active) {                // v16.2: in Free Flight the floor
+      ffGroundCarry();                   // is a treadmill, not a grave —
+      if (b.x + HIT < 0) startDeath(false);   // even during warm-up
+    }
+    else if (b.y > GROUND_Y - HIT) { b.y = GROUND_Y - HIT; startDeath(false); }
     return;
   }
 
@@ -1030,10 +1133,20 @@ function step() {
     if (!p.scored && (p.x === BIRD_X || p.x === BIRD_X - 1)) {
       p.scored = true;
       game.score++;
-      if (window.Eggs) Eggs.onPipeCleared();   // v16: eggs observe the clear (Flippening countdown / 21 Club phase step) — score itself untouched
+      /* v16.2: Free Flight clears are invisible to the eggs (the
+         Flippening counts ONLY normal runs) — nothing counts here */
+      if (!game.ff.active && window.Eggs) Eggs.onPipeCleared();   // v16: eggs observe the clear (Flippening countdown / 21 Club phase step) — score itself untouched
       sfx("point");
       if (game.score === 20) game.pauseSteps = 27;   // 19 → 20 transition beat
     }
+  }
+  if (game.ff.active) {
+    /* v16.2 FREE FLIGHT: solid pipes on a treadmill (see ffResolve).
+       The ONLY death is the carry off the left edge — the hitbox is
+       the bird's width, as everywhere else in the sim. */
+    ffResolve();
+    if (game.phase === "flying" && b.x + HIT < 0) startDeath(false);
+    return;
   }
   /* collision (spec §2/§3): bird = 20×20 AABB at (80, y); pipes = full
      52×320 rects — the narrower drawn body does NOT forgive, the box does */
@@ -1061,7 +1174,8 @@ function step() {
    nothing here touches the sim.
    ===================================================================== */
 const ART = {
-  scrollU: 0, _lastLandOff: 0, pulseA: 0.5, pulseB: 0.5,
+  scrollU: 0, scrollFar: 0, scrollMid: 0, scrollCrowd: 0,
+  _lastLandOff: 0, pulseA: 0.5, pulseB: 0.5,
   bgFar: null, bgMid: null, bgFg: null, pileTex: null, frameTex: null, medallion: null,
   bbFrameImg: null,   // v15: Kenn's coupon-collage billboard frame (keyed, window open)
   halo: null, tubeGrad: null,
@@ -1159,12 +1273,26 @@ function mulberry(seed) {
 function mkCanvas(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
 
 /* scroll distance is render-side bookkeeping: it follows game.landOff
-   (which scrollGround() advances) without touching sim state. */
+   (which scrollGround() advances) without touching sim state.
+   v16.2 THE GASLIGHT RAMP: each visual layer keeps its OWN scroll
+   distance, advanced here at its ramped rate. progress p = min(score
+   / 100, 1) per run (menu = score 0 = base rates): far converges
+   0.3 -> 1.0, mid 0.6 -> 1.0 (never past full speed — no depth
+   inversion), the crowd's treadmill runs 1x -> 2x. The FG layer
+   (scrollU) stays LOCKED 1.0x to game.landOff — the ground moves
+   with the pipes, exactly as the sim does, because the pipes and
+   the sim are the one thing the ramp never touches. With
+   POPICOIN_CONFIG.GASLIGHT_RAMP off, p is 0 and every layer is
+   bit-for-bit the v16.1 behaviour. */
 function artAdvanceScroll() {
   let d = ART._lastLandOff - game.landOff;
   if (d < 0) d += 24;
   if (d > 12 || d < 0) d = 0;
   ART.scrollU += d;
+  const p = POPICOIN_CONFIG.GASLIGHT_RAMP ? Math.min(Math.max(game.score, 0) / 100, 1) : 0;
+  ART.scrollFar += d * (0.3 + 0.7 * p);
+  ART.scrollMid += d * (0.6 + 0.4 * p);
+  ART.scrollCrowd += d * (1 + p);
   ART._lastLandOff = game.landOff;
 }
 
@@ -1382,7 +1510,10 @@ function drawZombieWall() {
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, top, W, H - top);
   if (!ART.wallStrips) return;
-  const scrollPx = ART.scrollU * S;
+  /* v16.2: the crowd marches on its OWN scroll (ART.scrollCrowd) —
+     translation AND the bob/pose cadence below both read it, so the
+     Gaslight Ramp hurries the horde's feet and its bounce together */
+  const scrollPx = ART.scrollCrowd * S;
   const P = LAY.crowdPeriod;
   const off = ((scrollPx % P) + P) % P;
   for (const row of ART.wallStrips) {
@@ -1625,13 +1756,15 @@ function drawBackgroundFallback() {
 }
 /* v14 TRUE WRAP TILE — one parallax layer drawn straight from its
    source image: height from the LAY rect (fraction of H), width from
-   the image's own aspect, repeated along x at the layer's parallax
-   speed off the same scroll source the plates used (ART.scrollU,
-   units * S px/unit). NO mirror: the join is the image's own left
-   edge meeting its own right edge, exactly as Kenn generated it. */
-function drawTiledLayer(img, rect, speed) {
+   the image's own aspect, repeated along x. v16.2: the offset source
+   is the layer's OWN ramped scroll accumulator (artAdvanceScroll),
+   passed in as scrollUnits — at score 0 / ramp off it accumulates at
+   the classic parallax rate, so the picture is unchanged. NO mirror:
+   the join is the image's own left edge meeting its own right edge,
+   exactly as Kenn generated it. */
+function drawTiledLayer(img, rect, scrollUnits) {
   const h = rect[1] * H, w = h * (img.naturalWidth / img.naturalHeight);
-  let off = -((ART.scrollU * S * speed) % w); if (off > 0) off -= w;
+  let off = -((scrollUnits * S) % w); if (off > 0) off -= w;
   for (let x = off; x < W; x += w) ctx.drawImage(img, x, rect[0] * H, w, h);
 }
 /* v15.1 — the FG layer is anchored in UNIT SPACE to the ground
@@ -1665,8 +1798,8 @@ function drawBackground() {
   // mid/fg art is a keyed texture (real alpha holes between trash), so
   // this guarantees no void pixel ever shows through the stack.
   ctx.fillStyle = "#0c120c"; ctx.fillRect(0, 0, W, H);
-  drawTiledLayer(ART.bgFar, LAY.bgFar, 0.3);
-  drawTiledLayer(ART.bgMid, LAY.bgMid, 0.6);
+  drawTiledLayer(ART.bgFar, LAY.bgFar, ART.scrollFar);   // v16.2: ramped 0.3x -> 1.0x
+  drawTiledLayer(ART.bgMid, LAY.bgMid, ART.scrollMid);   // v16.2: ramped 0.6x -> 1.0x
   if (ART.bgFg) drawFgLayer(ART.bgFg);
 }
 function drawBillboard(t) {
@@ -1793,6 +1926,7 @@ function drawBirdU() {
   const skin = birdSkinImage();
   if (skin) {
     ctx.save();
+    if (game.ff.active) ctx.globalAlpha = 0.55;   // v16.2: Free Flight tell — the bird runs translucent
     ctx.translate(b.x + 10, b.y + 10 + hov);   // hitbox center
     ctx.rotate(b.angle * Math.PI / 180);
     const BW = 48, BH = BW * skin.bb.h / skin.bb.w;
@@ -1805,6 +1939,7 @@ function drawBirdU() {
     ? Math.sin(wt * 1.05) * 32
     : 8 + Math.sin((wt - 18) * (Math.PI * 2 / 100)) * 9;
   ctx.save();
+  if (game.ff.active) ctx.globalAlpha = 0.55;   // v16.2: same Free Flight tell on the fallback bird
   ctx.translate(b.x + 9, b.y + 10 + hov);   // measured art anchor: hitbox +(9,10)
   ctx.rotate(b.angle * Math.PI / 180);
   drawWingU(-1, wang);
@@ -2146,6 +2281,33 @@ document.getElementById("btnSponsor").addEventListener("click", openSponsorPanel
 document.getElementById("btnOverSponsor").addEventListener("click", openSponsorPanel);
 document.getElementById("btnCloseSponsorPanel").addEventListener("click", closeSponsorPanel);
 document.getElementById("btnCopySpAddr").addEventListener("click", e => copyText(POPICOIN_CONFIG.sponsorAddress, e.target));
+/* v16.2 — "USE AI" creative help (Kenn): a sponsor with no ad image
+   copies ONE prompt, pastes it into any AI chat, answers 3 questions
+   and gets a banner at the exact billboard size (1770x697, the frame
+   window's geometry). The prompt text is contractual — the rig
+   asserts the clipboard matches it byte-for-byte. If the clipboard
+   API is unavailable or blocked, the same text appears in a
+   selectable box inside the panel instead. */
+const SP_AI_PROMPT = "Make me an ad banner for an in-game billboard. First ask me 3 quick questions: (1) my business or product name, (2) what I'm promoting, (3) the vibe — bold, funny, classy, you pick. Then generate ONE image at exactly 1770x697 pixels (a 2.54:1 wide banner): my name BIG and readable at a glance, one clear message, high contrast, no small print. The image gets cover-cropped into a billboard frame, so keep everything important inside the center 80%. Bright, punchy, game-friendly. If you can also make video, offer a version that runs at most 10 seconds and works silent.";
+const SP_AI_DONE = "✅ PROMPT COPIED — now go to your favorite AI and press PASTE. It will ask you 3 quick questions and build your ad at the exact billboard size. After paying, DM the finished image to @KennethBosak or @Skynetonx.";
+async function copySpAiPrompt() {
+  const doneEl = document.getElementById("spAiDone");
+  const hintEl = document.getElementById("spAiHint");
+  const fb = document.getElementById("spAiFallback");
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error("clipboard API unavailable");
+    await navigator.clipboard.writeText(SP_AI_PROMPT);
+    fb.style.display = "none"; hintEl.style.display = "none";
+    doneEl.textContent = SP_AI_DONE; doneEl.style.display = "";
+  } catch (e) {
+    doneEl.style.display = "none";
+    hintEl.style.display = "";
+    fb.value = SP_AI_PROMPT; fb.style.display = "";
+    fb.focus(); fb.select();
+  }
+}
+document.getElementById("btnSpAiPrompt").addEventListener("click", copySpAiPrompt);
+window.__popicoin.spAiPrompt = () => SP_AI_PROMPT;
 window.__popicoin.sponsorsSold = SPONSORS_SOLD;
 document.getElementById("btnRefresh").addEventListener("click", refreshPrice);
 document.getElementById("fUser").addEventListener("input", renderPrice);
@@ -2846,8 +3008,18 @@ const Leaderboard = (() => {
     document.getElementById("boardYou").innerHTML = youHTML;
     document.getElementById("boardNote").textContent = note;
   }
-  async function render(score) {
+  async function render(score, opts) {
     if (IS_DEMO) {
+      if (opts && opts.record === false) {
+        // v16.2 FREE FLIGHT: display-only paint — the board exactly
+        // as it stands; this run leaves no row and moves no best
+        const b = demoBoard(); const name = demoName();
+        const row = b.find(e => e.name.toLowerCase() === name.toLowerCase());
+        paint(b.slice(0, 3),
+              row ? `YOU: ${row.pipes} pipes — #${b.indexOf(row) + 1}` : "YOU: 0 pipes",
+              "BETA BOARD — THIS DEVICE'S BESTS ONLY", name);
+        return;
+      }
       // v16.1: the you-line IS the player's single row — their best
       // and its rank — and paint marks that same row in the top 3
       // instead of duplicating it
@@ -2909,7 +3081,7 @@ requestAnimationFrame(loop);
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
-/* ---- FLAPPY SATS v16 — end of build ---- */
+/* ---- FLAPPY SATS v16.2 — end of build ---- */
 </script>
 </body>
 </html>
