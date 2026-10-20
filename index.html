@@ -6,7 +6,7 @@
 <title>FLAPPY SATS — ESCAPE FIAT TRASH</title>
 <meta name="description" content="FLAPPY SATS — trash-world flappy. Escape fiat trash. Sponsored by the people, priced in Bitcoin Cash.">
 <meta name="theme-color" content="#0a0f0a">
-<!-- FLAPPY SATS v16.3 — FIRST LIVE SPONSOR: slot #1 (00TATT$, paid on-chain) rotates on the billboard from the baked-in BETA SPONSOR LIST — the beta's loader resolves to it until the server source exists; slot #2 is PAID too but its creative is PENDING, so it does not display. THE LINEAR LADDER: Kenn replaced the doubling ladder with +$1 per slot (slotUsd = $1.00 x (sold + 1)); SPONSORS_SOLD = 2 (slots #1 AND #2 both paid at the frozen $1.00 panel price and were honored at $1.00 — the panel's word is the store's word), so the panel's NEXT SLOT is #3 at $3.00. Sponsor panel gains the Drive UPLOAD LANE beside DM intake. ROTATION CADENCE 3s (was 10s): BILLBOARD_SECONDS in the config block drives drawBillboard off the same global clock, and video cards ride the same 3s clock — the USE AI prompt and all copy now say 3 seconds. (v16.2 — THE GASLIGHT RAMP: the cosmetic scroll layers (far/mid parallax + the zombie crowd's treadmill) accelerate with the score and converge to full speed by pipe 100 while the pipes and the sim NEVER change; + THE FREE FLIGHT EGG: 10 flap inputs at score 0 make the bird invincible for the run — pipes turn SOLID on a treadmill world (faces stop you, tops carry you left, only the left edge can end it) and the run earns NOTHING (no sats, no board, no stats). (v16.1: score lives in the sky strip ABOVE the billboard plate (never on the sponsor window), toast band BELOW the plate; sponsor panel gains a live CoinGecko rate + BIP21 wallet pay link + runtime QR (vendored qrcode.js); every user-visible DEMO string is now BETA (storage keys/identifiers untouched); the leaderboard records PLAYERS — one row per username, best score only, self-healing on load. v16: Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
+<!-- FLAPPY SATS v16.4 — THE LIVE FEED + THE UPDATE BUTTON. THE LIVE FEED (Kenn's design, live-feed-design.md): the billboard is a TV screen and sponsors.json is the broadcast — a same-origin PLAYLIST the loader fetches (cache-busted, cache:no-store; the SW treats sponsors.json + version.json as NETWORK-ONLY) at boot and RE-POLLS every 60 s; when the playlist changes, the rotation rebuilds LIVE in the open game — new entries join, removed entries leave, captions follow — no rebuild, no reload. Fallback stack, in order: the running list in memory → the localStorage last-good list → the baked BETA_SPONSORS → the house placeholder; a playlist entry whose image fails to load is SKIPPED for the rotation, never a broken frame. The Drive sponsor folder stays the studio (Skynet's desk sync writes the playlist); the filter stays human. THE UPDATE BUTTON: version.json is polled on the same 60 s tick; when the served version differs from BUILD_VERSION below, the game shows "🔄 UPDATE — TAP TO REFRESH" (the classic waiting-service-worker path surfaces the same button); a tap asks a waiting SW to SKIP_WAITING and reloads ONCE, sessionStorage-guarded — stale shells and ?v= rescue links are retired. SPONSORS_SOLD + the panel are UNCHANGED (2 sold; next slot #3 at $3.00): the ladder stays code-side by design — price ticks on VERIFIED PAYMENT, desk-side in the beta, server-side at the deploy pass. (v16.3 — FIRST LIVE SPONSOR: slot #1 (00TATT$, paid on-chain) rotates on the billboard from the baked-in BETA SPONSOR LIST — the beta's loader resolves to it until the server source exists; slot #2 is PAID too but its creative is PENDING, so it does not display. THE LINEAR LADDER: Kenn replaced the doubling ladder with +$1 per slot (slotUsd = $1.00 x (sold + 1)); SPONSORS_SOLD = 2 (slots #1 AND #2 both paid at the frozen $1.00 panel price and were honored at $1.00 — the panel's word is the store's word), so the panel's NEXT SLOT is #3 at $3.00. Sponsor panel gains the Drive UPLOAD LANE beside DM intake. ROTATION CADENCE 3s (was 10s): BILLBOARD_SECONDS in the config block drives drawBillboard off the same global clock, and video cards ride the same 3s clock — the USE AI prompt and all copy now say 3 seconds. (v16.2 — THE GASLIGHT RAMP: the cosmetic scroll layers (far/mid parallax + the zombie crowd's treadmill) accelerate with the score and converge to full speed by pipe 100 while the pipes and the sim NEVER change; + THE FREE FLIGHT EGG: 10 flap inputs at score 0 make the bird invincible for the run — pipes turn SOLID on a treadmill world (faces stop you, tops carry you left, only the left edge can end it) and the run earns NOTHING (no sats, no board, no stats). (v16.1: score lives in the sky strip ABOVE the billboard plate (never on the sponsor window), toast band BELOW the plate; sponsor panel gains a live CoinGecko rate + BIP21 wallet pay link + runtime QR (vendored qrcode.js); every user-visible DEMO string is now BETA (storage keys/identifiers untouched); the leaderboard records PLAYERS — one row per username, best score only, self-healing on load. v16: Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -129,6 +129,18 @@
     letter-spacing:1px;font-size:15px;padding:12px 18px;border-radius:12px;opacity:0;
     pointer-events:none;transition:opacity .25s, transform .25s;text-align:center;max-width:88%}
   #toast.show{opacity:1;transform:translate(-50%,0)}
+  /* v16.4 — THE UPDATE BUTTON: a fixed top-center pill above every
+     overlay (z 70 > modal 50). display:none until the live-feed
+     version poll (or the waiting-worker path) shows it. Only the
+     button itself takes pointer events — it never blocks the game. */
+  #btnUpdate{position:fixed;left:50%;top:calc(162px + env(safe-area-inset-top));transform:translateX(-50%);
+    z-index:70;background:#0a2a18;border:2px solid var(--neon);color:#fff;
+    font-family:"JetBrains Mono",monospace;font-weight:700;font-size:15px;letter-spacing:1px;
+    padding:12px 20px;border-radius:999px;cursor:pointer;white-space:nowrap;
+    box-shadow:0 0 18px rgba(0,255,136,.55),0 4px 14px rgba(0,0,0,.5);
+    animation:updPulse 1.6s ease-in-out infinite}
+  @keyframes updPulse{0%,100%{box-shadow:0 0 10px rgba(0,255,136,.35),0 4px 14px rgba(0,0,0,.5)}
+    50%{box-shadow:0 0 28px rgba(0,255,136,.85),0 4px 14px rgba(0,0,0,.5)}}
   #goldFlash{position:absolute;inset:0;z-index:35;pointer-events:none;opacity:0;
     background:radial-gradient(ellipse at center, rgba(255,213,79,.95), rgba(255,170,0,.75));
     transition:opacity .09s}
@@ -274,10 +286,11 @@
 
     <div id="goldFlash" aria-hidden="true"></div>
     <div id="toast" role="status" aria-live="polite"></div>
+    <button id="btnUpdate" type="button" style="display:none">🔄 UPDATE — TAP TO REFRESH</button>
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.3 • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.4 • Trash world bg • Scrap pipes • Neon #00FF88<br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -560,13 +573,36 @@ const POPICOIN_CONFIG = {
    DOUBLING ladder ($1.00 x 2^sold) everywhere from v16.3 on. */
 const SPONSORS_SOLD = 2;
 
+/* ---------------- v16.4: BUILD VERSION + THE LIVE FEED ----------------
+   BUILD_VERSION is THIS copy's build, stamped here and mirrored in
+   version.json beside the game. The feed polls version.json every
+   60 s; a served version different from BUILD_VERSION means a new
+   build exists → the UPDATE button shows (see checkVersionNow).
+   The sponsor PLAYLIST is sponsors.json, same-origin: an array of
+   {username, image, paidSats} in purchase order (schema documented
+   in live-feed-design.md). The loader fetches it cache-busted with
+   cache:"no-store" — and sw.js treats both JSON files as
+   network-only — so a playlist edit is the ONLY thing a sponsor
+   change needs; the game itself is never rebuilt for art. */
+const BUILD_VERSION = "16.4";
+const PLAYLIST_URL = "sponsors.json";
+const VERSION_URL = "version.json";
+const FEED_POLL_MS = 60000;
+const LAST_GOOD_KEY = "popicoin_sponsors_lastgood_v1";
+const FEED = { source: "none", polls: 0, lastOkAt: 0, lastApplyAt: 0, servedVersion: "", updateShown: false };
+let swRegistration = null;   // set at boot (update button's SKIP_WAITING path)
+let pendingVersion = "";     // the served version the button would install
+
 /* ---------------- sponsor data (read path) ---------------- */
 let sponsors = [];           // [{username, imageUrl, paidSats, createdAt}]
 let sponsorsLoadedAt = null;
 
 /* v16.3 — BETA SPONSOR LIST: the server source (Firestore, below)
-   does not exist in the beta, so the beta's live sponsors are baked
-   in here and the loader resolves to this list. Slot #2 is PAID but
+   does not exist in the beta, so the beta's live sponsors were
+   baked in here and the loader resolved to this list. v16.4: the
+   LIVE FEED's sponsors.json playlist supersedes it as the source;
+   this list remains as the fallback stack's baked rung (and its
+   contents mirror the shipped playlist). Slot #2 is PAID but
    its creative is PENDING — no entry until it lands and passes
    review (SPONSORS_SOLD still counts it: the ladder is sales; the
    rotation is only what displays). Creative ships AS-IS: slot #1's
@@ -575,17 +611,158 @@ const BETA_SPONSORS = [
   { username: "00TATT$", imageUrl: "art/sponsor-001.png", paidSats: 358474, createdAt: "2026-10-20" }
 ];
 
+/* v16.4 — apply a sponsor list (internal shape) from a named
+   source. A PLAYLIST apply also persists the list as the
+   localStorage last-good. Preloading is idempotent per imageUrl,
+   so re-applying an unchanged list is cheap; drawBillboard reads
+   `sponsors` fresh every frame, so an apply IS the live rebuild —
+   the rotation, captions and all change on the next frame. */
+function applySponsors(list, source) {
+  sponsors = list.slice();
+  sponsorsLoadedAt = new Date();
+  FEED.source = source;
+  FEED.lastApplyAt = Date.now();
+  if (source === "playlist") {
+    FEED.lastOkAt = FEED.lastApplyAt;
+    try { localStorage.setItem(LAST_GOOD_KEY, JSON.stringify(sponsors)); } catch (e) {}
+  }
+  preloadBillboardImages();
+}
+
+function readLastGood() {
+  try {
+    const raw = localStorage.getItem(LAST_GOOD_KEY);
+    if (!raw) return null;
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list) || !list.length) return null;
+    const out = list.filter(e => e && e.username).map(e => ({
+      username: String(e.username), imageUrl: String(e.imageUrl || ""),
+      paidSats: parseInt(e.paidSats, 10) || 0, createdAt: String(e.createdAt || "")
+    }));
+    return out.length ? out : null;
+  } catch (e) { return null; }
+}
+
+/* Fetch + apply the playlist. THROWS on any failure (bad status,
+   bad JSON, not an array) — the caller runs the fallback stack.
+   An empty array is a VALID playlist: every sponsor removed →
+   the placeholder board (takedown of the last entry works). */
+async function fetchPlaylistApply() {
+  const bust = "?t=" + Math.floor(Date.now() / 60000);
+  const res = await fetch(PLAYLIST_URL + bust, { cache: "no-store" });
+  if (!res.ok) throw new Error("playlist " + res.status);
+  const data = await res.json();
+  if (!Array.isArray(data)) throw new Error("playlist is not an array");
+  const list = [];
+  for (const e of data) {
+    if (!e || typeof e !== "object") continue;
+    const u = String(e.username || "").trim();
+    if (!u) continue;
+    list.push({
+      username: u,
+      imageUrl: String(e.image || e.imageUrl || ""),
+      paidSats: parseInt(e.paidSats, 10) || 0,
+      createdAt: String(e.createdAt || "")
+    });
+  }
+  applySponsors(list, "playlist");
+  return true;
+}
+
+/* One feed poll. On failure the running list stays (the in-memory
+   last good); at BOOT, with nothing running yet, the stack falls
+   through to the localStorage last-good, then the baked list. */
+async function pollSponsorsFeed(boot) {
+  FEED.polls++;
+  try { if (await fetchPlaylistApply()) return true; }
+  catch (e) { /* fall through to the stack — the feed never breaks the game */ }
+  if (boot && !sponsors.length) {
+    const lg = readLastGood();
+    if (lg) { applySponsors(lg, "lastgood"); return false; }
+    try { applySponsors(BETA_SPONSORS.slice(), "baked"); }
+    catch (e) { sponsors = []; }
+  }
+  return false;
+}
+
+/* ---------------- v16.4: THE UPDATE BUTTON ---------------- */
+function showUpdateButton() {
+  FEED.updateShown = true;
+  const b = document.getElementById("btnUpdate");
+  if (b) b.style.display = "";
+}
+
+async function checkVersionNow() {
+  try {
+    const bust = "?t=" + Math.floor(Date.now() / 60000);
+    const res = await fetch(VERSION_URL + bust, { cache: "no-store" });
+    if (!res.ok) return;
+    const j = await res.json();
+    const v = (j && j.version != null) ? String(j.version) : "";
+    if (!v) return;
+    FEED.servedVersion = v;
+    if (v !== BUILD_VERSION) {
+      pendingVersion = v;
+      showUpdateButton();
+      /* a new build exists — also prod the service worker to fetch
+         it now, so the tap's SKIP_WAITING has a worker to wake. */
+      if (swRegistration && swRegistration.update) {
+        try { swRegistration.update(); } catch (e) {}
+      }
+    }
+  } catch (e) { /* offline / file gone: stay quiet, keep playing */ }
+}
+
+/* The 60 s heartbeat: playlist poll + version check, started once
+   by the beta loader. Returning to the tab polls immediately too —
+   a player who left the game open on the splash hears the news
+   when they come back, not up to a minute later. */
+let feedStarted = false;
+function startFeed() {
+  if (feedStarted) return;
+  feedStarted = true;
+  checkVersionNow();
+  setInterval(() => { pollSponsorsFeed(false); checkVersionNow(); }, FEED_POLL_MS);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) { pollSponsorsFeed(false); checkVersionNow(); }
+  });
+}
+
+/* The button's tap: wake a waiting SW (SKIP_WAITING), then reload
+   ONCE. The sessionStorage stamp ignores a repeat tap for the same
+   target version inside the same 15 s bucket — no reload loops.
+   Nothing ever reloads without the tap (Kenn's ruling: a BUTTON
+   the player presses, not a forced refresh). */
+(() => {
+  const b = document.getElementById("btnUpdate");
+  if (!b) return;
+  b.addEventListener("pointerdown", e => e.stopPropagation());
+  b.addEventListener("click", e => {
+    e.stopPropagation();
+    const stamp = (pendingVersion || "sw") + "@" + Math.floor(Date.now() / 15000);
+    let last = "";
+    try { last = sessionStorage.getItem("popicoin_update_tap") || ""; } catch (err) {}
+    if (last === stamp) return;
+    try { sessionStorage.setItem("popicoin_update_tap", stamp); } catch (err) {}
+    let reloaded = false;
+    const go = () => { if (!reloaded) { reloaded = true; location.reload(); } };
+    const w = swRegistration && swRegistration.waiting;
+    if (w) {
+      try { navigator.serviceWorker.addEventListener("controllerchange", go); } catch (err) {}
+      try { w.postMessage({ type: "SKIP_WAITING" }); } catch (err) {}
+      setTimeout(go, 1200);   // no controllerchange (nothing to claim): reload anyway
+    } else go();
+  });
+})();
+
 async function loadSponsors() {
   const pid = POPICOIN_CONFIG.firebaseProjectId;
   if (!pid) {
-    /* BETA path: resolve to the baked-in list. Same fail-safe as
-       the server path — any error leaves the list empty and the
-       placeholder billboard renders; nothing here may throw. */
-    try {
-      sponsors = BETA_SPONSORS.slice();
-      sponsorsLoadedAt = new Date();
-      preloadBillboardImages();
-    } catch (e) { sponsors = []; }
+    /* BETA path — v16.4: THE LIVE FEED (see the block above).
+       The playlist is the rotation's source; the baked list is
+       now only the third rung of the fallback stack. */
+    await pollSponsorsFeed(true);
+    startFeed();
     return;
   }
   try {
@@ -688,6 +865,10 @@ function preloadBillboardImages() {
     if (s.imageUrl && !bbImages[s.imageUrl]) {
       const im = new Image();
       im.crossOrigin = "anonymous";
+      /* v16.4: an image that fails to load marks itself broken;
+         displaySponsors() then SKIPS the entry for the rotation —
+         the board never shows a broken frame. */
+      im.onerror = () => { im.__broken = true; };
       im.src = s.imageUrl;
       bbImages[s.imageUrl] = im;
       /* v16.3: register with the ART warm-up pass like other
@@ -698,6 +879,19 @@ function preloadBillboardImages() {
       ART_WARM_SOURCES.push({ key: "sponsor:" + s.imageUrl, im });
     }
   }
+}
+
+/* v16.4 — the rotation's working list: the applied sponsors minus
+   any entry whose image is KNOWN broken (errored). An entry whose
+   image is still loading keeps its slot — the board draws its text
+   card until the art lands, as shipped. Recomputed per frame, so a
+   playlist rebuild or a late image error lands on the next frame. */
+function displaySponsors() {
+  return sponsors.filter(s => {
+    if (!s.imageUrl) return true;
+    const im = bbImages[s.imageUrl];
+    return !(im && im.__broken);
+  });
 }
 
 /* =====================================================================
@@ -1924,8 +2118,9 @@ function drawBackground() {
 }
 function drawBillboard(t) {
   const { bw, bh, bx, by, win } = BB, k = BB.k, FS = win.w / 431.2;
-  const idx = sponsors.length ? Math.floor(t / POPICOIN_CONFIG.BILLBOARD_SECONDS) % sponsors.length : -1;   // v16.3: 3 s cadence, global clock
-  const s = idx >= 0 ? sponsors[idx] : null;
+  const disp = displaySponsors();   // v16.4: the live-feed working list (broken-image entries skipped)
+  const idx = disp.length ? Math.floor(t / POPICOIN_CONFIG.BILLBOARD_SECONDS) % disp.length : -1;   // 3 s cadence, global clock
+  const s = idx >= 0 ? disp[idx] : null;
   // v15.1: the legacy posts + cross-brace are REMOVED (Kenn's
   // playtest: "there's legs coming off of our sponsor frame, we
   // don't need that"). Kenn's coupon frame plate is the complete
@@ -2429,6 +2624,8 @@ async function copySpAiPrompt() {
 document.getElementById("btnSpAiPrompt").addEventListener("click", copySpAiPrompt);
 window.__popicoin.spAiPrompt = () => SP_AI_PROMPT;
 window.__popicoin.sponsorsSold = SPONSORS_SOLD;
+window.__popicoin.buildVersion = BUILD_VERSION;   // v16.4
+window.__popicoin.feed = FEED;                    // v16.4: live reference — source/polls/servedVersion/updateShown
 document.getElementById("btnRefresh").addEventListener("click", refreshPrice);
 document.getElementById("fUser").addEventListener("input", renderPrice);
 
@@ -3200,7 +3397,24 @@ Player.init();
 requestAnimationFrame(loop);
 scheduleArtWarmup();   // v16.2.3: art warms behind the splash (see warmArt)
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      /* v16.4: keep the registration for the UPDATE button. A
+         worker already WAITING at load, or one that finishes
+         installing while this page lives (updatefound), surfaces
+         the same button the version poll shows — the classic
+         path, beside the poll. */
+      swRegistration = reg;
+      if (reg.waiting && navigator.serviceWorker.controller) showUpdateButton();
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) showUpdateButton();
+        });
+      });
+    }).catch(() => {});
+  });
 }
 
 /* ---------------- v16.2.2: INSTALL APP affordance ----------------
