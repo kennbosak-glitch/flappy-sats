@@ -672,6 +672,8 @@ function resetGame() {
   game.phase = "ready";
 }
 function startGame() {
+  goFullscreenPortrait();   // v9.1: every run start re-attempts fullscreen + portrait lock
+  fitStage();               // v9.1: and re-fits — in-play visibility is the guarantee that matters
   if (typeof Player !== "undefined" && !Player.isAuthed()) { Player.showAuth(); return; }
   resetGame();
   game.state = "play";
@@ -1259,7 +1261,19 @@ function drawBand(plate, y, speed) {
    2x pipeline (incl. the build-check rig) reproduces v8 geometry 1:1.
    All layout absolutes scale by the same factor; fractions are immune. */
 let RSCALE = 1;
+/* v9.1 DEMO — FORCED PORTRAIT (Kenn's playtest order, 2026-10-20):
+   on a landscape viewport the stage took the landscape branch (or
+   grew taller than the screen) and the portrait playfield was
+   cropped top and bottom — score and ground/zombie wall cut off.
+   The demo is portrait-first, period: every layout request is
+   coerced to portrait here, the single choke point (boot, settings
+   preview, debug handle all route through applyLayout). The LAY_L
+   table and the paid-unlock flow stay intact below, unreachable in
+   the demo; the fit pass (fitStage) guarantees the whole stage —
+   score at top, wall at bottom — is visible in ANY window shape. */
+const DEMO_FORCE_PORTRAIT = true;
 function applyLayout(portrait) {
+  if (DEMO_FORCE_PORTRAIT) portrait = true;
   const base = portrait ? LAY_P : LAY_L;
   RSCALE = Math.max(0.5, Math.min(window.devicePixelRatio || 1, 3) / 2);
   LAY = Object.assign({}, base, {
@@ -1298,6 +1312,64 @@ function applyLayout(portrait) {
   if (ART.frameTex || ART.medallion) bakeBillboard();
   if (window.__popicoin) { window.__popicoin.U.S = S; window.__popicoin.U.OX = OX; }
   if (typeof renderSettings === "function") renderSettings();
+  fitStage();
+}
+
+/* v9.1 — FIT, never crop: size the stage (CSS px) so the ENTIRE
+   9:16 stage fits inside the viewport — width-limited on tall
+   screens, height-limited on wide/short ones. The page around it
+   (--bg, #0a0f0a — the game's own dark) is the letterbox. Runs on
+   boot, resize, orientation change and fullscreen change. */
+function fitStage() {
+  const stage = document.getElementById("stage");
+  if (!stage || !stage.parentElement) return;
+  const availW = Math.min(stage.parentElement.clientWidth - 20, 470);
+  const availH = Math.max(280, window.innerHeight - stage.getBoundingClientRect().top - 14);
+  const fitW = Math.min(availW, availH * 9 / 16);
+  stage.style.width = Math.max(200, Math.floor(fitW)) + "px";
+}
+
+let fitT = 0;
+function queueFit() { clearTimeout(fitT); fitT = setTimeout(fitStage, 60); }
+window.addEventListener("resize", queueFit);
+window.addEventListener("orientationchange", queueFit);
+document.addEventListener("fullscreenchange", queueFit);
+window.addEventListener("load", fitStage);
+/* the brand webfont landing grows the header and pushes the stage
+   down AFTER the boot fit — refit once fonts settle, or the stage
+   can sit a few px too tall on short viewports */
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitStage());
+/* the chrome above the stage (brand header, HUD) can change height
+   after a fit — the HUD wraps to two rows then settles to one, the
+   brand grows when its webfont lands — and every px it grows pushes
+   the stage down. Watch both and refit on any size change. */
+if (window.ResizeObserver) {
+  const roFit = new ResizeObserver(queueFit);
+  const hudEl = document.getElementById("hud"); if (hudEl) roFit.observe(hudEl);
+  const brandEl = document.querySelector("header.brand"); if (brandEl) roFit.observe(brandEl);
+}
+
+/* v9.1 — FORCED FULLSCREEN + PORTRAIT LOCK on the play gesture.
+   Best-effort enhancement only: every call is try/caught (and its
+   promise caught) so unsupported browsers silently keep the fit
+   view, which already guarantees the full stage. Called from
+   startGame (every run start: PLAY, PLAY AGAIN, splash tap/space)
+   and from the CREATE ACCOUNT & PLAY / login submits. */
+function goFullscreenPortrait() {
+  try {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      let p = null;
+      try { p = document.documentElement.requestFullscreen({ navigationUI: "hide" }); }
+      catch (e) { p = document.documentElement.requestFullscreen(); }
+      if (p && p.catch) p.catch(() => {});
+    }
+  } catch (e) { /* fit view is the guarantee */ }
+  try {
+    if (screen.orientation && screen.orientation.lock) {
+      const q = screen.orientation.lock("portrait-primary");
+      if (q && q.catch) q.catch(() => {});
+    }
+  } catch (e) { /* unsupported — fit view stands */ }
 }
 
 function bakeBillboard() {
@@ -1991,12 +2063,14 @@ const Player = (() => {
     $("authgate").classList.remove("hidden");
     $("splash").classList.add("hidden");
     $("hud").classList.remove("show");
+    fitStage();   // v9.1: HUD hides -> stage top moves -> refit
   }
   function enter(p) {
     profile = p;
     $("authgate").classList.add("hidden");
     $("splash").classList.remove("hidden");
     $("hud").classList.add("show");
+    fitStage();   // v9.1: HUD appears (~55px) -> stage top drops -> refit
     renderHud();
     ensurePrice().then(() => { renderHud(); if ($("stackModal").classList.contains("open")) renderStack(); });
   }
@@ -2242,10 +2316,12 @@ const Player = (() => {
     $("tabLogin").addEventListener("click", () => setTab(false));
     $("formSignup").addEventListener("submit", e => {
       e.preventDefault();
+      goFullscreenPortrait();   // v9.1: CREATE ACCOUNT & PLAY entry gesture
       signup($("suUser").value.trim(), $("suPass").value, $("suAddr").value, $("suInvite").value);
     });
     $("formLogin").addEventListener("submit", e => {
       e.preventDefault();
+      goFullscreenPortrait();   // v9.1: same entry gesture on the login tab
       login($("liUser").value.trim(), $("liPass").value);
     });
     $("btnLogout").addEventListener("click", logout);
