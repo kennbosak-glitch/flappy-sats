@@ -277,7 +277,7 @@
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.2.2 • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.2.3 • Trash world bg • Scrap pipes • Neon #00FF88<br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -527,7 +527,13 @@ const POPICOIN_CONFIG = {
      crowd's treadmill accelerate with the score (progress = score /
      100) and converge to full speed by pipe 100 — the pipes and the
      sim NEVER change speed. OFF restores the exact v16.1 layers. */
-  GASLIGHT_RAMP: true
+  GASLIGHT_RAMP: true,
+  /* v16.2.3 — ART PRELOAD: warm every game image (decode + one
+     offscreen draw) behind the splash, so a sprite's first IN-GAME
+     draw is never its first decode. The fire columns (idx >= 20)
+     used to debut undecoded mid-flight — one visible hitch at
+     pipe 20. OFF skips the warm-up pass entirely. */
+  PRELOAD_ART: true
 };
 
 /* v16 — sponsor slots sold so far (baked at build time; Skynet bumps
@@ -1196,14 +1202,20 @@ const ART = {
   zoms: null, road: null, crowd: null, wall: null, wallStrips: null,
   wilhelmPlays: 0
 };
+/* v16.2.3 — every image the loader fetches registers here (key +
+   element) so the warm-up pass can enumerate — and the rig can
+   audit — exactly what it warmed. */
+const ART_WARM_SOURCES = [];
 function artLoad(key, file, cb) {
   const im = new Image();
+  ART_WARM_SOURCES.push({ key, im });
   im.onload = () => { ART[key] = im; if (cb) cb(); };
   im.src = "art/" + file + ".webp";
   return im;
 }
 function artLoadPng(key, file, cb) {
   const im = new Image();
+  ART_WARM_SOURCES.push({ key, im });
   im.onload = () => { ART[key] = im; if (cb) cb(); };
   im.src = "art/" + file + ".png";
   return im;
@@ -1743,6 +1755,67 @@ artLoadPng("birdOrange", "bird-orange", () => measureBird(ART.birdOrange));
 artLoadPng("birdGold", "bird-gold", () => measureBird(ART.birdGold));
 bakeHalo();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (ART.bbFrame) ART.bbPlaceholder = bakePlaceholder(); });
+
+/* ---------------- v16.2.3: ART WARM-UP ----------------
+   THE PIPE-20 HITCH: browsers lazily decode an image on its first
+   drawImage. Pipes 1-19 only ever draw the regular columns, so the
+   fire set (col-f-hang / col-f-stand, ~1.2 MB lossless PNGs each)
+   paid its full decode + texture-upload cost on the exact frame it
+   first appeared — a visible freeze at the wave transition.
+   THE FIX: behind the splash (kicked only after the first menu
+   frame has painted, so it never blocks first paint), walk EVERY
+   image the loader fetched (ART_WARM_SOURCES) and for each one
+   (1) await HTMLImageElement.decode() — the browser keeps the
+   decoded bitmap resident for later draws, and (2) draw it once
+   onto a small offscreen canvas (longest side capped at 256 px)
+   to force the raster path once. Full-natural-size scratch draws
+   would allocate ~3 MB per big sprite for zero extra benefit —
+   decode() does the heavy lifting; the capped draw is the proof
+   of rasterization, not the payload. The scratch canvas is then
+   released. Sequential on purpose: a gentle background pass, not
+   a decode storm against the menu animation.
+   Gameplay is NEVER gated on this — if the player flaps first,
+   the pass finishes harmlessly underneath (offscreen draws only,
+   no shared state). window.__ART_WARM_LIST records every visited
+   key in order; window.__ART_WARM flips true when the pass ends.
+   POPICOIN_CONFIG.PRELOAD_ART (default true) is the master switch,
+   read at kick time. */
+let artWarmStarted = false;
+async function warmArt() {
+  if (artWarmStarted) return;
+  artWarmStarted = true;
+  window.__ART_WARM_LIST = [];
+  const scratch = mkCanvas(1, 1), sg = scratch.getContext("2d");
+  for (const { key, im } of ART_WARM_SOURCES) {
+    try {
+      if (!im.complete || im.naturalWidth === 0) {
+        await new Promise(res => {
+          im.addEventListener("load", res, { once: true });
+          im.addEventListener("error", res, { once: true });
+        });
+      }
+      if (im.naturalWidth > 0) {
+        if (typeof im.decode === "function") { try { await im.decode(); } catch (e) {} }
+        const longest = Math.max(im.naturalWidth, im.naturalHeight);
+        const s = Math.min(1, 256 / longest);
+        scratch.width = Math.max(1, Math.round(im.naturalWidth * s));
+        scratch.height = Math.max(1, Math.round(im.naturalHeight * s));
+        sg.drawImage(im, 0, 0, scratch.width, scratch.height);
+      }
+    } catch (e) { /* one bad asset must never break the pass */ }
+    window.__ART_WARM_LIST.push(key);
+  }
+  scratch.width = 0; scratch.height = 0;   // release the scratch surface
+  window.__ART_WARM = true;
+}
+function scheduleArtWarmup() {
+  /* one painted splash frame + a breath, THEN kick — and the flag
+     is read here, at kick time, so the pass honours its switch
+     exactly as shipped (and exactly as the rig flips it). */
+  requestAnimationFrame(() => setTimeout(() => {
+    if (POPICOIN_CONFIG.PRELOAD_ART) warmArt();
+  }, 60));
+}
 
 function drawBackgroundFallback() {
   const g = ctx.createLinearGradient(0, 0, 0, H);
@@ -3079,6 +3152,7 @@ applyLayout(landscapeUnlocked() ? false : true);
 loadSponsors().then(preloadBillboardImages);
 Player.init();
 requestAnimationFrame(loop);
+scheduleArtWarmup();   // v16.2.3: art warms behind the splash (see warmArt)
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
