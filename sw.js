@@ -1,8 +1,8 @@
-/* FLAPPY SATS service worker — offline app shell. v16.
+/* FLAPPY SATS service worker — offline app shell. v16.1.
    Only same-origin GETs are cached; API calls, cross-origin requests
    and non-GETs always hit the network. Bump CACHE to ship updates. */
-const CACHE = "popicoin-shell-v17";
-const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png",
+const CACHE = "popicoin-shell-v18";
+const SHELL = ["/", "/index.html", "/qrcode.js", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png",
   "/art/bg-far.webp", "/art/bg-mid.webp", "/art/bg-fg.webp",
   "/art/col-o-hang.png", "/art/col-o-stand.png", "/art/col-f-hang.png", "/art/col-f-stand.png",
   "/art/bird-green.png", "/art/bird-orange.png", "/art/bird-gold.png", "/art/bb-frame.png",

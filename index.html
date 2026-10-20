@@ -6,7 +6,7 @@
 <title>FLAPPY SATS — ESCAPE FIAT TRASH</title>
 <meta name="description" content="FLAPPY SATS — trash-world flappy. Escape fiat trash. Sponsored by the people, priced in Bitcoin Cash.">
 <meta name="theme-color" content="#0a0f0a">
-<!-- FLAPPY SATS v16 — Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. (v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
+<!-- FLAPPY SATS v16.1 — score lives in the sky strip ABOVE the billboard plate (never on the sponsor window), toast band BELOW the plate; sponsor panel gains a live CoinGecko rate + BIP21 wallet pay link + runtime QR (vendored qrcode.js); every user-visible DEMO string is now BETA (storage keys/identifiers untouched); the leaderboard records PLAYERS — one row per username, best score only, self-healing on load. (v16: Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -122,7 +122,9 @@
   .charSlot.sel{border-color:var(--gold);box-shadow:0 0 12px rgba(255,213,79,.35)}
   .charSlot.locked{cursor:default}
   .charSlot.locked small{color:#7fae8d}
-  #toast{position:absolute;left:50%;top:16%;transform:translate(-50%,-8px);z-index:40;
+  /* v16.1: top is set from the billboard plate rect in applyLayout —
+     the toast band sits BELOW the plate, never over the sponsor window */
+  #toast{position:absolute;left:50%;top:0;transform:translate(-50%,-8px);z-index:40;
     background:rgba(6,20,12,.92);border:1px solid var(--gold);color:#fff;font-weight:700;
     letter-spacing:1px;font-size:15px;padding:12px 18px;border-radius:12px;opacity:0;
     pointer-events:none;transition:opacity .25s, transform .25s;text-align:center;max-width:88%}
@@ -142,6 +144,7 @@
   #boardRows .brow{display:flex;justify-content:space-between;gap:10px;font-family:'JetBrains Mono',monospace;
     font-size:13px;color:#cfe9d8;padding:1.5px 0}
   #boardRows .brow.first{color:var(--gold);font-weight:700}
+  #boardRows .brow.you .bname{color:var(--neon);font-weight:700}
   #boardRows .brow .bname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase}
   #boardYou{border-top:1px dashed rgba(0,255,136,.35);margin-top:5px;padding-top:5px;text-align:center;
     font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--neon);font-weight:700}
@@ -188,7 +191,7 @@
         <text x="60" y="47" text-anchor="middle" dominant-baseline="central" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="34" fill="#fff" transform="rotate(-15 60 45)">₿</text>
       </svg>
       <h2 id="authTitle">SIGN UP TO PLAY</h2>
-      <span class="demobadge" id="demoBadge" style="display:none">DEMO MODE — LOCAL FAKE ACCOUNTS · NO REAL SATS</span>
+      <span class="demobadge" id="demoBadge" style="display:none">BETA — LOCAL ACCOUNTS · PRACTICE SATS ONLY</span>
       <p>Earn <b>1 sat per pipe</b> — every pipe counts, up to <b>$0.10 worth per day</b>.
          Cash out from <b>$1.00 worth</b> to your own Bitcoin Cash wallet. No account, no game.</p>
       <div class="authtabs">
@@ -273,7 +276,7 @@
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16 • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.1 • Trash world bg • Scrap pipes • Neon #00FF88<br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -407,10 +410,10 @@
        lives on your server-side account record, never in the app.</p>
     <button class="btn gold" id="btnUnlockOpen" style="width:100%">UNLOCK LANDSCAPE — $1.00 IN BCH</button>
     <div id="demoPreviewRow">
-      <h3>DEMO PREVIEW</h3>
-      <p style="font-size:12px">DEMO only: peek at the landscape layout without paying.
+      <h3>BETA PREVIEW</h3>
+      <p style="font-size:12px">BETA only: peek at the landscape layout without paying.
          This is a local layout preview — <b>not</b> an unlock, and it buys nothing.</p>
-      <button class="btn ghost" id="btnPreviewLand" style="width:100%">PREVIEW LANDSCAPE LAYOUT (DEMO)</button>
+      <button class="btn ghost" id="btnPreviewLand" style="width:100%">PREVIEW LANDSCAPE LAYOUT (BETA)</button>
     </div>
   </div>
 </div>
@@ -435,7 +438,7 @@
        · Paying from a fresh wallet is fine; the payment is matched to your
          account at checkout when unlock opens.</p>
     <button class="btn gold" id="btnUnlockPay" disabled style="width:100%">UNLOCK OPENS AT LAUNCH</button>
-    <small class="hint">This build is a DEMO — the pay button is disabled and nothing can be charged.
+    <small class="hint">This build is a BETA — the pay button is disabled and nothing can be charged.
       At launch this button becomes “I understand — pay” and opens checkout.</small>
   </div>
 </div>
@@ -455,13 +458,17 @@
     </div>
 
     <h3>PAY IN BITCOIN CASH</h3>
-    <p>Pay the USD price in BCH at the live rate to the house wallet:</p>
+    <p id="spRate" style="font-size:13px;color:#9fd4b2">Fetching the live BCH rate…</p>
+    <a class="btn btnlink selene" id="spPayBtn" href="bitcoincash:qz40helxvypa8u698hxl2thsypmhlqudncygfnrh3k">💸 OPEN IN WALLET &amp; PAY</a>
+    <div id="spQrBox" style="text-align:center;margin:12px 0 2px"></div>
+    <p style="text-align:center;font-size:12px;color:#9fd4b2;margin:0 0 10px">Scan with your BCH wallet</p>
+    <p>…or pay the house wallet directly:</p>
     <div class="addr" id="spAddr">bitcoincash:qz40helxvypa8u698hxl2thsypmhlqudncygfnrh3k</div>
     <div class="copyrow">
       <button class="btn ghost" id="btnCopySpAddr">📋 TAP TO COPY ADDRESS</button>
     </div>
-    <p>Then DM <b>@KennethBosak</b> or <b>@Skynetonx</b> with your ad image (wide banner) —
-       your slot goes live the same day.</p>
+    <p>After paying, DM <b>@KennethBosak</b> or <b>@Skynetonx</b> — we match your payment
+       on-chain and take your ad image (wide banner). Your slot goes live the same day.</p>
 
     <h3>THE RULES</h3>
     <p>Creative is reviewed before it displays. Keep it clean. Payment is final.</p>
@@ -474,6 +481,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<!-- QR generator vendored locally (qrcode-generator 1.4.4, Kazuhiko Arase, MIT) — no CDN at runtime; the sponsor panel's QR is generated on-device. -->
+<script src="qrcode.js"></script>
 <script>
 "use strict";
 /* =====================================================================
@@ -1445,6 +1454,14 @@ function applyLayout(portrait) {
   ctx.imageSmoothingEnabled = true;               // v9 quality mandate
   ctx.imageSmoothingQuality = "high";
   BB = computeBB();
+  { // v16.1 — the Flippening toast band sits BELOW the billboard
+    // plate, never over the sponsor window: position the DOM toast
+    // from the same plate rect the canvas draws (backing px → CSS px).
+    const t = document.getElementById("toast");
+    if (t) t.style.top = Math.round((BB.by + BB.bh) * (window.innerWidth / W) + 10) + "px";
+    if (window.__popicoin) window.__popicoin.bbRect =
+      { x: BB.bx, y: BB.by, w: BB.bw, h: BB.bh, W, H, innerW: window.innerWidth, innerH: window.innerHeight };
+  }
   buildWall();
   { // lane wash, pre-baked (art bible: no per-frame gradient raster).
     // v15: the lane is the whole screen width (the flex world fills
@@ -1903,18 +1920,40 @@ function draw(tSec) {
   ctx.setTransform(S, 0, 0, S, OX, OY);
   drawBirdU();
   if (game.state === "play" || game.state === "over") {
-    // legibility halo (pre-baked sprite) — bright sponsor art can never
-    // wash the score out now; no per-frame shadowBlur (art bible §1)
-    if (ART.halo) ctx.drawImage(ART.halo, VIS_W / 2 - 80, 70, 160, 128);
-    ctx.font = "800 44px Syne, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    /* v16.1 — SCORE OFF THE MONEY (Kenn's playtest catch on v16: the
+       digit rendered over the billboard's sponsor window). The digit
+       now lives in the sky strip between the visible ceiling
+       (ceilU = -skyExtra) and the billboard PLATE's top edge — the
+       plate rect includes the frame and its brass medallion, and the
+       digit clears it entirely at every geometry. It is centred in
+       the strip (horizontally on VIS_W/2, as before) and sized to the
+       strip: ~80% of the strip height, capped at the old 44u. On 9:16
+       the strip is thin, so the digit is smaller there — expected;
+       taller screens grow it back to full size. */
+    const plateTopU = BB.by / S - skyExtra, plateBotU = (BB.by + BB.bh) / S - skyExtra;
+    const ceilU = -skyExtra, stripU = Math.max(1, plateTopU - ceilU);
+    const fontU = Math.min(44, Math.max(6, stripU * 0.8));
+    const digTopU = ceilU + (stripU - fontU) / 2, digBotU = digTopU + fontU;
+    // legibility halo (pre-baked sprite) — bright sky art can never
+    // wash the score out; the halo box stays inside the strip too
+    // (its radial edge is transparent, so the plate never smears)
+    if (ART.halo) {
+      const hw = fontU * (160 / 44), hh = Math.min(fontU * (128 / 44), stripU);
+      ctx.drawImage(ART.halo, VIS_W / 2 - hw / 2, (digTopU + digBotU) / 2 - hh / 2, hw, hh);
+    }
+    ctx.font = "800 " + fontU + "px Syne, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
     ctx.fillStyle = "rgba(0,0,0,0.55)";
-    ctx.fillText(String(game.score), VIS_W / 2, 102);
+    ctx.fillText(String(game.score), VIS_W / 2, digTopU + Math.max(1.5, fontU * 0.045));
     ctx.fillStyle = "#fff";
-    ctx.fillText(String(game.score), VIS_W / 2, 100);   // spec §6 placement
+    ctx.fillText(String(game.score), VIS_W / 2, digTopU);
     ctx.textBaseline = "alphabetic";
+    if (window.__popicoin) window.__popicoin.scoreBox =
+      { ceilU, plateTopU, plateBotU, stripU, fontU, digTopU, digBotU, S, OY, VIS_W };
     if (game.score >= 19 && game.score < 21 && game.state === "play") {
+      // v16.1: the wave warning rides BELOW the plate's bottom edge
+      // too — a centred canvas notice never sits on the window
       ctx.fillStyle = "#ffd54f"; ctx.font = "700 13px 'JetBrains Mono', monospace";
-      ctx.fillText("⚠ MOVING PIPES AHEAD ⚠", VIS_W / 2, 152);
+      ctx.fillText("⚠ MOVING PIPES AHEAD ⚠", VIS_W / 2, plateBotU + 20);
     }
   }
   ctx.restore();
@@ -2014,13 +2053,95 @@ document.getElementById("btnClose").addEventListener("click", closeModal);
    self-serve modal above (openModal) stays dormant in the demo: its
    verify-and-go-live flow belongs to the server build. */
 const sponsorPanel = document.getElementById("sponsorPanel");
+/* v16.1 — the panel's pay action is a real BIP21 wallet link + a QR
+   of the SAME URI, with a live CoinGecko rate fetched at open. The
+   rate is an enhancement, never a dependency: the panel renders
+   instantly with the USD price and an amount-less URI, and if the
+   fetch fails or times out (~4 s) it stays that way — "your wallet
+   converts at payment time". No sats figure is ever shown without a
+   live rate behind it. */
+let spRate;                 // undefined = fetching, null = failed, {price} = live
+let spPanelOpen = false;
+function spUri() {
+  const slot = SPONSORS_SOLD + 1;
+  const label = "Flappy%20Sats%20Sponsor%20Slot%20" + slot;
+  if (spRate && spRate.price > 0) {
+    const sats = satsFor(slotUsd(SPONSORS_SOLD), spRate.price);
+    return POPICOIN_CONFIG.sponsorAddress + "?amount=" + (sats / 1e8).toFixed(8) + "&label=" + label;
+  }
+  return POPICOIN_CONFIG.sponsorAddress + "?label=" + label;
+}
+function renderSpQr() {
+  const box = document.getElementById("spQrBox");
+  if (!box) return;
+  box.innerHTML = "";
+  if (typeof qrcode !== "function") return;      // vendored lib missing: pay link + copy still work
+  try {
+    const qr = qrcode(0, "M");                     // typeNumber 0 = auto-size
+    qr.addData(spUri());
+    qr.make();
+    const n = qr.getModuleCount(), cell = Math.max(2, Math.floor(180 / (n + 8)));
+    const size = cell * (n + 8);                   // modules + 4-module quiet zone per side
+    const c = document.createElement("canvas");
+    c.width = size; c.height = size;
+    // the global `canvas{}` rule fullscreen-pins every canvas (it is
+    // written for #game) — the QR canvas must opt out explicitly or
+    // it leaves the panel flow and stretches over the page corner
+    c.style.cssText = "position:static;display:block;width:180px;height:180px;margin:0 auto;touch-action:auto";
+    c.setAttribute("role", "img");
+    c.setAttribute("aria-label", "QR code for the sponsor payment link");
+    const g = c.getContext("2d");
+    g.fillStyle = "#ffffff"; g.fillRect(0, 0, size, size);
+    g.fillStyle = "#000000";
+    for (let r = 0; r < n; r++) for (let col = 0; col < n; col++)
+      if (qr.isDark(r, col)) g.fillRect((col + 4) * cell, (r + 4) * cell, cell, cell);
+    box.appendChild(c);
+  } catch (e) { /* URI too long for a QR, etc. — the pay link remains */ }
+}
+function renderSpPay() {
+  const slot = SPONSORS_SOLD + 1, usd = slotUsd(SPONSORS_SOLD);
+  const nextEl = document.getElementById("spNextSlot");
+  const rateEl = document.getElementById("spRate");
+  if (spRate && spRate.price > 0) {
+    const sats = satsFor(usd, spRate.price);
+    nextEl.textContent = "#" + slot + " — $" + usd.toFixed(2) + " ≈ " + sats.toLocaleString("en-US") + " sats";
+    rateEl.textContent = "Live rate $" + spRate.price.toFixed(2) + "/BCH · CoinGecko, fetched just now.";
+  } else if (spRate === null) {
+    nextEl.textContent = "#" + slot + " — $" + usd.toFixed(2);
+    rateEl.textContent = "Live rate unavailable — your wallet converts at payment time.";
+  } else {
+    nextEl.textContent = "#" + slot + " — $" + usd.toFixed(2);
+    rateEl.textContent = "Fetching the live BCH rate…";
+  }
+  document.getElementById("spPayBtn").href = spUri();
+  renderSpQr();
+}
+async function fetchPanelRate() {
+  try {
+    const ctl = new AbortController();
+    const to = setTimeout(() => ctl.abort(), 4000);
+    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin-cash&vs_currencies=usd",
+      { signal: ctl.signal });
+    clearTimeout(to);
+    if (!r.ok) return null;
+    const j = await r.json();
+    const p = j["bitcoin-cash"] && j["bitcoin-cash"].usd;
+    return p > 0 ? p : null;
+  } catch (e) { return null; }
+}
 function openSponsorPanel() {
-  const usd = slotUsd(SPONSORS_SOLD);
-  document.getElementById("spNextSlot").textContent = "#" + (SPONSORS_SOLD + 1) + " — $" + usd.toFixed(2);
   document.getElementById("spAddr").textContent = POPICOIN_CONFIG.sponsorAddress;
+  spRate = undefined;                            // never show a stale rate as "just now"
+  spPanelOpen = true;
+  renderSpPay();                                   // instant: USD price + amount-less URI + QR
+  fetchPanelRate().then(p => {                     // then the live rate upgrades link + QR in place
+    spRate = p ? { price: p } : null;
+    if (spPanelOpen) renderSpPay();
+  });
   sponsorPanel.classList.add("open");
 }
-function closeSponsorPanel() { sponsorPanel.classList.remove("open"); }
+function closeSponsorPanel() { spPanelOpen = false; sponsorPanel.classList.remove("open"); }
+window.__popicoin.spUri = () => spUri();
 document.getElementById("btnSponsor").addEventListener("click", openSponsorPanel);
 document.getElementById("btnOverSponsor").addEventListener("click", openSponsorPanel);
 document.getElementById("btnCloseSponsorPanel").addEventListener("click", closeSponsorPanel);
@@ -2089,7 +2210,7 @@ document.getElementById("btnSubmit").addEventListener("click", async () => {
       showStatus("err", "Unexpected answer from the verifier. Your payment is safe on-chain — try again in a minute, or send the txid to the game owner.");
     }
   } catch (e) {
-    showStatus("info", "Could not reach the verification service from this copy of the game (demo/offline mode). " +
+    showStatus("info", "Could not reach the verification service from this copy of the game (beta/offline mode). " +
       "Send your txid to the game owner and they will verify the payment on-chain and add you manually.");
   } finally {
     btn.disabled = false; btn.textContent = "VERIFY & GO LIVE →";
@@ -2222,7 +2343,7 @@ const Player = (() => {
   }
   function renderHud() {
     if (!profile) return;
-    $("hudUser").textContent = "👤 " + profile.username + (DEMO ? " (DEMO)" : "");
+    $("hudUser").textContent = "👤 " + profile.username + (DEMO ? " (BETA)" : "");
     $("hudBal").textContent = "🪙 " + (profile.balanceSats || 0).toLocaleString("en-US") + " sats";
     $("hudToday").textContent = priceUsd > 0
       ? "today $" + usdOf(profile.earnedToday || 0).toFixed(2) + " / $" + CAP_USD.toFixed(2) + " · " + (profile.earnedToday || 0).toLocaleString("en-US") + " sats"
@@ -2270,13 +2391,13 @@ const Player = (() => {
     if (!addr) { authErr("suStatus", { message: "That doesn't look like a Bitcoin Cash address. Open Selene, copy your receive address (bitcoincash:q…), paste it here." }); return; }
     if (DEMO) {
       const users = demoLoad(); const key = username.toLowerCase();
-      if (users[key]) { authErr("suStatus", { message: "That username is taken (demo) — pick another." }); return; }
-      if (Object.values(users).some(u => u.bchAddress === addr)) { authErr("suStatus", { message: "That BCH address already has an account (demo). One account per address." }); return; }
+      if (users[key]) { authErr("suStatus", { message: "That username is taken (beta) — pick another." }); return; }
+      if (Object.values(users).some(u => u.bchAddress === addr)) { authErr("suStatus", { message: "That BCH address already has an account (beta). One account per address." }); return; }
       let referrerKey = "";
       if (invite) {
         const refEntry = Object.entries(users).find(([k, u]) => demoInviteCodeFor(k) === invite && demoPaidClaims(u) >= 1);
-        if (!refEntry) { authErr("suStatus", { message: "That invite code doesn't match an unlocked partner (demo). Check it, or sign up without one." }); return; }
-        if (refEntry[0] === key) { authErr("suStatus", { message: "You can't invite yourself (demo)." }); return; }
+        if (!refEntry) { authErr("suStatus", { message: "That invite code doesn't match an unlocked partner (beta). Check it, or sign up without one." }); return; }
+        if (refEntry[0] === key) { authErr("suStatus", { message: "You can't invite yourself (beta)." }); return; }
         referrerKey = refEntry[0];
         users[referrerKey].referralPending = (users[referrerKey].referralPending || 0) + 1;
       }
@@ -2303,8 +2424,8 @@ const Player = (() => {
   async function login(username, password) {
     if (DEMO) {
       const users = demoLoad(); const key = (username || "").toLowerCase(); const rec = users[key];
-      if (!rec) { authErr("liStatus", { message: "No demo account with that username. Sign up first." }); return; }
-      if (rec.password !== password) { authErr("liStatus", { message: "Wrong password (demo)." }); return; }
+      if (!rec) { authErr("liStatus", { message: "No beta account with that username. Sign up first." }); return; }
+      if (rec.password !== password) { authErr("liStatus", { message: "Wrong password (beta)." }); return; }
       try { localStorage.setItem(DS, key); } catch (e) {}
       enter(demoProfileOf(rec));
       return;
@@ -2349,7 +2470,7 @@ const Player = (() => {
       rec.earnedToday = earned + r.credit; rec.earnDay = today;
       demoSave(users);
       profile = demoProfileOf(rec); renderHud();
-      if (note) note.textContent = r.credit > 0 ? "🪙 +" + r.credit + " sats stacked (demo)" : "Daily $0.10 cap reached — no sats this run (demo)";
+      if (note) note.textContent = r.credit > 0 ? "🪙 +" + r.credit + " sats stacked (beta)" : "Daily $0.10 cap reached — no sats this run (beta)";
       return;
     }
     if (!fbSessionId) { if (note) note.textContent = "⚠ Run wasn't tracked — no sats this time."; return; }
@@ -2368,7 +2489,7 @@ const Player = (() => {
   /* ---------- stack panel + claim ---------- */
   function renderStack() {
     if (!profile) return;
-    $("stackUser").textContent = "👤 " + profile.username + (DEMO ? " · DEMO account — fake sats" : "");
+    $("stackUser").textContent = "👤 " + profile.username + (DEMO ? " · BETA account — practice sats" : "");
     $("stackBal").textContent = (profile.balanceSats || 0).toLocaleString("en-US");
     const balUsd = usdOf(profile.balanceSats || 0);
     $("stackUsd").textContent = priceUsd > 0 ? "≈ $" + balUsd.toFixed(2) + " · BCH $" + priceUsd.toFixed(2) : "≈ $— (price unavailable)";
@@ -2415,7 +2536,7 @@ const Player = (() => {
       rec.claims = rec.claims || [];
       // Demo settles INSTANTLY (testability): live claims queue as
       // "pending" until Skynet pays them in batches.
-      const txid = "demo-" + Math.random().toString(16).slice(2, 10);
+      const txid = "beta-" + Math.random().toString(16).slice(2, 10);
       rec.claims.push({ amount, status: "paid", createdAt: new Date().toISOString(), txid });
       // Partner referral (demo mirror of the server rule): the penny
       // lands when the invited partner's first claim is PAID.
@@ -2435,7 +2556,7 @@ const Player = (() => {
         }
       }
       demoSave(users); profile = demoProfileOf(rec); renderHud(); renderStack();
-      show("ok", "✔ Claim settled instantly (demo): " + amount.toLocaleString("en-US") + " sats → " + rec.bchAddress + " · tx " + txid + ". Live claims are paid in batches by Skynet — usually within a day.");
+      show("ok", "✔ Claim settled instantly (beta): " + amount.toLocaleString("en-US") + " sats → " + rec.bchAddress + " · tx " + txid + ". Live claims are paid in batches by Skynet — usually within a day.");
       return;
     }
     try {
@@ -2662,22 +2783,50 @@ const Leaderboard = (() => {
   function demoName() {
     try {
       const users = JSON.parse(localStorage.getItem("popicoin_demo_users_v1") || "{}");
-      const s = JSON.parse(localStorage.getItem("popicoin_demo_session_v1") || "null");
-      if (s && s.username && users[s.username]) return s.username;
+      const raw = localStorage.getItem("popicoin_demo_session_v1");
+      if (raw) {
+        // the game's own session shape: DS holds the account KEY
+        // (Player module reads it the same way) -> its display name
+        if (users[raw] && users[raw].username) return users[raw].username;
+        const s = JSON.parse(raw);           // legacy object shape
+        if (s && s.username && users[s.username]) return s.username;
+      }
     } catch (e) {}
     return "you";
   }
+  /* v16.1 — the board records PLAYERS, not runs: one row per
+     username (case-insensitive — account names are unique that way),
+     holding that player's BEST score. Collapsing happens on every
+     load, so a stored board full of duplicate run-rows self-heals
+     the first time it is read — nothing is wiped, bests survive. */
+  function collapseBoard(b) {
+    const best = new Map();
+    for (const e of (Array.isArray(b) ? b : [])) {
+      if (!e || typeof e.name !== "string") continue;
+      const key = e.name.toLowerCase();
+      const cur = best.get(key);
+      if (!cur || (e.pipes | 0) > (cur.pipes | 0))
+        best.set(key, { name: e.name, pipes: e.pipes | 0, at: e.at || 0 });
+    }
+    return [...best.values()].sort((a, z) => z.pipes - a.pipes);
+  }
   function demoBoard() {
-    try { const b = JSON.parse(localStorage.getItem(BOARD_KEY) || "[]"); return Array.isArray(b) ? b : []; }
-    catch (e) { return []; }
+    let raw = null;
+    try { raw = JSON.parse(localStorage.getItem(BOARD_KEY) || "[]"); } catch (e) { return []; }
+    const b = collapseBoard(raw);
+    // persist the healed board so the duplicates don't linger
+    try { if (JSON.stringify(raw) !== JSON.stringify(b)) localStorage.setItem(BOARD_KEY, JSON.stringify(b)); } catch (e) {}
+    return b;
   }
   function recordDemo(score) {
-    const b = demoBoard();
-    const entry = { name: demoName(), pipes: score, at: Date.now() };
-    b.push(entry);
+    const b = demoBoard();                       // already collapsed
+    const name = demoName(), key = name.toLowerCase();
+    let row = b.find(e => e.name.toLowerCase() === key);
+    if (!row) { row = { name, pipes: score | 0, at: Date.now() }; b.push(row); }
+    else if ((score | 0) > row.pipes) { row.pipes = score | 0; row.at = Date.now(); }
     b.sort((a, z) => z.pipes - a.pipes);
     try { localStorage.setItem(BOARD_KEY, JSON.stringify(b.slice(0, 50))); } catch (e) {}
-    return { top: b.slice(0, 3), rank: b.indexOf(entry) + 1 };
+    return { top: b.slice(0, 3), rank: b.indexOf(row) + 1, best: row.pipes, name };
   }
   async function liveBoard() {
     try {
@@ -2690,17 +2839,20 @@ const Leaderboard = (() => {
     } catch (e) {}
     return null;
   }
-  function paint(top, youHTML, note) {
+  function paint(top, youHTML, note, selfName) {
     document.getElementById("boardRows").innerHTML = top.length ? top.map((e, i) =>
-      `<div class="brow${i === 0 ? " first" : ""}"><span class="bname">${i + 1} · ${esc(e.name)}</span><span>${e.pipes | 0} pipes</span></div>`).join("")
+      `<div class="brow${i === 0 ? " first" : ""}${selfName && e.name.toLowerCase() === selfName.toLowerCase() ? " you" : ""}"><span class="bname">${i + 1} · ${esc(e.name)}${selfName && e.name.toLowerCase() === selfName.toLowerCase() ? " · YOU" : ""}</span><span>${e.pipes | 0} pipes</span></div>`).join("")
       : `<div class="brow"><span class="bname">NO RUNS YET</span><span>—</span></div>`;
     document.getElementById("boardYou").innerHTML = youHTML;
     document.getElementById("boardNote").textContent = note;
   }
   async function render(score) {
     if (IS_DEMO) {
-      const { top, rank } = recordDemo(score);
-      paint(top, `YOU: ${score} pipes — #${rank}`, "DEMO BOARD — THIS DEVICE'S RUNS ONLY");
+      // v16.1: the you-line IS the player's single row — their best
+      // and its rank — and paint marks that same row in the top 3
+      // instead of duplicating it
+      const { top, rank, best, name } = recordDemo(score);
+      paint(top, `YOU: ${best} pipes — #${rank}`, "BETA BOARD — THIS DEVICE'S BESTS ONLY", name);
     } else {
       paint([], "YOU: " + score + " pipes", "LOADING THE BOARD…");
       const lb = await liveBoard();
