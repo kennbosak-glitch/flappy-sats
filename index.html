@@ -6,7 +6,7 @@
 <title>FLAPPY SATS — ESCAPE FIAT TRASH</title>
 <meta name="description" content="FLAPPY SATS — trash-world flappy. Escape fiat trash. Sponsored by the people, priced in Bitcoin Cash.">
 <meta name="theme-color" content="#0a0f0a">
-<!-- FLAPPY SATS v16.2 — THE GASLIGHT RAMP: the cosmetic scroll layers (far/mid parallax + the zombie crowd's treadmill) accelerate with the score and converge to full speed by pipe 100 while the pipes and the sim NEVER change; + THE FREE FLIGHT EGG: 10 flap inputs at score 0 make the bird invincible for the run — pipes turn SOLID on a treadmill world (faces stop you, tops carry you left, only the left edge can end it) and the run earns NOTHING (no sats, no board, no stats). (v16.1: score lives in the sky strip ABOVE the billboard plate (never on the sponsor window), toast band BELOW the plate; sponsor panel gains a live CoinGecko rate + BIP21 wallet pay link + runtime QR (vendored qrcode.js); every user-visible DEMO string is now BETA (storage keys/identifiers untouched); the leaderboard records PLAYERS — one row per username, best score only, self-healing on load. v16: Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
+<!-- FLAPPY SATS v16.3 — FIRST LIVE SPONSOR: slot #1 (00TATT$, paid on-chain) rotates on the billboard from the baked-in BETA SPONSOR LIST — the beta's loader resolves to it until the server source exists; slot #2 is PAID too but its creative is PENDING, so it does not display. THE LINEAR LADDER: Kenn replaced the doubling ladder with +$1 per slot (slotUsd = $1.00 x (sold + 1)); SPONSORS_SOLD = 2 (slots #1 AND #2 both paid at the frozen $1.00 panel price and were honored at $1.00 — the panel's word is the store's word), so the panel's NEXT SLOT is #3 at $3.00. Sponsor panel gains the Drive UPLOAD LANE beside DM intake. ROTATION CADENCE 3s (was 10s): BILLBOARD_SECONDS in the config block drives drawBillboard off the same global clock, and video cards ride the same 3s clock — the USE AI prompt and all copy now say 3 seconds. (v16.2 — THE GASLIGHT RAMP: the cosmetic scroll layers (far/mid parallax + the zombie crowd's treadmill) accelerate with the score and converge to full speed by pipe 100 while the pipes and the sim NEVER change; + THE FREE FLIGHT EGG: 10 flap inputs at score 0 make the bird invincible for the run — pipes turn SOLID on a treadmill world (faces stop you, tops carry you left, only the left edge can end it) and the run earns NOTHING (no sats, no board, no stats). (v16.1: score lives in the sky strip ABOVE the billboard plate (never on the sponsor window), toast band BELOW the plate; sponsor panel gains a live CoinGecko rate + BIP21 wallet pay link + runtime QR (vendored qrcode.js); every user-visible DEMO string is now BETA (storage keys/identifiers untouched); the leaderboard records PLAYERS — one row per username, best score only, self-healing on load. v16: Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -236,7 +236,7 @@
       <h2>FLAPPY SATS</h2>
       <p class="splashtag">PLAY. EARN. REPEAT.</p>
       <span class="demobadge" id="betaBadge">BETA</span>
-      <p>Trash-world flappy with a live billboard behind the pipes. Sponsors rotate every 10s.
+      <p>Trash-world flappy with a live billboard behind the pipes. Sponsors rotate every 3s.
          Pipes start moving after pipe 20 — watch for the dust telegraph.</p>
       <p style="color:var(--gold);font-size:12px">🪙 You earn 1 sat per pipe — up to $0.10 worth a day.</p>
       <div id="charRow" aria-label="Choose your bird">
@@ -277,7 +277,7 @@
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.2.3 • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.3 • Trash world bg • Scrap pipes • Neon #00FF88<br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -287,7 +287,7 @@
   <div class="card">
     <button class="x" id="btnClose" aria-label="Close">✕</button>
     <h2 id="modalTitle">SPONSOR THE BILLBOARD</h2>
-    <p>Your image rides the in-game billboard, rotating every 10 seconds, in every copy of the game.
+    <p>Your image rides the in-game billboard, rotating every 3 seconds, in every copy of the game.
        Payment is verified on-chain before your ad goes live — no accounts, no passwords, no trust required.</p>
 
     <h3>GAME DATA — VERIFY IT YOURSELF</h3>
@@ -320,7 +320,7 @@
       <div class="row total"><span>PAY EXACTLY</span><span id="pTotal">…</span></div>
       <div class="row"><span></span><span id="pTotalBch" style="color:#9fd4b2;font-size:13px"></span></div>
     </div>
-    <small class="hint">Pricing: $1.00 for the first sponsor, doubling every slot ($1 × 2<sup>sponsors</sup>),
+    <small class="hint">Pricing: $1.00 for the first sponsor, rising $1 with every slot sold ($1 × (sponsors + 1)),
       converted at the live BCH price. The <b>unique dust</b> (100–999 sats, hashed from your username)
       makes your exact total one-of-a-kind, so your payment can be matched to you on-chain.</small>
 
@@ -452,10 +452,10 @@
     <p style="font-size:15px;color:#fff"><b>YOUR AD ON THE BILLBOARD — EVERY PLAYER SEES IT.</b></p>
 
     <h3>HOW IT WORKS</h3>
-    <p>· Sponsors rotate on the in-game billboard, <b>10 seconds each</b>, in purchase order.<br>
-       · The price <b>DOUBLES with every slot sold</b>: Slot #1 $1.00 · #2 $2.00 · #3 $4.00 · #4 $8.00…</p>
+    <p>· Sponsors rotate on the in-game billboard, <b>3 seconds each</b>, in purchase order.<br>
+       · The price <b>rises $1 with every slot sold</b>: Slot #1 $1.00 · #2 $2.00 · #3 $3.00 · #4 $4.00…</p>
     <div class="pricebox">
-      <div class="row total"><span>NEXT SLOT</span><span id="spNextSlot">#1 — $1.00</span></div>
+      <div class="row total"><span>NEXT SLOT</span><span id="spNextSlot">#3 — $3.00</span></div>
     </div>
 
     <h3>PAY IN BITCOIN CASH</h3>
@@ -468,8 +468,13 @@
     <div class="copyrow">
       <button class="btn ghost" id="btnCopySpAddr">📋 TAP TO COPY ADDRESS</button>
     </div>
-    <p>After paying, DM <b>@KennethBosak</b> or <b>@Skynetonx</b> — we match your payment
-       on-chain and take your ad image (wide banner). Your slot goes live the same day.</p>
+    <p>After paying, send us your ad — upload it to the sponsor folder, or DM it over:</p>
+    <div class="copyrow">
+      <a class="btn btnlink" id="spUploadLink" href="https://drive.google.com/drive/folders/1-LCNfKQmk3CJBQjqFdampnkWXglacrUK" target="_blank" rel="noopener">📤 Upload your ad image/video</a>
+    </div>
+    <p>…or DM <b>@KennethBosak</b> or <b>@Skynetonx</b>. Send an image at billboard size
+       (<b>1770×697</b>) or a video up to <b>3 seconds</b>. We match your payment on-chain,
+       review the creative, and your slot goes live the same day.</p>
 
     <h3>NO AD IMAGE?</h3>
     <p>No designer? No problem. Copy this prompt, paste it into your favorite AI,
@@ -533,21 +538,56 @@ const POPICOIN_CONFIG = {
      draw is never its first decode. The fire columns (idx >= 20)
      used to debut undecoded mid-flight — one visible hitch at
      pipe 20. OFF skips the warm-up pass entirely. */
-  PRELOAD_ART: true
+  PRELOAD_ART: true,
+  /* v16.3 — BILLBOARD ROTATION CADENCE (Kenn): every sponsor card
+     gets BILLBOARD_SECONDS on the board, off the one global clock
+     (runs from the first frame; deaths and restarts never reset
+     it). Was 10 s as a bare literal in drawBillboard until v16.3;
+     video cards ride the SAME clock — no special video hold. */
+  BILLBOARD_SECONDS: 3
 };
 
-/* v16 — sponsor slots sold so far (baked at build time; Skynet bumps
-   this one constant as slots sell). The sponsor panel's NEXT SLOT
-   price derives from it: slotUsd(SPONSORS_SOLD) = $1.00 x 2^sold. */
-const SPONSORS_SOLD = 0;
+/* Sponsor slots sold so far (baked at build time; Skynet bumps this
+   one constant as slots sell). The sponsor panel's NEXT SLOT price
+   derives from it: slotUsd(SPONSORS_SOLD) = $1.00 x (sold + 1).
+   v16.3 HISTORY: slots #1 and #2 BOTH sold at $1.00 — the shipped
+   panel still advertised slot #1's $1.00 when #2 paid (the counter
+   only moves in a rebuild); Kenn honored both at $1.00 — the
+   panel's word is the store's word. Slot #2's creative is still
+   PENDING (paid, not received), so it has NO sponsor entry yet.
+   LADDER (Kenn's ruling, Oct 20): LINEAR +$1 — slot n costs
+   $1.00 x n ($1, $2, $3, $4...). This replaces the original
+   DOUBLING ladder ($1.00 x 2^sold) everywhere from v16.3 on. */
+const SPONSORS_SOLD = 2;
 
 /* ---------------- sponsor data (read path) ---------------- */
 let sponsors = [];           // [{username, imageUrl, paidSats, createdAt}]
 let sponsorsLoadedAt = null;
 
+/* v16.3 — BETA SPONSOR LIST: the server source (Firestore, below)
+   does not exist in the beta, so the beta's live sponsors are baked
+   in here and the loader resolves to this list. Slot #2 is PAID but
+   its creative is PENDING — no entry until it lands and passes
+   review (SPONSORS_SOLD still counts it: the ladder is sales; the
+   rotation is only what displays). Creative ships AS-IS: slot #1's
+   banner is exactly the billboard window size, 1770x697. */
+const BETA_SPONSORS = [
+  { username: "00TATT$", imageUrl: "art/sponsor-001.png", paidSats: 358474, createdAt: "2026-10-20" }
+];
+
 async function loadSponsors() {
   const pid = POPICOIN_CONFIG.firebaseProjectId;
-  if (!pid) { sponsors = []; return; }
+  if (!pid) {
+    /* BETA path: resolve to the baked-in list. Same fail-safe as
+       the server path — any error leaves the list empty and the
+       placeholder billboard renders; nothing here may throw. */
+    try {
+      sponsors = BETA_SPONSORS.slice();
+      sponsorsLoadedAt = new Date();
+      preloadBillboardImages();
+    } catch (e) { sponsors = []; }
+    return;
+  }
   try {
     const url = "https://firestore.googleapis.com/v1/projects/" + encodeURIComponent(pid) +
       "/databases/(default)/documents/sponsors?pageSize=100";
@@ -578,7 +618,7 @@ function dustFor(username) {
   for (let i = 0; i < username.length; i++) h = (h * 31 + username.charCodeAt(i)) % 1000000;
   return h % 900 + 100;
 }
-function slotUsd(count) { return POPICOIN_CONFIG.baseUsd * Math.pow(2, count); }
+function slotUsd(count) { return POPICOIN_CONFIG.baseUsd * (count + 1); }   // v16.3: LINEAR +$1 ladder (Kenn's ruling, Oct 20) — slot n costs $1.00 x n; replaces the doubling ladder
 function satsFor(usd, bchPrice) { return Math.round(usd / bchPrice * 1e8); }
 
 let priceState = { price: null, source: null, at: null, stale: false };
@@ -650,6 +690,12 @@ function preloadBillboardImages() {
       im.crossOrigin = "anonymous";
       im.src = s.imageUrl;
       bbImages[s.imageUrl] = im;
+      /* v16.3: register with the ART warm-up pass like other
+         billboard art, so the creative's first in-game draw is
+         never its first decode either. Boot order guarantees the
+         timing: loadSponsors() resolves (and lands this entry in
+         the registry) before scheduleArtWarmup() kicks the pass. */
+      ART_WARM_SOURCES.push({ key: "sponsor:" + s.imageUrl, im });
     }
   }
 }
@@ -703,7 +749,7 @@ function preloadBillboardImages() {
    orange->gold... one step per pipe cleared, overriding skin
    selection until the tab closes; death #21's game-over screen
    flickers gold. SPONSOR PANEL: splash sponsor button opens the
-   honest beta panel (doubling ladder, NEXT SLOT from the baked
+   honest beta panel (price ladder, NEXT SLOT from the baked
    SPONSORS_SOLD constant, house address tap-to-copy, DM intake).
    Eggs are COSMETIC ONLY — they never touch sats, score or pipes.
    ===================================================================== */
@@ -1878,7 +1924,7 @@ function drawBackground() {
 }
 function drawBillboard(t) {
   const { bw, bh, bx, by, win } = BB, k = BB.k, FS = win.w / 431.2;
-  const idx = sponsors.length ? Math.floor(t / 10) % sponsors.length : -1;
+  const idx = sponsors.length ? Math.floor(t / POPICOIN_CONFIG.BILLBOARD_SECONDS) % sponsors.length : -1;   // v16.3: 3 s cadence, global clock
   const s = idx >= 0 ? sponsors[idx] : null;
   // v15.1: the legacy posts + cross-brace are REMOVED (Kenn's
   // playtest: "there's legs coming off of our sponsor frame, we
@@ -2257,8 +2303,8 @@ function closeModal() { modal.classList.remove("open"); }
 document.getElementById("btnClose").addEventListener("click", closeModal);
 
 /* v16 — SPONSOR PANEL: the splash/game-over sponsor buttons open the
-   honest beta panel (doubling ladder + NEXT SLOT from the baked
-   SPONSORS_SOLD constant + house address + DM intake). The full
+   honest beta panel (ladder + NEXT SLOT from the baked
+   SPONSORS_SOLD constant + house address + DM/Drive intake). The full
    self-serve modal above (openModal) stays dormant in the demo: its
    verify-and-go-live flow belongs to the server build. */
 const sponsorPanel = document.getElementById("sponsorPanel");
@@ -2362,7 +2408,7 @@ document.getElementById("btnCopySpAddr").addEventListener("click", e => copyText
    asserts the clipboard matches it byte-for-byte. If the clipboard
    API is unavailable or blocked, the same text appears in a
    selectable box inside the panel instead. */
-const SP_AI_PROMPT = "Make me an ad banner for an in-game billboard. First ask me 3 quick questions: (1) my business or product name, (2) what I'm promoting, (3) the vibe — bold, funny, classy, you pick. Then generate ONE image at exactly 1770x697 pixels (a 2.54:1 wide banner): my name BIG and readable at a glance, one clear message, high contrast, no small print. The image gets cover-cropped into a billboard frame, so keep everything important inside the center 80%. Bright, punchy, game-friendly. If you can also make video, offer a version that runs at most 10 seconds and works silent.";
+const SP_AI_PROMPT = "Make me an ad banner for an in-game billboard. First ask me 3 quick questions: (1) my business or product name, (2) what I'm promoting, (3) the vibe — bold, funny, classy, you pick. Then generate ONE image at exactly 1770x697 pixels (a 2.54:1 wide banner): my name BIG and readable at a glance, one clear message, high contrast, no small print. The image gets cover-cropped into a billboard frame, so keep everything important inside the center 80%. Bright, punchy, game-friendly. If you can also make video, offer a version that runs at most 3 seconds and works silent.";
 const SP_AI_DONE = "✅ PROMPT COPIED — now go to your favorite AI and press PASTE. It will ask you 3 quick questions and build your ad at the exact billboard size. After paying, DM the finished image to @KennethBosak or @Skynetonx.";
 async function copySpAiPrompt() {
   const doneEl = document.getElementById("spAiDone");
@@ -2438,7 +2484,7 @@ document.getElementById("btnSubmit").addEventListener("click", async () => {
         "Send your txid (" + txid.slice(0, 12) + "…) to the game owner and they will add your sponsorship by hand after checking the payment on-chain.");
     } else if (j && j.status === "live") {
       showStatus("ok", "✔ VERIFIED — payment confirmed on-chain. Your sponsorship is LIVE: “" + username +
-        "” now rotates on the billboard every 10 seconds. Paid " + (j.paidSats ? j.paidSats.toLocaleString("en-US") : "") + " sats.");
+        "” now rotates on the billboard every 3 seconds. Paid " + (j.paidSats ? j.paidSats.toLocaleString("en-US") : "") + " sats.");
       loadSponsors();
     } else if (j && j.status === "rejected") {
       showStatus("err", "✖ Not verified: " + (j.reason || "payment could not be confirmed."));
