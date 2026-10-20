@@ -1735,8 +1735,8 @@ function draw(tSec) {
   // Drawn over the background + billboard only — never over the wall,
   // the tape, or the pipes (v8 relative order preserved).
   if (ART.washCv) ctx.drawImage(ART.washCv, 0, 0);
-  /* foreground plate — part of the background (v9 order: background →
-     billboard → tape → zombie wall → pipes → bird → HUD). The plate's
+  /* foreground plate — part of the background (v9.2 order: background →
+     billboard → tape → pipes → zombie wall → bird → HUD). The plate's
      painted foreground trash sits behind the wall; the spec ground
      LINE is unchanged. The v8 debug strips that used to mark it (a 2px
      #3E7A4E line + shadow) are GONE — no green line anywhere. */
@@ -1747,10 +1747,11 @@ function draw(tSec) {
     ctx.fillStyle = "#131c14"; ctx.fillRect(0, GROUND_Y * S, W, H - GROUND_Y * S);
   }
   drawTape();
-  drawZombieWall();
-  /* world pass — unit space, clipped to the playfield. Pipes draw IN
-     FRONT of the zombie wall, bottoms running to the bottom edge
-     (approved mock v4). */
+  /* world pass — unit space, clipped to the playfield. Pipes draw
+     BEHIND the zombie wall (v9.2, Kenn's playtest order 2026-10-20
+     04:26): their bottoms run to the bottom edge and disappear
+     behind the crowd — the wall pass after this block draws over
+     them. Rendering only; collision is computed in the sim. */
   ctx.save();
   ctx.beginPath(); ctx.rect(OX, 0, UW * S, H); ctx.clip();
   ctx.setTransform(S, 0, 0, S, OX, 0);
@@ -1767,6 +1768,11 @@ function draw(tSec) {
     });
   }
   ctx.restore();
+  /* zombie wall — v9.2: drawn AFTER the pipes so the crowd sits IN
+     FRONT of the pipe bottoms (depth, Kenn's order). The wall's black
+     mass + silhouette strips cover the pipe feet where they enter
+     the band; the bird and particles still draw over the wall. */
+  drawZombieWall();
   // particles (device space)
   for (const pt of game.particles) {
     const a = 1 - pt.age / pt.life;
