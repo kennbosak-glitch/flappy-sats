@@ -1,1 +1,32 @@
-{"background_color": "#0a0f0a", "description": "Trash-world flappy with a live, on-chain-verified sponsor billboard. Prices in Bitcoin Cash.", "display": "standalone", "icons": [{"purpose": "any", "sizes": "192x192", "src": "icon-192.png", "type": "image/png"}, {"purpose": "any", "sizes": "512x512", "src": "icon-512.png", "type": "image/png"}, {"purpose": "maskable", "sizes": "512x512", "src": "icon-512.png", "type": "image/png"}], "id": "/", "name": "FLAPPY SATS — Escape Fiat Trash", "orientation": "landscape", "scope": "/", "short_name": "FLAPPY SATS", "start_url": "/", "theme_color": "#0a0f0a"}
+{
+  "background_color": "#0a0f0a",
+  "description": "Trash-world flappy with a live, on-chain-verified sponsor billboard. Prices in Bitcoin Cash.",
+  "display": "standalone",
+  "icons": [
+    {
+      "purpose": "any",
+      "sizes": "192x192",
+      "src": "icon-192.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "any",
+      "sizes": "512x512",
+      "src": "icon-512.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "sizes": "512x512",
+      "src": "icon-512.png",
+      "type": "image/png"
+    }
+  ],
+  "id": "/flappy-sats/",
+  "name": "FLAPPY SATS \u2014 Escape Fiat Trash",
+  "orientation": "portrait",
+  "scope": "/flappy-sats/",
+  "short_name": "FLAPPY SATS",
+  "start_url": "/flappy-sats/",
+  "theme_color": "#0a0f0a"
+}
