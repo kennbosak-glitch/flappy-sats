@@ -937,6 +937,34 @@ function artLoadPng(key, file, cb) {
   im.src = "art/" + file + ".png";
   return im;
 }
+/* v10.1 — measure a column sprite's CONTENT (not its canvas): the median
+   per-row span of alpha>=128 pixels is the typical trash width, and the
+   median span centre is where that width sits. Kenn's columns carry a
+   wide monster-bag mouth over a narrower body, so canvas-width scaling
+   shrank the visible pipe well under the 52u collision width. The draw
+   now scales so the CONTENT width is exactly 52u (see drawPipeColumn).
+   One-time cost at load; falls back to canvas metrics if pixels are
+   unreadable. */
+function measureColumn(im) {
+  try {
+    const c = mkCanvas(im.naturalWidth, im.naturalHeight);
+    const g = c.getContext("2d", { willReadFrequently: true });
+    g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    const spans = [], centres = [];
+    for (let y = 0; y < c.height; y++) {
+      let x0 = -1, x1 = -1;
+      for (let x = 0; x < c.width; x++) {
+        if (d[(y * c.width + x) * 4 + 3] >= 128) { if (x0 < 0) x0 = x; x1 = x; }
+      }
+      if (x1 > x0) { spans.push(x1 - x0 + 1); centres.push((x0 + x1) / 2); }
+    }
+    if (spans.length) {
+      const med = a => a.sort((p, q) => p - q)[a.length >> 1];
+      im._cw = med(spans); im._ccx = med(centres);
+    }
+  } catch (e) { /* canvas metrics fallback in drawPipeColumn */ }
+}
 function mulberry(seed) {
   let a = seed >>> 0;
   return function () {
@@ -1029,6 +1057,23 @@ function drawPipeSprites(x, y, h, isTop, p) {
    keeps every static gap inside the hang's reach; the stands end
    above the ground line by design and the crowd swallows the foot.
    Collision stays the spec 52x320 rect; the paint conforms to it.
+
+   v10.1 (Kenn's on-device playtest, 2026-10-20 05:09): two art fixes.
+   (a) THIN PIPES — v10 scaled the sprite CANVAS to 52u, but the trash
+   content is narrower than the canvas (wide mouth cluster, narrower
+   body), so the visible pipe read ~29-35u against a 52u collision
+   rect. The draw now scales by CONTENT (measureColumn: median alpha
+   span): the typical trash width IS 52u, content-centred on the
+   collision centre, mouth rows bulge past 52u like a cap. Uniform
+   scale only — aspect untouched. New coverage: hang 454u / stand
+   372u (regular), hang 437u / stand 384u (fire) — the v10 fire-stand
+   sine-trough sliver is covered with 124u to spare.
+   (b) GHOSTED FIRE BODIES — the v10 ramp key left the fire columns'
+   dark bags at alpha 10-249 (23-25% of interior pixels). Re-keyed
+   (art-lab/key-v101.py): body silhouette forced fully opaque, only
+   the exterior flame/smoke wisps keep the ramp falloff. Audit on the
+   shipped sprites: 0 semi-transparent and 0 clear pixels inside the
+   silhouette, all four columns.
    ===================================================================== */
 function drawPipeColumn(x, y, h, isTop, p) {
   const fire = !!(p && p.idx >= 20 && POPICOIN_CONFIG.WAVE_PIPES);
@@ -1036,23 +1081,30 @@ function drawPipeColumn(x, y, h, isTop, p) {
                    : (fire ? ART.colFStand : ART.colOStand);
   if (!im || !im.naturalWidth) return false;   // sprite not in yet — caller falls back
   const sw = im.naturalWidth, sh = im.naturalHeight;
-  const Hd = PIPE_WU * sh / sw;                // column length in units at 52u wide
+  /* v10.1: uniform scale by CONTENT width — content (median alpha
+     span, im._cw) maps to exactly PIPE_WU, content centre (im._ccx)
+     sits on the collision centre. Aspect preserved. */
+  const cw = im._cw || sw;
+  const ccx = (im._ccx != null) ? im._ccx : sw / 2;
+  const k = PIPE_WU / cw;                      // units per source px
+  const dw = sw * k, dh = sh * k;              // drawn size in units
+  const dx = x + PIPE_WU / 2 - ccx * k;        // content centred on the pipe
   if (isTop) {
     const yM = y + h;                          // gap's top edge — the mouth line
-    if (yM - Hd < 0) {                         // body runs past the stage top: source-crop
-      const cut = (Hd - yM) / Hd * sh;
-      ctx.drawImage(im, 0, cut, sw, sh - cut, x, 0, PIPE_WU, yM);
+    if (yM - dh < 0) {                         // body runs past the stage top: source-crop
+      const cut = (dh - yM) / k;
+      ctx.drawImage(im, 0, cut, sw, sh - cut, dx, 0, dw, yM);
     } else {
-      ctx.drawImage(im, x, yM - Hd, PIPE_WU, Hd);
+      ctx.drawImage(im, dx, yM - dh, dw, dh);
     }
   } else {
     const yM = y;                              // gap's bottom edge — the mouth line
     const stageBot = H / S;                    // unit-space stage bottom
-    if (yM + Hd > stageBot) {                  // body runs past the stage bottom: source-crop
+    if (yM + dh > stageBot) {                  // body runs past the stage bottom: source-crop
       const visH = stageBot - yM;
-      ctx.drawImage(im, 0, 0, sw, visH / Hd * sh, x, yM, PIPE_WU, visH);
+      ctx.drawImage(im, 0, 0, sw, visH / k, dx, yM, dw, visH);
     } else {
-      ctx.drawImage(im, x, yM, PIPE_WU, Hd);
+      ctx.drawImage(im, dx, yM, dw, dh);
     }
   }
   return true;
@@ -1448,8 +1500,10 @@ artLoad("pileTex", "pile-texture");
 artLoad("frameTex", "frame-tex", bakeBillboard); artLoad("medallion", "medallion", bakeBillboard);
 artLoad("zoms", "zombies", buildWall); artLoad("road", "road");
 /* v10 purpose-made full columns (lossless PNG, native resolution) */
-artLoadPng("colOHang", "col-o-hang"); artLoadPng("colOStand", "col-o-stand");
-artLoadPng("colFHang", "col-f-hang"); artLoadPng("colFStand", "col-f-stand");
+artLoadPng("colOHang", "col-o-hang", () => measureColumn(ART.colOHang));
+artLoadPng("colOStand", "col-o-stand", () => measureColumn(ART.colOStand));
+artLoadPng("colFHang", "col-f-hang", () => measureColumn(ART.colFHang));
+artLoadPng("colFStand", "col-f-stand", () => measureColumn(ART.colFStand));
 artLoadPng("birdHQ", "bird-hq"); artLoadPng("tapeStrip", "tape-strip", bakeTape);
 bakeHalo();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (ART.bbFrame) ART.bbPlaceholder = bakePlaceholder(); });
