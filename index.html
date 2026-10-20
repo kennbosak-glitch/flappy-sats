@@ -579,7 +579,7 @@ const GROUND_Y = 400;                      // ground line, units (spec §1)
 const BIRD_X = 80, HIT = 20;               // hitbox anchor x + AABB size
 const FLAP_V = -5.0, GRAV = 0.3, MAXFALL = 8.0;
 const PIPE_WU = 52, GAP_H = 96, PITCH = 157, SCROLL = 2;
-const GAP_MIN = 180, GAP_SPAN = 180;       // gapBottom ∈ [180, 360)
+const GAP_MIN = 190, GAP_SPAN = 116;       // gapBottom ∈ [190, 306) — v10 tune: Kenn's full-column hang sprite covers 305u at 52u wide; the old 360 max needed a 264u hang, so the spawn range was narrowed (190/116) until the art is never short. NOTHING else in the engine changed.
 const ROT_MIN = -20, ROT_MAX = 90;         // rotation clamp, degrees
 
 const cv = document.getElementById("game"), ctx = cv.getContext("2d");
@@ -913,12 +913,13 @@ const ART = {
   bgPortrait: null, bgLandscape: null, pileTex: null, frameTex: null, medallion: null,
   halo: null, tubeGrad: null,
   pipeCap: null, pipeBody: null,
-  /* v9 — Kenn's as-is sprites (lossless PNG, native crop resolution):
-     outline set = regular pipes, fire set = wave pipes (idx >= 20),
+  /* v10 — Kenn's purpose-made full pipe columns (lossless PNG keyed
+     from his 508x2048 masters, native resolution, tight-cropped):
+     regular set = pipes idx < 20, fire set = wave pipes (idx >= 20).
+     One sprite per column, mouth-anchored — see drawPipeColumn.
      HQ bird character, duct-tape seam strip */
-  pipeOHangTL: null, pipeOHangTR: null, pipeOStandBL: null, pipeOStandBR: null,
-  pipeFHangTL: null, pipeFStandBL: null, pipeFStandBR: null,
-  birdHQ: null, tapeStrip: null, tapeBaked: null, tapeW: 0, pipeCols: null,
+  colOHang: null, colOStand: null, colFHang: null, colFStand: null,
+  birdHQ: null, tapeStrip: null, tapeBaked: null, tapeW: 0,
   bbGlow: null, bbFrame: null, bbPlaceholder: null,
   /* the zombie wall (v9) + legacy road plate slot */
   zoms: null, road: null, crowd: null, wall: null, wallStrips: null,
@@ -1008,102 +1009,52 @@ function drawPipeSprites(x, y, h, isTop, p) {
 }
 
 /* =====================================================================
-   v9 — AS-IS PIPE SPRITES. The columns are whole pieces cut from Kenn's
-   two sheets (art/pipe-o-*.png from the outline sheet, art/pipe-f-*.png
-   from the fire sheet), shipped at native crop resolution, lossless.
-   Regular pipes (idx < 20) wear the OUTLINE set; wave pipes (idx >= 20)
-   wear the FIRE set. Each piece draws at the 52u collision width with
-   its native aspect, anchored at the gap/mouth edge and extending off
-   the screen edge. Where one piece is shorter than the rect, WHOLE
-   pieces stack with the join overlapped 8% at a bag cluster — never
-   stretched, never sub-tiled, never flipped. Variant mapping:
-     hang, even idx: [TL, TR, TL, ...]   hang, odd idx: [TR, TL, TR, ...]
-     stand (any idx): [BL (mouth), BR, BL, BR, ...]
-     fire hang (single variant on the sheet): [TL, TL, ...]
-     fire stand: [BL (mouth), BR, BL, BR, ...]
-   Collision stays the spec 52x320 rect; the paint conforms to it. The
-   fire crops include their flame tips, which lick past the trash body
-   inside the column width (player-friendly overflow, Kenn-approved).
+   v10 — PURPOSE-MADE FULL COLUMNS. Kenn supplied four full pipe
+   columns (508x2048 masters, art-lab/kenn-col-*.jpg) drawn to spec:
+   ONE sprite per column, shipped as-is — keyed (flood key for the
+   regular set, luminance ramp for the fire set) and tight-cropped,
+   lossless PNG, native resolution (art/col-*.png). No stacking, no
+   tiling, no flipping, no stretching: each sprite scales uniformly
+   to the 52u collision width and is MOUTH-ANCHORED —
+     hang:  the sprite's BOTTOM end (monster-bag mouth cluster) sits
+            exactly at the gap's top edge; the body extends UP and is
+            source-cropped at the stage top.
+     stand: the sprite's TOP end (mouth cluster) sits exactly at the
+            gap's bottom edge; the body extends DOWN and is cropped
+            at the stage bottom — its foot disappears behind the
+            zombie wall (v9.2 draw order).
+   Regular set for pipe idx < 20, FIRE set for wave pipes (idx >= 20).
+   Coverage at 52u wide: hang 305u / stand 197u (regular), hang 279u /
+   stand 219u (fire). The v10 spawn tune (GAP_MIN 190, GAP_SPAN 116)
+   keeps every static gap inside the hang's reach; the stands end
+   above the ground line by design and the crowd swallows the foot.
+   Collision stays the spec 52x320 rect; the paint conforms to it.
    ===================================================================== */
-const PIPE_SETS = {
-  outline: { hang: ["pipeOHangTL", "pipeOHangTR"], stand: ["pipeOStandBL", "pipeOStandBR"] },
-  fire:    { hang: ["pipeFHangTL"],                stand: ["pipeFStandBL", "pipeFStandBR"] }
-};
-/* Stack whole pieces into a 52x320 column at the origin of g (g is
-   pre-scaled so 1 unit = S px). Hangs anchor at the mouth (bottom) and
-   stack upward; stands anchor at the mouth (top) and stack downward;
-   every join overlaps the previous piece by 8% of the incoming piece. */
-function stackInto(g, imgs, isTop, start) {
-  if (isTop) {
-    let bottom = 320, i = 0;
-    while (bottom > 0 && i < 8) {
-      const im = imgs[(start + i) % imgs.length];
-      const ih = PIPE_WU * im.naturalHeight / im.naturalWidth;
-      g.drawImage(im, 0, bottom - ih, PIPE_WU, ih);
-      bottom = bottom - ih + ih * 0.08;
-      i++;
-    }
-  } else {
-    let top = 0, i = 0;
-    while (top < 320 && i < 8) {
-      const im = imgs[i % imgs.length];
-      const ih = PIPE_WU * im.naturalHeight / im.naturalWidth;
-      g.drawImage(im, 0, top, PIPE_WU, ih);
-      top = top + ih - ih * 0.08;
-      i++;
-    }
-  }
-}
-/* Columns are pre-baked ONCE per layout at full backing resolution
-   (the codebase's plate/billboard/wall-strip discipline): per frame a
-   pipe is a single 1:1 blit, where live stacking cost ~8 high-quality
-   rescales per pipe and dragged frame rates down. Pipes are always
-   drawn as the full 52x320 spec rect, so one bake per set/orientation/
-   parity serves every pipe. */
-function bakePipeColumns() {
-  ART.pipeCols = null;
-  const need = ["pipeOHangTL", "pipeOHangTR", "pipeOStandBL", "pipeOStandBR",
-                "pipeFHangTL", "pipeFStandBL", "pipeFStandBR"];
-  if (need.some(k => !ART[k] || !ART[k].naturalWidth)) return;
-  const mk = (keys, isTop, start) => {
-    const c = document.createElement("canvas");
-    c.width = Math.ceil(PIPE_WU * S); c.height = Math.ceil(320 * S);
-    const g = c.getContext("2d");
-    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
-    g.scale(S, S);
-    stackInto(g, keys.map(k => ART[k]), isTop, start);
-    return c;
-  };
-  ART.pipeCols = {
-    oTop: [mk(PIPE_SETS.outline.hang, true, 0), mk(PIPE_SETS.outline.hang, true, 1)],
-    oBot: mk(PIPE_SETS.outline.stand, false, 0),
-    fTop: [mk(PIPE_SETS.fire.hang, true, 0)],
-    fBot: mk(PIPE_SETS.fire.stand, false, 0)
-  };
-}
 function drawPipeColumn(x, y, h, isTop, p) {
   const fire = !!(p && p.idx >= 20 && POPICOIN_CONFIG.WAVE_PIPES);
-  if (ART.pipeCols) {
-    const col = isTop
-      ? (fire ? ART.pipeCols.fTop[0] : ART.pipeCols.oTop[Math.abs(p ? p.idx : 0) % 2])
-      : (fire ? ART.pipeCols.fBot : ART.pipeCols.oBot);
-    ctx.drawImage(col, x, y, PIPE_WU, 320);
-    return true;
+  const im = isTop ? (fire ? ART.colFHang : ART.colOHang)
+                   : (fire ? ART.colFStand : ART.colOStand);
+  if (!im || !im.naturalWidth) return false;   // sprite not in yet — caller falls back
+  const sw = im.naturalWidth, sh = im.naturalHeight;
+  const Hd = PIPE_WU * sh / sw;                // column length in units at 52u wide
+  if (isTop) {
+    const yM = y + h;                          // gap's top edge — the mouth line
+    if (yM - Hd < 0) {                         // body runs past the stage top: source-crop
+      const cut = (Hd - yM) / Hd * sh;
+      ctx.drawImage(im, 0, cut, sw, sh - cut, x, 0, PIPE_WU, yM);
+    } else {
+      ctx.drawImage(im, x, yM - Hd, PIPE_WU, Hd);
+    }
+  } else {
+    const yM = y;                              // gap's bottom edge — the mouth line
+    const stageBot = H / S;                    // unit-space stage bottom
+    if (yM + Hd > stageBot) {                  // body runs past the stage bottom: source-crop
+      const visH = stageBot - yM;
+      ctx.drawImage(im, 0, 0, sw, visH / Hd * sh, x, yM, PIPE_WU, visH);
+    } else {
+      ctx.drawImage(im, x, yM, PIPE_WU, Hd);
+    }
   }
-  // live stacking fallback (sprites in, bake pending a frame)
-  const set = fire ? PIPE_SETS.fire : PIPE_SETS.outline;
-  const keys = isTop ? set.hang : set.stand;
-  const imgs = [];
-  for (const k of keys) {
-    const im = ART[k];
-    if (!im || !im.naturalWidth) return false;      // sprites not in yet — caller falls back
-    imgs.push(im);
-  }
-  ctx.save();
-  ctx.beginPath(); ctx.rect(x, y, PIPE_WU, h); ctx.clip();
-  ctx.translate(x, y);
-  stackInto(ctx, imgs, isTop, (isTop && p) ? Math.abs(p.idx) % imgs.length : 0);
-  ctx.restore();
   return true;
 }
 
@@ -1290,7 +1241,7 @@ function applyLayout(portrait) {
   stage.style.aspectRatio = portrait ? "9 / 16" : "16 / 9";
   stage.style.maxWidth = portrait ? "470px" : "980px";
   BB = computeBB();
-  buildPlates(); buildWall(); bakePipeColumns(); bakeTape();
+  buildPlates(); buildWall(); bakeTape();
   { // lane wash, pre-baked (art bible: no per-frame gradient raster)
     const wc = document.createElement("canvas"); wc.width = W; wc.height = H;
     const wg = wc.getContext("2d");
@@ -1496,11 +1447,9 @@ artLoad("pipeCap", "pipe-cap"); artLoad("pipeBody", "pipe-body");
 artLoad("pileTex", "pile-texture");
 artLoad("frameTex", "frame-tex", bakeBillboard); artLoad("medallion", "medallion", bakeBillboard);
 artLoad("zoms", "zombies", buildWall); artLoad("road", "road");
-/* v9 as-is sprites (lossless PNG at native crop resolution) */
-artLoadPng("pipeOHangTL", "pipe-o-hang-tl", bakePipeColumns); artLoadPng("pipeOHangTR", "pipe-o-hang-tr", bakePipeColumns);
-artLoadPng("pipeOStandBL", "pipe-o-stand-bl", bakePipeColumns); artLoadPng("pipeOStandBR", "pipe-o-stand-br", bakePipeColumns);
-artLoadPng("pipeFHangTL", "pipe-f-hang-tl", bakePipeColumns);
-artLoadPng("pipeFStandBL", "pipe-f-stand-bl", bakePipeColumns); artLoadPng("pipeFStandBR", "pipe-f-stand-br", bakePipeColumns);
+/* v10 purpose-made full columns (lossless PNG, native resolution) */
+artLoadPng("colOHang", "col-o-hang"); artLoadPng("colOStand", "col-o-stand");
+artLoadPng("colFHang", "col-f-hang"); artLoadPng("colFStand", "col-f-stand");
 artLoadPng("birdHQ", "bird-hq"); artLoadPng("tapeStrip", "tape-strip", bakeTape);
 bakeHalo();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (ART.bbFrame) ART.bbPlaceholder = bakePlaceholder(); });
@@ -1602,10 +1551,10 @@ function drawBillboard(t) {
   else ctx.fillText("PLACEHOLDER • SPONSOR TO REPLACE", bx + 8, by + bh - 7);
 }
 function drawPipeU(x, y, h, isTop, slot, p) {
-  // v9: Kenn's as-is sheet pieces (outline set / fire set), drawn into
-  // the spec 52x320 collision rect — the paint conforms to the rect,
-  // never the reverse. Falls back to the v6 extraction, then to flat
-  // scrap, only while sprites are still loading.
+  // v10: Kenn's purpose-made full columns — one mouth-anchored sprite
+  // per column (regular set / fire set). The paint conforms to the
+  // spec 52x320 collision rect, never the reverse. Falls back to the
+  // v6 extraction, then to flat scrap, only while sprites are loading.
   if (drawPipeColumn(x, y, h, isTop, p)) return;
   if (ART.pipeBody && ART.pipeCap) { drawPipeSprites(x, y, h, isTop, p); return; }
   // fallback while the sprites load: flat scrap column + lip
