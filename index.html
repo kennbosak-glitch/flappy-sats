@@ -6,7 +6,7 @@
 <title>FLAPPY SATS — ESCAPE FIAT TRASH</title>
 <meta name="description" content="FLAPPY SATS — trash-world flappy. Escape fiat trash. Sponsored by the people, priced in Bitcoin Cash.">
 <meta name="theme-color" content="#0a0f0a">
-<!-- FLAPPY SATS v15 — full-screen flex viewport (the stage IS the screen) + Kenn's coupon-frame billboard. -->
+<!-- FLAPPY SATS v15.1 — full-screen flex viewport (the stage IS the screen) + Kenn's coupon-frame billboard + hanging-pipe ceiling fix. -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -242,7 +242,7 @@
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v15 • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v15.1 • Trash world bg • Scrap pipes • Neon #00FF88<br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -579,6 +579,17 @@ function preloadBillboardImages() {
    with the window at its measured fractions. During play ALL page
    chrome hides — the canvas alone owns the screen. Render + layout
    only; the sim is untouched.
+   v15.1 (2026-10-20): THREE PLAYTEST FIXES, render only — sim and
+   art untouched. (1) HANGING PIPE CEILING: drawPipeColumn's isTop
+   crop extends to the true visible ceiling (ceilY = -skyExtra)
+   instead of design 0, so on tall screens the hanging column
+   reaches the top of the screen instead of ending mid-sky with its
+   far cap showing. (2) FG GROUND ANCHOR: the foreground layer is
+   anchored in unit space straddling the 400u ground line instead
+   of screen fractions, so the rubble meets the crowd's hands at
+   every screen height — no base-coat bar. (3) BILLBOARD HARDWARE:
+   the legacy code-drawn posts + cross-brace under the board are
+   removed; Kenn's frame plate is the complete object.
    ===================================================================== */
 /* v15 layout — ONE unit-space parameter set (the portrait canon
    Kenn playtested), derived from the v6–v14 device tables at their
@@ -1135,11 +1146,23 @@ function drawPipeColumn(x, y, h, isTop, p) {
   const dx = x + PIPE_WU / 2 - ccx * k;        // content centred on the pipe
   if (isTop) {
     const yM = y + h;                          // gap's top edge — the mouth line
-    if (yM - dh < 0) {                         // body runs past the stage top: source-crop
-      const cut = (dh - yM) / k;
-      ctx.drawImage(im, 0, cut, sw, sh - cut, dx, 0, dw, yM);
-    } else {
-      ctx.drawImage(im, dx, yM - dh, dw, dh);
+    /* v15.1: the flex viewport pours extra height into sky ABOVE the
+       design band, so the visible unit window starts at ceilY =
+       -skyExtra, NOT at design 0. Cropping at 0 (the v15 code) left
+       the hanging column's rounded far cap floating mid-sky on tall
+       screens — Kenn's playtest catch. Extend the crop to the true
+       ceiling instead: source-crop from the sprite's FAR end so the
+       mouth end stays pixel-exact on the gap line, aspect untouched.
+       AS-IS law: if a sprite is ever shorter than the span (extreme
+       geometry), draw it whole from the ceiling down — never stretch,
+       never tile. At skyExtra = 0 this reduces to the exact v15 math. */
+    const ceilY = -skyExtra;                   // visible top of the unit window (<= 0)
+    const need = yM - ceilY;                   // span the column must cover, units
+    if (dh >= need) {                          // sprite covers: source-crop the far end
+      const cut = (dh - need) / k;
+      ctx.drawImage(im, 0, cut, sw, sh - cut, dx, ceilY, dw, need);
+    } else {                                   // shortfall: whole sprite from the ceiling
+      ctx.drawImage(im, dx, ceilY, dw, dh);
     }
   } else {
     const yM = y;                              // gap's bottom edge — the mouth line
@@ -1474,13 +1497,32 @@ function drawTiledLayer(img, rect, speed) {
   let off = -((ART.scrollU * S * speed) % w); if (off > 0) off -= w;
   for (let x = off; x < W; x += w) ctx.drawImage(img, x, rect[0] * H, w, h);
 }
+/* v15.1 — the FG layer is anchored in UNIT SPACE to the ground
+   line, NOT to screen fractions. The v15 screen-fraction rect
+   drifted against the unit-anchored crowd as VIS_H grew, and the
+   base coat showed between the rubble and the crowd's hands on
+   Kenn's device (a dark bar). Measured from art/bg-fg.webp (v15.1
+   prep): content begins at 0.40 of image height, >=50% opaque from
+   0.484, >=90% from 0.643, ~0.90 opaque through the bottom row.
+   At FG_TOP_U / FG_H_U the content starts at 324u, the opaque mass
+   runs 337u..414u — straddling the 400u ground line: rubble backs
+   the crowd's raised hands at every VIS_H, and the layer's lower
+   portion continues below 400u behind the crowd mass. */
+const FG_TOP_U = 264, FG_H_U = 150;
+function drawFgLayer(img) {
+  const h = FG_H_U * S, w = h * (img.naturalWidth / img.naturalHeight);
+  const y = FG_TOP_U * S + OY;
+  let off = -((ART.scrollU * S) % w); if (off > 0) off -= w;   // 1.0x — full ground speed
+  for (let x = off; x < W; x += w) ctx.drawImage(img, x, y, w, h);
+}
 function drawBackground() {
   artAdvanceScroll();
   // v14/v15 parallax: Kenn's purpose-made layers in true wrap tiling —
   // far sky+skyline 0.3x lane speed, mid trash fields 0.6x, foreground
   // mounds at FULL ground speed 1.0x (v15, Kenn's playtest law:
   // everything in the world travels right-to-left; only the crowd
-  // runs the other way). Layer rects are fractions of full height.
+  // runs the other way). Far/mid rects are fractions of full height;
+  // FG is unit-anchored to the ground line (v15.1, see drawFgLayer).
   if (!ART.bgFar || !ART.bgMid) { drawBackgroundFallback(); return; }
   // base coat: the same deep green-black the v6 ground band used. The
   // mid/fg art is a keyed texture (real alpha holes between trash), so
@@ -1488,25 +1530,17 @@ function drawBackground() {
   ctx.fillStyle = "#0c120c"; ctx.fillRect(0, 0, W, H);
   drawTiledLayer(ART.bgFar, LAY.bgFar, 0.3);
   drawTiledLayer(ART.bgMid, LAY.bgMid, 0.6);
-  if (ART.bgFg) drawTiledLayer(ART.bgFg, LAY.bgFg, 1.0);
+  if (ART.bgFg) drawFgLayer(ART.bgFg);
 }
 function drawBillboard(t) {
   const { bw, bh, bx, by, win } = BB, k = BB.k, FS = win.w / 431.2;
   const idx = sponsors.length ? Math.floor(t / 10) % sponsors.length : -1;
   const s = idx >= 0 ? sponsors[idx] : null;
-  // posts: rusty scrap columns cut from the frame atlas + a warm edge
-  // light and a cross-brace — v4's flat #233528 rects read as black
-  // slabs under the board (v4.1)
-  const post = (px) => {
-    if (ART.frameTex) ctx.drawImage(ART.frameTex, 40, 200, 60, 700, px, by + bh, 9 * k, 92 * k);
-    else { ctx.fillStyle = "#233528"; ctx.fillRect(px, by + bh, 9 * k, 92 * k); }
-    ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(px, by + bh, 2 * k, 92 * k);
-    ctx.fillStyle = "rgba(255,190,120,0.28)"; ctx.fillRect(px + 7 * k, by + bh, 2 * k, 92 * k);
-  };
-  post(bx + 14 * k); post(bx + bw - 23 * k);
-  if (ART.frameTex) ctx.drawImage(ART.frameTex, 200, 500, 140, 40, bx + 20 * k, by + bh + 40 * k, bw - 40 * k, 9 * k);
-  else { ctx.fillStyle = "#1d2b20"; ctx.fillRect(bx + 20 * k, by + bh + 40 * k, bw - 40 * k, 9 * k); }
-  ctx.fillStyle = "rgba(255,190,120,0.18)"; ctx.fillRect(bx + 20 * k, by + bh + 40 * k, bw - 40 * k, 1.5 * k);
+  // v15.1: the legacy posts + cross-brace are REMOVED (Kenn's
+  // playtest: "there's legs coming off of our sponsor frame, we
+  // don't need that"). Kenn's coupon frame plate is the complete
+  // object now — the board floats as the framed sign itself, with
+  // only the breathing neon glow (light, not hardware) behind it.
   // neon spill + tube bloom: pre-baked, breathing on the pulse
   if (ART.bbGlow) {
     ctx.save();
@@ -2407,7 +2441,7 @@ requestAnimationFrame(loop);
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
-/* ---- FLAPPY SATS v15 — end of build ---- */
+/* ---- FLAPPY SATS v15.1 — end of build ---- */
 </script>
 </body>
 </html>
