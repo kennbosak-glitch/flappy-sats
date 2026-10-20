@@ -251,6 +251,7 @@
       </div>
       <button class="btn" id="btnPlay">▶ PLAY GAME</button>
       <button class="btn gold" id="btnSponsor">SPONSOR THIS GAME</button>
+      <button class="btn" id="btnInstall" style="display:none">📲 INSTALL APP</button>
       <p style="font-size:11px;color:#7fae8d">Tap / click / spacebar to flap.</p>
     </div>
 
@@ -276,7 +277,7 @@
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.2.1 • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.2.2 • Trash world bg • Scrap pipes • Neon #00FF88<br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -3081,6 +3082,80 @@ requestAnimationFrame(loop);
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
+
+/* ---------------- v16.2.2: INSTALL APP affordance ----------------
+   The button lives in the SPLASH overlay only (menu state — the
+   overlay is hidden during play, so it can never sit over gameplay).
+   Chromium: stash the beforeinstallprompt event and offer it from
+   our own button. iOS Safari fires no such event — the same slot
+   becomes a Share-sheet hint button instead. Already installed /
+   running standalone: the button never appears. No dead buttons:
+   with neither a stashed prompt nor an iOS Safari UA it stays
+   hidden. Purely an install affordance — no sim/economy contact. */
+(() => {
+  const btn = document.getElementById("btnInstall");
+  if (!btn) return;
+  let deferred = null;      // stashed BeforeInstallPromptEvent
+  let promptUsed = false;   // a stashed event's prompt() is single-use
+  let installed = false;    // accepted this session / appinstalled fired
+  const isStandalone = () =>
+    (typeof matchMedia === "function" && matchMedia("(display-mode: standalone)").matches) ||
+    window.navigator.standalone === true;
+  const ua = navigator.userAgent || "";
+  const isIOS = /iphone|ipad|ipod/i.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isIOSSafari = isIOS && /safari/i.test(ua) && !/crios|fxios|edgios|opios/i.test(ua);
+  function installToast(msg, ms) {
+    const t = document.getElementById("toast");
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(installToast._h);
+    installToast._h = setTimeout(() => t.classList.remove("show"), ms || 2800);
+  }
+  function refresh() {
+    if (installed || isStandalone()) { btn.style.display = "none"; return; }
+    if (deferred) { btn.textContent = "📲 INSTALL APP"; btn.style.display = ""; return; }
+    if (isIOSSafari) {
+      btn.textContent = "📲 INSTALL — TAP SHARE, THEN 'ADD TO HOME SCREEN'";
+      btn.style.display = "";
+      return;
+    }
+    btn.style.display = "none";
+  }
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    deferred = e;
+    promptUsed = false;
+    refresh();
+  });
+  window.addEventListener("appinstalled", () => {
+    installed = true;
+    deferred = null;
+    refresh();
+  });
+  btn.addEventListener("click", async () => {
+    if (!deferred) {                       // iOS hint button
+      if (isIOSSafari && !installed && !isStandalone())
+        installToast("📲 TAP SHARE ⬆ THEN 'ADD TO HOME SCREEN'", 5000);
+      return;
+    }
+    if (promptUsed) return;                // never call prompt() twice on one event
+    promptUsed = true;
+    try { deferred.prompt(); } catch (e) {}
+    let choice = null;
+    try { choice = await deferred.userChoice; } catch (e) {}
+    if (choice && choice.outcome === "accepted") {
+      installed = true;
+      deferred = null;
+      refresh();
+      installToast("✓ INSTALLED — FLAPPY SATS is in your app drawer");
+    } else {
+      refresh();                           // dismissed: button stays available
+    }
+  });
+  refresh();
+})();
 /* ---- FLAPPY SATS v16.2 — end of build ---- */
 </script>
 </body>
