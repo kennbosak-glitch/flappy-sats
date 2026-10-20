@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>FLAPPY SATS — ESCAPE FIAT TRASH</title>
 <meta name="description" content="FLAPPY SATS — trash-world flappy. Escape fiat trash. Sponsored by the people, priced in Bitcoin Cash.">
 <meta name="theme-color" content="#0a0f0a">
-<!-- FLAPPY SATS v14 — true-tile parallax background: Kenn's far/mid/fg layers, mirror plates + duct tape retired. -->
+<!-- FLAPPY SATS v15 — full-screen flex viewport (the stage IS the screen) + Kenn's coupon-frame billboard. -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -18,20 +18,24 @@
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
     font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-    min-height:100%; overscroll-behavior:none}
-  #wrap{max-width:980px;margin:0 auto;padding:10px 10px 28px}
-  header.brand{text-align:center;padding:14px 0 4px}
+    height:100%;overflow:hidden;overscroll-behavior:none}
+  /* v15 — the page shell is now overlays pinned over the full-screen
+     stage: brand + HUD float at the top, the footer line at the bottom
+     (splash state only — draw() toggles their visibility). */
+  #wrap{margin:0;padding:0}
+  header.brand{position:fixed;top:0;left:0;width:100%;z-index:30;pointer-events:none;
+    text-align:center;padding:calc(10px + env(safe-area-inset-top)) 10px 0}
   header.brand h1{margin:0;font-family:Syne, system-ui, sans-serif;font-weight:800;
     font-size:44px;letter-spacing:2px;color:#fff;
     text-shadow:0 0 18px rgba(0,255,136,.55), 0 0 46px rgba(0,255,136,.25)}
   header.brand h1 .coin{color:var(--gold);text-shadow:0 0 18px rgba(255,213,79,.6)}
   header.brand p.tag{margin:4px 0 0;color:var(--neon);letter-spacing:4px;font-size:13px}
-  #stage{position:relative;width:100%;aspect-ratio:9/16;max-width:470px;margin-left:auto;margin-right:auto;background:#060906;
-    border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:12px;
-    box-shadow:0 0 0 1px #000, 0 18px 50px rgba(0,0,0,.6)}
-  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #stage{position:fixed;inset:0;background:#060906;overflow:hidden}
+  canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
   .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-    justify-content:center;gap:14px;background:rgba(4,8,5,.72);text-align:center;padding:20px}
+    justify-content:center;gap:14px;background:rgba(4,8,5,.72);text-align:center;overflow-y:auto;
+    padding:calc(20px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right))
+            calc(20px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left))}
   .overlay.hidden{display:none}
   .overlay h2{margin:0;font-family:Syne, system-ui, sans-serif;font-size:34px;letter-spacing:2px;color:#fff}
   .overlay h2.crash{color:var(--bad);text-shadow:0 0 16px rgba(255,82,82,.5)}
@@ -44,10 +48,13 @@
   .btn.ghost{background:transparent;border-color:var(--line);box-shadow:none;font-size:13px;padding:9px 16px}
   .btn:disabled{opacity:.45;cursor:not-allowed}
   .score-big{font-size:52px;font-weight:700;color:#fff}
-  footer{margin-top:14px;text-align:center;color:#5f7a66;font-size:11px;line-height:1.7}
+  footer{position:fixed;bottom:0;left:0;width:100%;z-index:30;pointer-events:none;
+    text-align:center;color:#5f7a66;font-size:11px;line-height:1.7;
+    padding:0 10px calc(8px + env(safe-area-inset-bottom))}
   /* sponsor modal */
   #modal{position:fixed;inset:0;background:rgba(2,5,3,.86);display:none;z-index:50;
-    overflow-y:auto;padding:18px 12px}
+    overflow-y:auto;padding:calc(18px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right))
+            calc(18px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
   #modal.open{display:block}
   .card{max-width:460px;margin:0 auto;background:var(--panel);border:1px solid var(--line);
     border-radius:14px;padding:20px}
@@ -76,7 +83,9 @@
   small.hint{color:#7fae8d;font-size:11px;line-height:1.5;display:block;margin-top:5px}
   /* ---- v2: HUD, auth gate, stack panel ---- */
   #hud{display:none;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;
-    margin-top:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+    position:fixed;left:50%;transform:translateX(-50%);z-index:30;
+    top:calc(104px + env(safe-area-inset-top));width:min(980px,calc(100% - 16px));
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
   #hud.show{display:flex}
   #hud .who{font-weight:700;color:#fff;font-size:13px}
   #hud .bal{color:var(--gold);font-weight:700;font-size:13px}
@@ -98,9 +107,11 @@
   .selene{border-color:#26a17b !important;background:#062b21 !important;width:100%;margin-top:8px}
   .bar{height:14px;background:#0a140c;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:8px 0 4px}
   .bar > div{height:100%;background:linear-gradient(90deg,#0a3d22,var(--neon));width:0%;transition:width .4s}
-  #stackModal{position:fixed;inset:0;background:rgba(2,5,3,.86);display:none;z-index:50;overflow-y:auto;padding:18px 12px}
+  #stackModal{position:fixed;inset:0;background:rgba(2,5,3,.86);display:none;z-index:50;overflow-y:auto;
+    padding:calc(18px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom))}
   #stackModal.open{display:block}
-  #settingsModal,#unlockModal{position:fixed;inset:0;background:rgba(2,5,3,.86);display:none;z-index:50;overflow-y:auto;padding:18px 12px}
+  #settingsModal,#unlockModal{position:fixed;inset:0;background:rgba(2,5,3,.86);display:none;z-index:50;overflow-y:auto;
+    padding:calc(18px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom))}
   #settingsModal.open,#unlockModal.open{display:block}
   .balbig{font-size:38px;font-weight:700;color:var(--gold);text-align:center;margin:6px 0 0}
   /* ---- v3: medal row on the game-over panel (original thresholds) ---- */
@@ -231,7 +242,7 @@
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v14 • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v15 • Trash world bg • Scrap pipes • Neon #00FF88<br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -560,28 +571,46 @@ function preloadBillboardImages() {
    v14 (2026-10-20): background rebuilt on Kenn's purpose-made layers
    (art/bg-far.webp, bg-mid.webp, bg-fg.webp) in TRUE wrap tiling —
    the v6 mirror plates and the duct-tape seam strip are retired.
-   Render only; sim, pipes, crowd, billboard, economy untouched.
+   v15 (2026-10-20): FULL-SCREEN FLEX VIEWPORT — the canvas IS the
+   screen (fixed inset-0); the 288x512 design band never crops and
+   never stretches: width-locked screens pour their extra height
+   into sky (skyExtra), wider screens extend the world rightward.
+   The billboard wears Kenn's coupon-collage frame (art/bb-frame.png)
+   with the window at its measured fractions. During play ALL page
+   chrome hides — the canvas alone owns the screen. Render + layout
+   only; the sim is untouched.
    ===================================================================== */
-/* v6 layout tables — device-space values per orientation. The sim
-   never sees these; only the render mapping + DOM chrome do. */
-/* v14 background layer rects — [y, h] as fractions of stage height H
-   (fractions are RSCALE-immune, like the rest of the render mapping).
-   FAR is opaque and overlaps MID's top; MID's bottom overlaps FG's top,
-   so the stack has no void rows. Drawn widths follow each image's own
-   aspect (far/mid 2:1, fg 4:1) — see drawBackground. */
-const LAY_P = { portrait: true,  W: 1080, H: 1920,
-  bgFar: [0, 0.521], bgMid: [0.292, 0.469], bgFg: [0.66, 0.25],
-  roadY: 1829, roadH: 91, feetY: 1846,
-  crowdCount: 25, crowdPeriod: 2160, crowdBaseH: 246 };
-const LAY_L = { portrait: false, W: 960, H: 540,
-  bgFar: [0, 0.521], bgMid: [0.292, 0.469], bgFg: [0.66, 0.25],
-  roadY: 459, roadH: 81, feetY: 474,
-  crowdCount: 34, crowdPeriod: 1920, crowdBaseH: 106 };
-let LAY = LAY_P;
+/* v15 layout — ONE unit-space parameter set (the portrait canon
+   Kenn playtested), derived from the v6–v14 device tables at their
+   reference scale S0 = 3.75 (1080x1920 backing). applyLayout()
+   multiplies by the live flex scale S and the sky offset OY, so the
+   same design lands identically on any screen. The sim never sees
+   these; only the render mapping + DOM chrome do. */
+/* v14 background layer rects — [y, h] as fractions of FULL canvas
+   height H. FAR is opaque and overlaps MID's top; MID's bottom
+   overlaps FG's top, so the stack has no void rows. Drawn widths
+   follow each image's own aspect (far/mid 2:1, fg 4:1) — see
+   drawBackground. v15: FG scrolls at full ground speed (1.0x). */
+const BG_FAR = [0, 0.521], BG_MID = [0.292, 0.469], BG_FG = [0.66, 0.25];
+const ROAD_Y_U = 1829 / 3.75, ROAD_H_U = 91 / 3.75;        // legacy road plate anchors (units)
+const FEET_Y_U = 1846 / 3.75;                              // crowd mass bottom anchor (units)
+const CROWD_BASE_H_U = 246 / 3.75, CROWD_PERIOD_U = 2160 / 3.75;
+/* v15 (Kenn's playtest): the crowd wall is LIFTED so the figures
+   rise directly out of the foreground rubble line — the mass top
+   lands exactly on the design ground line (400u) and the dead
+   black band between the mid layer's bottom and the FG content
+   is swallowed by silhouettes. */
+const WALL_LIFT_U = FEET_Y_U - CROWD_BASE_H_U - 400;
+let LAY = { portrait: true, W: 1080, H: 1920, bgFar: BG_FAR, bgMid: BG_MID, bgFg: BG_FG,
+            roadY: 1829, roadH: 91, feetY: 1846, crowdBaseH: 246, crowdPeriod: 2160,
+            crowdCount: 25, wallLift: WALL_LIFT_U * 3.75 };
 let W = LAY.W, H = LAY.H;                  // device px (canvas backing)
-const UW = 288, UH = 512;                  // original unit space
-let S = H / UH;                            // 3.75 portrait / 1.0547 landscape
-let OX = (W - UW * S) / 2;                 // playfield left edge (device px)
+const UW = 288, UH = 512;                  // original unit space (the design band)
+let S = H / UH;                            // flex scale — applyLayout()
+let OX = 0;                                // v15: world x-origin = screen left edge
+let OY = 0;                                // world-to-screen y offset (sky), device px
+let VIS_W = UW, VIS_H = UH;                // visible unit extents of the flex viewport
+let skyExtra = 0;                          // visible units above the design band
 let BB = null;                             // billboard geometry — computeBB()
 const GROUND_Y = 400;                      // ground line, units (spec §1)
 
@@ -683,7 +712,6 @@ function resetGame() {
 }
 function startGame() {
   goFullscreenPortrait();   // v9.1: every run start re-attempts fullscreen + portrait lock
-  fitStage();               // v9.1: and re-fits — in-play visibility is the guarantee that matters
   if (typeof Player !== "undefined" && !Player.isAuthed()) { Player.showAuth(); return; }
   resetGame();
   game.state = "play";
@@ -696,8 +724,12 @@ function armPipes() {
   // Warm-up over (spec §3): the first two slots park off-screen and the
   // first live pipe starts at x = 418 — it enters the screen ≈2.2 s
   // after the first flap and reaches the bird ≈3.9 s after it.
+  // v15: in the wide flex (VIS_W > 288) the chain starts at the true
+  // screen edge instead, so pipes enter from off-screen exactly as
+  // they do in portrait; portrait keeps the spec 418.
+  const startX = Math.max(418, Math.ceil(VIS_W) + 60);
   game.pipes.forEach((p, i) => {
-    p.x = 418 + i * PITCH; p.gapBottom = randGap(); p.effGap = p.gapBottom; p.scored = false;
+    p.x = startX + i * PITCH; p.gapBottom = randGap(); p.effGap = p.gapBottom; p.scored = false;
   });
 }
 function startDeath(byPipe) {
@@ -879,7 +911,7 @@ function step() {
     if (POPICOIN_CONFIG.WAVE_PIPES && p.idx >= 20) {
       if (p.tele > 0) {
         p.tele--;
-        if (game.t % 4 === 0) emitDust(OX + (p.x + PIPE_WU / 2) * S, (p.gapBottom - GAP_H / 2) * S, 2, 60);
+        if (game.t % 4 === 0) emitDust(OX + (p.x + PIPE_WU / 2) * S, (p.gapBottom - GAP_H / 2) * S + OY, 2, 60);
       } else {
         off = Math.sin(game.t / 60 * 2.2 + p.phase) * p.amp;
       }
@@ -922,6 +954,7 @@ function step() {
 const ART = {
   scrollU: 0, _lastLandOff: 0, pulseA: 0.5, pulseB: 0.5,
   bgFar: null, bgMid: null, bgFg: null, pileTex: null, frameTex: null, medallion: null,
+  bbFrameImg: null,   // v15: Kenn's coupon-collage billboard frame (keyed, window open)
   halo: null, tubeGrad: null,
   pipeCap: null, pipeBody: null,
   /* v10 — Kenn's purpose-made full pipe columns (lossless PNG keyed
@@ -1110,7 +1143,7 @@ function drawPipeColumn(x, y, h, isTop, p) {
     }
   } else {
     const yM = y;                              // gap's bottom edge — the mouth line
-    const stageBot = H / S;                    // unit-space stage bottom
+    const stageBot = UH;                       // v15: unit-space band bottom (512)
     if (yM + dh > stageBot) {                  // body runs past the stage bottom: source-crop
       const visH = stageBot - yM;
       ctx.drawImage(im, 0, 0, sw, visH / k, dx, yM, dw, visH);
@@ -1137,7 +1170,9 @@ const WALL_ROWS = [
   { hMul: 1.13, topMul: 0.31, count: 34, bobMul: 0.8 },
   { hMul: 1.04, topMul: 0.18, count: 31, bobMul: 0.6 }    // front row — just heads + arms
 ];
-function wallTopY() { return LAY.feetY - LAY.crowdBaseH; }
+/* v15: minus LAY.wallLift — the mass top lands on the ground line
+   (400u) and the figures rise straight out of the FG rubble line. */
+function wallTopY() { return LAY.feetY - LAY.crowdBaseH - LAY.wallLift; }
 function buildWall() {
   const rnd = mulberry(20261020);
   const weights = [3, 3, 2, 2, 2, 3, 2, 2, 3, 2];
@@ -1208,15 +1243,23 @@ function drawZombieWall() {
     ctx.drawImage(img, off, dy);
   }
 }
+/* v15 — the window fractions of Kenn's coupon frame, MEASURED from
+   art-lab/kenn-bb-frame-v2.png (2048x1152): the black opening floods
+   x 136..1911, y 238..945. The code window IS the frame's window —
+   sponsor creative composites behind the art, never over it. */
+const BB_WIN = { L: 136 / 2048, T: 238 / 1152, W: 1776 / 2048, H: 708 / 1152 };
 function computeBB() {
-  // The billboard spans the portrait top per Kenn's mock; in landscape it
-  // keeps its v5 home at upper-center. All sizes derive from the frame
-  // width via k so one bake serves both stages.
+  // The billboard spans the portrait top per Kenn's mock; in the wide
+  // (height-locked) flex it keeps its v5 home at upper-center. Its
+  // position anchors to the DESIGN BAND (bandH = 512u x S, band top at
+  // OY) — extra sky on tall screens opens ABOVE the board, never
+  // through it. All sizes derive from the frame width via k.
   let bw, bh, bx, by;
-  if (LAY.portrait) { bw = Math.round(W * 0.94); bh = Math.round(bw * 9 / 16); bx = Math.round((W - bw) / 2); by = Math.round(H * 0.028); }
-  else { bw = Math.round(W * 0.52); bh = Math.round(bw * 9 / 16); bx = Math.round((W - bw) / 2); by = Math.round(H * 0.35 - bh / 2); }
+  const bandH = UH * S;
+  if (LAY.portrait) { bw = Math.round(W * 0.94); bh = Math.round(bw * 9 / 16); bx = Math.round((W - bw) / 2); by = OY + Math.round(bandH * 0.028); }
+  else { bw = Math.round(W * 0.52); bh = Math.round(bw * 9 / 16); bx = Math.round((W - bw) / 2); by = OY + Math.round(bandH * 0.35 - bh / 2); }
   const k = bw / 499.2;
-  const win = { x: Math.round(bx + bw * 0.068), y: Math.round(by + bh * 0.213), w: Math.round(bw * 0.864), h: Math.round(bh * 0.605) };
+  const win = { x: Math.round(bx + bw * BB_WIN.L), y: Math.round(by + bh * BB_WIN.T), w: Math.round(bw * BB_WIN.W), h: Math.round(bh * BB_WIN.H) };
   const m = Math.round(80 * k);
   return { bx, by, bw, bh, k, win, glow: null, frame: null, placeholder: null,
            ox: bx - m, oy: by - m, cw: bw + 2 * m, ch: bh + m + Math.round(120 * k) };
@@ -1227,107 +1270,81 @@ function computeBB() {
    background layers are drawn as true wrap tiles straight from
    their source images in drawBackground — no baking, no mirror
    fold, nothing for a seam strip to hide. */
-/* v9 quality mandate: the canvas backing store scales with
-   devicePixelRatio (cap 3). The v8 geometry baseline assumed a ~2x
-   backing (1080x1920 portrait), so RSCALE = clamp(dpr,1,3)/2 — a DPR-3
-   phone renders at 1.5x the v8 backing, a DPR-1 screen at 0.5x, and a
-   2x pipeline (incl. the build-check rig) reproduces v8 geometry 1:1.
-   All layout absolutes scale by the same factor; fractions are immune. */
-let RSCALE = 1;
+/* v15 — the RSCALE/fixed-table system is REPLACED by the flex
+   viewport: the canvas backing derives from the REAL window at the
+   device pixel ratio (cap 3 — the v9 quality mandate, preserved),
+   and the scale locks whichever axis keeps the 288x512 design band
+   fully visible. Width-locked (portrait, at-or-taller than 9:16 —
+   nearly every phone): S = W/288, the visible height grows past
+   512u and ALL of the extra becomes sky above the band (skyExtra /
+   OY). Height-locked (wider than 9:16 — foldable inners, desktop):
+   S = H/512 and the world extends rightward (VIS_W > 288; pipes
+   spawn at the true edge — see armPipes). The band never crops,
+   never stretches; the sim never hears about any of it. */
 /* v9.1 DEMO — FORCED PORTRAIT (Kenn's playtest order, 2026-10-20):
-   on a landscape viewport the stage took the landscape branch (or
-   grew taller than the screen) and the portrait playfield was
-   cropped top and bottom — score and ground/zombie wall cut off.
-   The demo is portrait-first, period: every layout request is
-   coerced to portrait here, the single choke point (boot, settings
-   preview, debug handle all route through applyLayout). The LAY_L
-   table and the paid-unlock flow stay intact below, unreachable in
-   the demo; the fit pass (fitStage) guarantees the whole stage —
-   score at top, wall at bottom — is visible in ANY window shape. */
+   every layout request is coerced to the portrait branch here, the
+   single choke point (boot, settings preview, debug handle all route
+   through applyLayout). The wide branch and the paid-unlock flow
+   stay intact below, unreachable in the demo. */
 const DEMO_FORCE_PORTRAIT = true;
 function applyLayout(portrait) {
   if (DEMO_FORCE_PORTRAIT) portrait = true;
-  const base = portrait ? LAY_P : LAY_L;
-  RSCALE = Math.max(0.5, Math.min(window.devicePixelRatio || 1, 3) / 2);
-  LAY = Object.assign({}, base, {
-    W: Math.round(base.W * RSCALE), H: Math.round(base.H * RSCALE),
-    roadY: Math.round(base.roadY * RSCALE),
-    roadH: Math.round(base.roadH * RSCALE), feetY: Math.round(base.feetY * RSCALE),
-    crowdBaseH: base.crowdBaseH * RSCALE, crowdPeriod: base.crowdPeriod * RSCALE
-  });
-  W = LAY.W; H = LAY.H; S = H / 512; OX = (W - UW * S) / 2;
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+  W = Math.max(200, Math.round(window.innerWidth * dpr));
+  H = Math.max(200, Math.round(window.innerHeight * dpr));
+  if (W / H <= UW / UH) { S = W / UW; } else { S = H / UH; }   // the flex lock
+  VIS_W = W / S; VIS_H = H / S;
+  skyExtra = Math.max(0, VIS_H - UH);
+  OX = 0; OY = skyExtra * S;
+  LAY = { portrait, W, H, bgFar: BG_FAR, bgMid: BG_MID, bgFg: BG_FG,
+    roadY: ROAD_Y_U * S + OY, roadH: ROAD_H_U * S, feetY: FEET_Y_U * S + OY,
+    crowdBaseH: CROWD_BASE_H_U * S, crowdPeriod: CROWD_PERIOD_U * S,
+    crowdCount: 25, wallLift: WALL_LIFT_U * S };
   cv.width = W; cv.height = H;
   ctx.imageSmoothingEnabled = true;               // v9 quality mandate
   ctx.imageSmoothingQuality = "high";
-  const stage = document.getElementById("stage");
-  stage.style.aspectRatio = portrait ? "9 / 16" : "16 / 9";
-  stage.style.maxWidth = portrait ? "470px" : "980px";
   BB = computeBB();
   buildWall();
-  { // lane wash, pre-baked (art bible: no per-frame gradient raster)
+  { // lane wash, pre-baked (art bible: no per-frame gradient raster).
+    // v15: the lane is the whole screen width (the flex world fills
+    // it), feathered at both screen edges.
     const wc = document.createElement("canvas"); wc.width = W; wc.height = H;
     const wg = wc.getContext("2d");
-    const grad = wg.createLinearGradient(OX, 0, OX + UW * S, 0);
+    const grad = wg.createLinearGradient(0, 0, W, 0);
     grad.addColorStop(0, "rgba(8,16,10,0)"); grad.addColorStop(0.08, "rgba(8,16,10,0.35)");
     grad.addColorStop(0.92, "rgba(8,16,10,0.35)"); grad.addColorStop(1, "rgba(8,16,10,0)");
     wg.fillStyle = grad;
     const bbBot = BB.by + BB.bh;
-    wg.fillRect(OX, bbBot, UW * S, H - bbBot);                       // lane below the board
-    wg.fillRect(OX, 0, Math.max(0, BB.bx - 8 - OX), bbBot);         // margins beside it
-    wg.fillRect(BB.bx + BB.bw + 8, 0, Math.max(0, OX + UW * S - (BB.bx + BB.bw + 8)), bbBot);
-    wg.globalCompositeOperation = "destination-out";                // feather the seam
+    wg.fillRect(0, bbBot, W, H - bbBot);                       // lane below the board
+    wg.fillRect(0, 0, Math.max(0, BB.bx - 8), bbBot);          // margins beside it
+    wg.fillRect(BB.bx + BB.bw + 8, 0, Math.max(0, W - (BB.bx + BB.bw + 8)), bbBot);
+    wg.globalCompositeOperation = "destination-out";          // feather the seam
     const fg2 = wg.createLinearGradient(0, bbBot - 4, 0, bbBot + Math.round(46 * BB.k));
     fg2.addColorStop(0, "rgba(0,0,0,0.55)"); fg2.addColorStop(1, "rgba(0,0,0,0)");
-    wg.fillStyle = fg2; wg.fillRect(OX, bbBot - 4, UW * S, Math.round(46 * BB.k) + 4);
+    wg.fillStyle = fg2; wg.fillRect(0, bbBot - 4, W, Math.round(46 * BB.k) + 4);
     wg.globalCompositeOperation = "source-over";
     ART.washCv = wc;
   }
-  if (ART.frameTex || ART.medallion) bakeBillboard();
-  if (window.__popicoin) { window.__popicoin.U.S = S; window.__popicoin.U.OX = OX; }
+  if (ART.frameTex || ART.medallion || ART.bbFrameImg) bakeBillboard();
+  if (window.__popicoin) {
+    window.__popicoin.U.S = S; window.__popicoin.U.OX = OX; window.__popicoin.U.OY = OY;
+    window.__popicoin.U.VIS_W = VIS_W; window.__popicoin.U.VIS_H = VIS_H;
+  }
   if (typeof renderSettings === "function") renderSettings();
-  fitStage();
 }
 
-/* v9.1 — FIT, never crop: size the stage (CSS px) so the ENTIRE
-   9:16 stage fits inside the viewport — width-limited on tall
-   screens, height-limited on wide/short ones. The page around it
-   (--bg, #0a0f0a — the game's own dark) is the letterbox. Runs on
-   boot, resize, orientation change and fullscreen change. */
-function fitStage() {
-  const stage = document.getElementById("stage");
-  if (!stage || !stage.parentElement) return;
-  const availW = Math.min(stage.parentElement.clientWidth - 20, 470);
-  const availH = Math.max(280, window.innerHeight - stage.getBoundingClientRect().top - 14);
-  const fitW = Math.min(availW, availH * 9 / 16);
-  stage.style.width = Math.max(200, Math.floor(fitW)) + "px";
-}
-
+/* v15: the stage is fixed inset-0 — resize/orientation/fullscreen
+   changes simply re-run the flex layout. */
 let fitT = 0;
-function queueFit() { clearTimeout(fitT); fitT = setTimeout(fitStage, 60); }
+function queueFit() { clearTimeout(fitT); fitT = setTimeout(() => applyLayout(LAY.portrait), 60); }
 window.addEventListener("resize", queueFit);
 window.addEventListener("orientationchange", queueFit);
 document.addEventListener("fullscreenchange", queueFit);
-window.addEventListener("load", fitStage);
-/* the brand webfont landing grows the header and pushes the stage
-   down AFTER the boot fit — refit once fonts settle, or the stage
-   can sit a few px too tall on short viewports */
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitStage());
-/* the chrome above the stage (brand header, HUD) can change height
-   after a fit — the HUD wraps to two rows then settles to one, the
-   brand grows when its webfont lands — and every px it grows pushes
-   the stage down. Watch both and refit on any size change. */
-if (window.ResizeObserver) {
-  const roFit = new ResizeObserver(queueFit);
-  const hudEl = document.getElementById("hud"); if (hudEl) roFit.observe(hudEl);
-  const brandEl = document.querySelector("header.brand"); if (brandEl) roFit.observe(brandEl);
-}
 
 /* v9.1 — FORCED FULLSCREEN + PORTRAIT LOCK on the play gesture.
    Best-effort enhancement only: every call is try/caught (and its
-   promise caught) so unsupported browsers silently keep the fit
-   view, which already guarantees the full stage. Called from
-   startGame (every run start: PLAY, PLAY AGAIN, splash tap/space)
-   and from the CREATE ACCOUNT & PLAY / login submits. */
+   promise caught) so unsupported browsers silently keep the
+   full-screen stage, which already guarantees the whole game. */
 function goFullscreenPortrait() {
   try {
     if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
@@ -1336,88 +1353,44 @@ function goFullscreenPortrait() {
       catch (e) { p = document.documentElement.requestFullscreen(); }
       if (p && p.catch) p.catch(() => {});
     }
-  } catch (e) { /* fit view is the guarantee */ }
+  } catch (e) { /* full-screen stage is the guarantee */ }
   try {
     if (screen.orientation && screen.orientation.lock) {
       const q = screen.orientation.lock("portrait-primary");
       if (q && q.catch) q.catch(() => {});
     }
-  } catch (e) { /* unsupported — fit view stands */ }
+  } catch (e) { /* unsupported — full-screen stage stands */ }
 }
 
 function bakeBillboard() {
-  if (!ART.frameTex) return;
+  if (!ART.frameTex && !ART.bbFrameImg) return;
   const { bw, bh, bx, by, win } = BB, k = BB.k, X = x => x - BB.ox, Y = y => y - BB.oy;
-  /* glow plate: neon spill + ground pool + tube bloom (alpha-pulsed) */
+  /* glow plate: neon spill + ground pool (alpha-pulsed). v15: the
+     baked tube bloom is RETIRED — Kenn's frame carries its own tube. */
   const glow = mkCanvas(BB.cw, BB.ch), g = glow.getContext("2d");
   let gr = g.createRadialGradient(X(bx + bw / 2), Y(by + bh / 2), 40 * k, X(bx + bw / 2), Y(by + bh / 2), 400 * k);
   gr.addColorStop(0, "rgba(110,255,190,0.13)"); gr.addColorStop(1, "rgba(110,255,190,0)");
   g.fillStyle = gr; g.fillRect(0, 0, BB.cw, BB.ch);
   g.save();
-  g.translate(X(bx + bw / 2), Y(Math.min(GROUND_Y * S + 26 * k, by + bh + 110 * k))); g.scale(1, 26 / 280);
+  g.translate(X(bx + bw / 2), Y(Math.min((GROUND_Y + skyExtra) * S + 26 * k, by + bh + 110 * k))); g.scale(1, 26 / 280);
   gr = g.createRadialGradient(0, 0, 10 * k, 0, 0, 280 * k);
   gr.addColorStop(0, "rgba(0,255,136,0.07)"); gr.addColorStop(1, "rgba(0,255,136,0)");
   g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 280, 0, 7); g.fill();
   g.restore();
-  const tube = g2 => {
-    g2.beginPath();
-    if (g2.roundRect) g2.roundRect(X(bx + 7 * k), Y(by + 7 * k), bw - 14 * k, bh - 14 * k, 10 * k);
-    else g2.rect(X(bx + 7 * k), Y(by + 7 * k), bw - 14 * k, bh - 14 * k);
-  };
-  const tg = g.createLinearGradient(X(bx), Y(by), X(bx + bw), Y(by + bh));
-  tg.addColorStop(0, "#37E6FF"); tg.addColorStop(0.5, "#37E6FF"); tg.addColorStop(1, "#FF8C1A");
-  g.strokeStyle = tg;
-  g.globalAlpha = 0.10; g.lineWidth = 18 * k; tube(g); g.stroke();
-  g.globalAlpha = 0.16; g.lineWidth = 11 * k; tube(g); g.stroke();
-  g.globalAlpha = 0.28; g.lineWidth = 6 * k; tube(g); g.stroke();
-  g.globalAlpha = 1;
   ART.bbGlow = glow;
-  ART.tubeGrad = tg;
-  /* frame plate: patchwork borders + rivets + medallion, window hollow */
+  /* frame plate: Kenn's coupon-collage frame, AS-IS — exterior keyed,
+     window opened (art/bb-frame.png). The sponsor creative draws
+     into the window first; this plate lays over it, medallion, tube
+     and all, exactly as his generator painted them. */
   const fr = mkCanvas(BB.cw, BB.ch), f = fr.getContext("2d");
-  const tex = ART.frameTex;
-  const border = (dx, dy, dw, dh, sx, sy, sw, sh) => {
-    f.fillStyle = "#0A120C"; f.fillRect(dx, dy, dw, dh);
-    if (tex) f.drawImage(tex, sx, sy, sw, sh, dx, dy, dw, dh);
-  };
-  border(X(bx), Y(by), bw, 60 * k, 180, 120, 180, 70);                 // top
-  border(X(bx), Y(by + bh - 48 * k), bw, 48 * k, 180, 760, 180, 60);       // bottom
-  border(X(bx), Y(by + 60 * k), 34 * k, bh - 108 * k, 6, 60, 100, 950);        // left
-  border(X(bx + bw - 34 * k), Y(by + 60 * k), 34 * k, bh - 108 * k, 186, 60, 100, 950); // right
-  /* corner blocks */
-  border(X(bx), Y(by), 34 * k, 60 * k, 6, 60, 100, 130);
-  border(X(bx + bw - 34 * k), Y(by), 34 * k, 60 * k, 186, 60, 100, 130);
-  border(X(bx), Y(by + bh - 48 * k), 34 * k, 48 * k, 6, 700, 100, 110);
-  border(X(bx + bw - 34 * k), Y(by + bh - 48 * k), 34 * k, 48 * k, 186, 700, 100, 110);
-  /* shading: outer edge + window lip shadow + top light */
-  f.strokeStyle = "rgba(0,0,0,0.65)"; f.lineWidth = Math.max(1.5, 2 * k);
-  f.strokeRect(X(bx) + 1, Y(by) + 1, bw - 2, bh - 2);
-  f.strokeStyle = "rgba(0,0,0,0.55)"; f.lineWidth = 6 * k;
-  f.strokeRect(X(win.x), Y(win.y), win.w, win.h);
-  f.fillStyle = "rgba(255,255,255,0.07)"; f.fillRect(X(bx), Y(by), bw, 2 * k);
-  /* rivets along the window lip */
-  f.fillStyle = "#6E9277";
-  const rivet = (x, y) => {
-    f.beginPath(); f.arc(x, y, 2.2 * k, 0, 7); f.fill();
-    f.fillStyle = "rgba(0,0,0,0.5)"; f.beginPath(); f.arc(x + 0.7 * k, y + 0.8 * k, 0.9 * k, 0, 7); f.fill();
-    f.fillStyle = "#6E9277";
-  };
-  for (let x = win.x + 12 * k; x < win.x + win.w - 6 * k; x += 26 * k) { rivet(X(x), Y(win.y) - 5 * k); rivet(X(x), Y(win.y + win.h) + 5 * k); }
-  for (let y = win.y + 12 * k; y < win.y + win.h - 6 * k; y += 26 * k) { rivet(X(win.x) - 5 * k, Y(y)); rivet(X(win.x + win.w) + 5 * k, Y(y)); }
-  /* the BCH medallion crowns the frame, overlapping the top strip */
-  if (ART.medallion) {
-    f.save();
-    f.fillStyle = "rgba(0,0,0,0.35)";
-    f.beginPath(); f.ellipse(X(bx + bw / 2), Y(by) + 34 * k, 30 * k, 30 * k, 0, 0, 7); f.fill();
-    f.drawImage(ART.medallion, X(bx + bw / 2) - 30 * k, Y(by) - 2 * k, 60 * k, 60 * k);
-    f.restore();
-  }
+  if (ART.bbFrameImg) f.drawImage(ART.bbFrameImg, X(bx), Y(by), bw, bh);
   ART.bbFrame = fr;
   ART.bbPlaceholder = bakePlaceholder();
 }
 /* placeholder creative: SPONSOR ME — YOUR LOGO HERE (Kenn's copy, exact).
    No price on the board, ever. Baked once; re-baked when fonts land. */
 function bakePlaceholder() {
+  if (!BB) return null;
   const { win } = BB, F = win.w / 431.2; // type scale vs the v5 window
   const c = mkCanvas(Math.round(win.w), Math.round(win.h)), g = c.getContext("2d");
   /* v4.1: the empty board must read as a LIT SIGN, like Kenn's ref —
@@ -1468,6 +1441,7 @@ artLoad("bgFar", "bg-far"); artLoad("bgMid", "bg-mid"); artLoad("bgFg", "bg-fg")
 artLoad("pipeCap", "pipe-cap"); artLoad("pipeBody", "pipe-body");
 artLoad("pileTex", "pile-texture");
 artLoad("frameTex", "frame-tex", bakeBillboard); artLoad("medallion", "medallion", bakeBillboard);
+artLoadPng("bbFrameImg", "bb-frame", bakeBillboard);   // v15: Kenn's coupon frame
 artLoad("zoms", "zombies", buildWall); artLoad("road", "road");
 /* v10 purpose-made full columns (lossless PNG, native resolution) */
 artLoadPng("colOHang", "col-o-hang", () => measureColumn(ART.colOHang));
@@ -1483,7 +1457,7 @@ function drawBackgroundFallback() {
   g.addColorStop(0, "#0b1410"); g.addColorStop(0.6, "#0a0f0a"); g.addColorStop(1, "#070907");
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = "#0e1a12";
-  const gy = GROUND_Y * S;
+  const gy = GROUND_Y * S + OY;
   const piles = [[-0.02, 0.30, 0.33], [0.16, 0.345, 0.45], [0.64, 0.32, 0.42], [0.92, 0.285, 0.25]];
   for (const [fx, fp, fw] of piles) {
     ctx.beginPath(); ctx.moveTo(fx * W, gy); ctx.lineTo((fx + fw / 2) * W, fp * H); ctx.lineTo((fx + fw) * W, gy); ctx.fill();
@@ -1502,9 +1476,11 @@ function drawTiledLayer(img, rect, speed) {
 }
 function drawBackground() {
   artAdvanceScroll();
-  // v14 parallax: Kenn's purpose-made layers in true wrap tiling —
+  // v14/v15 parallax: Kenn's purpose-made layers in true wrap tiling —
   // far sky+skyline 0.3x lane speed, mid trash fields 0.6x, foreground
-  // mounds static, centered. Layer rects live in the LAY tables.
+  // mounds at FULL ground speed 1.0x (v15, Kenn's playtest law:
+  // everything in the world travels right-to-left; only the crowd
+  // runs the other way). Layer rects are fractions of full height.
   if (!ART.bgFar || !ART.bgMid) { drawBackgroundFallback(); return; }
   // base coat: the same deep green-black the v6 ground band used. The
   // mid/fg art is a keyed texture (real alpha holes between trash), so
@@ -1512,10 +1488,7 @@ function drawBackground() {
   ctx.fillStyle = "#0c120c"; ctx.fillRect(0, 0, W, H);
   drawTiledLayer(ART.bgFar, LAY.bgFar, 0.3);
   drawTiledLayer(ART.bgMid, LAY.bgMid, 0.6);
-  if (ART.bgFg) {
-    const h = LAY.bgFg[1] * H, w = h * (ART.bgFg.naturalWidth / ART.bgFg.naturalHeight);
-    ctx.drawImage(ART.bgFg, (W - w) / 2, LAY.bgFg[0] * H, w, h);
-  }
+  if (ART.bgFg) drawTiledLayer(ART.bgFg, LAY.bgFg, 1.0);
 }
 function drawBillboard(t) {
   const { bw, bh, bx, by, win } = BB, k = BB.k, FS = win.w / 431.2;
@@ -1561,27 +1534,12 @@ function drawBillboard(t) {
     ctx.fillText("YOUR AD HERE", win.x + win.w / 2, win.y + win.h / 2 - 4);
   }
   ctx.restore();
-  // painted scrap frame over the window edges
+  // Kenn's coupon frame over the window edges (v15) — the frame
+  // plate carries its own baked tube + medallion; no live stroke.
   if (ART.bbFrame) {
     ctx.drawImage(ART.bbFrame, BB.ox, BB.oy);
-    // the tube itself: a live core stroke over the baked bloom
-    ctx.save();
-    ctx.globalAlpha = 0.55 + 0.45 * ART.pulseA;
-    if (!ART.tubeGradMain) {
-      const tg2 = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
-      tg2.addColorStop(0, "#37E6FF"); tg2.addColorStop(0.5, "#37E6FF"); tg2.addColorStop(1, "#FF8C1A");
-      ART.tubeGradMain = tg2;
-    }
-    ctx.strokeStyle = ART.tubeGradMain; ctx.lineWidth = 2.6 * k;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(bx + 7 * k, by + 7 * k, bw - 14 * k, bh - 14 * k, 10 * k); else ctx.rect(bx + 7 * k, by + 7 * k, bw - 14 * k, bh - 14 * k);
-    ctx.stroke();
-    ctx.globalAlpha = 0.30 * ART.pulseA;
-    ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = Math.max(1, k);
-    ctx.stroke();
-    ctx.restore();
   } else {
-    // fallback while plates load: the v3 neon frame
+    // fallback while the frame loads: the v3 neon frame
     ctx.save();
     ctx.shadowColor = "#00FF88"; ctx.shadowBlur = 20 + ART.pulseA * 25;
     ctx.strokeStyle = "#00FF88"; ctx.lineWidth = 3;
@@ -1684,7 +1642,7 @@ function drawBirdU() {
   if (game.state === "play" && game.phase === "flying" && b.wingT < 16) {
     game.particles.push({
       x: OX + (b.x - 2) * S + Math.random() * 6,
-      y: (b.y + 14 + hov) * S + (Math.random() - 0.5) * 8,
+      y: (b.y + 14 + hov) * S + OY + (Math.random() - 0.5) * 8,
       vx: -50 - Math.random() * 50, vy: (Math.random() - 0.5) * 36,
       life: 0.35, age: 0, r: 1 + Math.random() * 1.3,
       spark: true, star: true, hue: Math.random() < 0.5 ? "gold" : "g"
@@ -1694,7 +1652,18 @@ function drawBirdU() {
 /* ---- Kenn's duct tape (v9) — RETIRED in v14 (Kenn's ruling): the
    strip existed to hide the mirror fold in the v6 plate system. True
    wrap tiles have no fold, so the tape's job no longer exists. */
+/* v15 chrome rule (Kenn's playtest law): during PLAY the canvas
+   alone owns the screen — brand header, account HUD and footer are
+   display:none from the tap that starts a run until the run ends.
+   In menu states (splash / game over) the chrome returns, fully
+   functional, overlaid on the fixed full-screen canvas. */
+const chromeEls = [document.querySelector("header.brand"), document.getElementById("hud"), document.querySelector("footer")];
+function syncChrome() {
+  const d = game.state === "play" ? "none" : "";
+  for (const el of chromeEls) if (el && el.style.display !== d) el.style.display = d;
+}
 function draw(tSec) {
+  syncChrome();
   // the two neon circuits breathe on one clock, phase-shifted (bible)
   ART.pulseA = 0.5 + 0.5 * Math.sin(tSec * (2 * Math.PI / 2.6));
   ART.pulseB = 0.5 + 0.5 * Math.sin(tSec * (2 * Math.PI / 2.6) + Math.PI / 2);
@@ -1705,7 +1674,7 @@ function draw(tSec) {
   // Drawn over the background + billboard only — never over the wall
   // or the pipes (v8 relative order preserved).
   if (ART.washCv) ctx.drawImage(ART.washCv, 0, 0);
-  /* draw order (v14): background (far/mid/fg layers, inside
+  /* draw order (v15): background (far/mid/fg layers, inside
      drawBackground) → billboard → wash → pipes → zombie wall → bird →
      HUD. The foreground layer rides inside the background pass now;
      its mounds sit behind the wall like the v6 plate's did, and the
@@ -1716,8 +1685,8 @@ function draw(tSec) {
      behind the crowd — the wall pass after this block draws over
      them. Rendering only; collision is computed in the sim. */
   ctx.save();
-  ctx.beginPath(); ctx.rect(OX, 0, UW * S, H); ctx.clip();
-  ctx.setTransform(S, 0, 0, S, OX, 0);
+  ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+  ctx.setTransform(S, 0, 0, S, OX, OY);
   const showPipes = game.state === "play" && game.phase !== "ready" && game.warmup <= 0;
   if (showPipes) {
     game.pipes.forEach((p, slot) => {
@@ -1760,22 +1729,22 @@ function draw(tSec) {
   }
   /* bird + score pass — unit space */
   ctx.save();
-  ctx.beginPath(); ctx.rect(OX, 0, UW * S, H); ctx.clip();
-  ctx.setTransform(S, 0, 0, S, OX, 0);
+  ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+  ctx.setTransform(S, 0, 0, S, OX, OY);
   drawBirdU();
   if (game.state === "play" || game.state === "over") {
     // legibility halo (pre-baked sprite) — bright sponsor art can never
     // wash the score out now; no per-frame shadowBlur (art bible §1)
-    if (ART.halo) ctx.drawImage(ART.halo, UW / 2 - 80, 70, 160, 128);
+    if (ART.halo) ctx.drawImage(ART.halo, VIS_W / 2 - 80, 70, 160, 128);
     ctx.font = "800 44px Syne, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
     ctx.fillStyle = "rgba(0,0,0,0.55)";
-    ctx.fillText(String(game.score), UW / 2, 102);
+    ctx.fillText(String(game.score), VIS_W / 2, 102);
     ctx.fillStyle = "#fff";
-    ctx.fillText(String(game.score), UW / 2, 100);   // spec §6 placement
+    ctx.fillText(String(game.score), VIS_W / 2, 100);   // spec §6 placement
     ctx.textBaseline = "alphabetic";
     if (game.score >= 19 && game.score < 21 && game.state === "play") {
       ctx.fillStyle = "#ffd54f"; ctx.font = "700 13px 'JetBrains Mono', monospace";
-      ctx.fillText("⚠ MOVING PIPES AHEAD ⚠", UW / 2, 152);
+      ctx.fillText("⚠ MOVING PIPES AHEAD ⚠", VIS_W / 2, 152);
     }
   }
   ctx.restore();
@@ -1806,7 +1775,7 @@ function loop(ts) {
 /* debug / autopilot handle (harmless in shipping code) */
 window.__popicoin = { game, perfStats, flap, startGame, medalFor, art: ART,
   setLayout: p => applyLayout(!!p), getLayout: () => (LAY.portrait ? "portrait" : "landscape"),
-  U: { S, OX, UW, UH },
+  U: { S, OX, OY, UW, UH, VIS_W, VIS_H },
   C: { FLAP_V, GRAV, MAXFALL, SCROLL, PIPE_WU, GAP_H, PITCH, HIT, BIRD_X, GROUND_Y, ROT_MIN, ROT_MAX } };
 
 /* ---------------- wiring ---------------- */
@@ -2032,14 +2001,12 @@ const Player = (() => {
     $("authgate").classList.remove("hidden");
     $("splash").classList.add("hidden");
     $("hud").classList.remove("show");
-    fitStage();   // v9.1: HUD hides -> stage top moves -> refit
   }
   function enter(p) {
     profile = p;
     $("authgate").classList.add("hidden");
     $("splash").classList.remove("hidden");
     $("hud").classList.add("show");
-    fitStage();   // v9.1: HUD appears (~55px) -> stage top drops -> refit
     renderHud();
     ensurePrice().then(() => { renderHud(); if ($("stackModal").classList.contains("open")) renderStack(); });
   }
@@ -2440,7 +2407,7 @@ requestAnimationFrame(loop);
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
-/* ---- FLAPPY SATS v14 — end of build ---- */
+/* ---- FLAPPY SATS v15 — end of build ---- */
 </script>
 </body>
 </html>
