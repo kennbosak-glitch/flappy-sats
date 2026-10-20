@@ -6,7 +6,7 @@
 <title>FLAPPY SATS — ESCAPE FIAT TRASH</title>
 <meta name="description" content="FLAPPY SATS — trash-world flappy. Escape fiat trash. Sponsored by the people, priced in Bitcoin Cash.">
 <meta name="theme-color" content="#0a0f0a">
-<!-- FLAPPY SATS v15.1 — full-screen flex viewport (the stage IS the screen) + Kenn's coupon-frame billboard + hanging-pipe ceiling fix. -->
+<!-- FLAPPY SATS v16 — Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. (v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -110,9 +110,27 @@
   #stackModal{position:fixed;inset:0;background:rgba(2,5,3,.86);display:none;z-index:50;overflow-y:auto;
     padding:calc(18px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom))}
   #stackModal.open{display:block}
-  #settingsModal,#unlockModal{position:fixed;inset:0;background:rgba(2,5,3,.86);display:none;z-index:50;overflow-y:auto;
+  #settingsModal,#unlockModal,#sponsorPanel{position:fixed;inset:0;background:rgba(2,5,3,.86);display:none;z-index:50;overflow-y:auto;
     padding:calc(18px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom))}
-  #settingsModal.open,#unlockModal.open{display:block}
+  #settingsModal.open,#unlockModal.open,#sponsorPanel.open{display:block}
+  /* ---- v16: character select (splash), toast, 21 Club gold flash ---- */
+  #charRow{display:flex;gap:14px;justify-content:center;align-items:flex-start}
+  .charSlot{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;
+    padding:7px 9px 5px;border:1px solid var(--line);border-radius:12px;background:rgba(5,18,10,.62)}
+  .charSlot img{width:64px;height:48px;object-fit:contain;display:block}
+  .charSlot small{font-size:10px;letter-spacing:2px;color:#9fd4b2}
+  .charSlot.sel{border-color:var(--gold);box-shadow:0 0 12px rgba(255,213,79,.35)}
+  .charSlot.locked{cursor:default}
+  .charSlot.locked small{color:#7fae8d}
+  #toast{position:absolute;left:50%;top:16%;transform:translate(-50%,-8px);z-index:40;
+    background:rgba(6,20,12,.92);border:1px solid var(--gold);color:#fff;font-weight:700;
+    letter-spacing:1px;font-size:15px;padding:12px 18px;border-radius:12px;opacity:0;
+    pointer-events:none;transition:opacity .25s, transform .25s;text-align:center;max-width:88%}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #goldFlash{position:absolute;inset:0;z-index:35;pointer-events:none;opacity:0;
+    background:radial-gradient(ellipse at center, rgba(255,213,79,.95), rgba(255,170,0,.75));
+    transition:opacity .09s}
+  #goldFlash.on{opacity:.55}
   .balbig{font-size:38px;font-weight:700;color:var(--gold);text-align:center;margin:6px 0 0}
   /* ---- v3: medal row on the game-over panel (original thresholds) ---- */
   #medalRow{display:flex;gap:12px;justify-content:center;min-height:64px}
@@ -218,8 +236,18 @@
       <p>Trash-world flappy with a live billboard behind the pipes. Sponsors rotate every 10s.
          Pipes start moving after pipe 20 — watch for the dust telegraph.</p>
       <p style="color:var(--gold);font-size:12px">🪙 You earn 1 sat per pipe — up to $0.10 worth a day.</p>
+      <div id="charRow" aria-label="Choose your bird">
+        <div class="charSlot sel" id="slotGreen" role="button" aria-label="Green bird">
+          <img id="imgGreen" src="art/bird-green.png" alt="Green BCH bird">
+          <small>BCH</small>
+        </div>
+        <div class="charSlot locked" id="slotOrange" role="button" aria-label="Mystery bird">
+          <img id="imgOrange" src="art/bird-orange.png" alt="Mystery bird" style="filter:brightness(0)">
+          <small id="orangeLabel">???</small>
+        </div>
+      </div>
       <button class="btn" id="btnPlay">▶ PLAY GAME</button>
-      <button class="btn gold" id="btnSponsor">SPONSOR ME</button>
+      <button class="btn gold" id="btnSponsor">SPONSOR THIS GAME</button>
       <p style="font-size:11px;color:#7fae8d">Tap / click / spacebar to flap.</p>
     </div>
 
@@ -237,12 +265,15 @@
       <p id="finalNote">The yard claims another coin.</p>
       <p id="earnNote" style="color:var(--gold);font-weight:700"></p>
       <button class="btn" id="btnAgain">PLAY AGAIN</button>
-      <button class="btn ghost" id="btnOverSponsor">SPONSOR ME</button>
+      <button class="btn ghost" id="btnOverSponsor">SPONSOR THIS GAME</button>
     </div>
+
+    <div id="goldFlash" aria-hidden="true"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v15.1 • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16 • Trash world bg • Scrap pipes • Neon #00FF88<br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -409,6 +440,38 @@
   </div>
 </div>
 
+<!-- ============ SPONSOR PANEL (v16 — the on-air panel: honest beta terms) ============ -->
+<div id="sponsorPanel" role="dialog" aria-modal="true" aria-labelledby="sponsorPanelTitle">
+  <div class="card">
+    <button class="x" id="btnCloseSponsorPanel" aria-label="Close">✕</button>
+    <h2 id="sponsorPanelTitle">SPONSOR THIS GAME</h2>
+    <p style="font-size:15px;color:#fff"><b>YOUR AD ON THE BILLBOARD — EVERY PLAYER SEES IT.</b></p>
+
+    <h3>HOW IT WORKS</h3>
+    <p>· Sponsors rotate on the in-game billboard, <b>10 seconds each</b>, in purchase order.<br>
+       · The price <b>DOUBLES with every slot sold</b>: Slot #1 $1.00 · #2 $2.00 · #3 $4.00 · #4 $8.00…</p>
+    <div class="pricebox">
+      <div class="row total"><span>NEXT SLOT</span><span id="spNextSlot">#1 — $1.00</span></div>
+    </div>
+
+    <h3>PAY IN BITCOIN CASH</h3>
+    <p>Pay the USD price in BCH at the live rate to the house wallet:</p>
+    <div class="addr" id="spAddr">bitcoincash:qz40helxvypa8u698hxl2thsypmhlqudncygfnrh3k</div>
+    <div class="copyrow">
+      <button class="btn ghost" id="btnCopySpAddr">📋 TAP TO COPY ADDRESS</button>
+    </div>
+    <p>Then DM <b>@KennethBosak</b> or <b>@Skynetonx</b> with your ad image (wide banner) —
+       your slot goes live the same day.</p>
+
+    <h3>THE RULES</h3>
+    <p>Creative is reviewed before it displays. Keep it clean. Payment is final.</p>
+
+    <p style="border-top:1px dashed var(--neon-dim);padding-top:12px;color:var(--warn);font-size:12px">
+      FLAPPY SATS — BETA. Player sats in the beta are practice; the earnings pool opens at full launch.
+      Sponsorships are real from slot #1.</p>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script>
@@ -440,6 +503,11 @@ const POPICOIN_CONFIG = {
      the pure original pipe behavior. The flight model is unaffected. */
   WAVE_PIPES: true
 };
+
+/* v16 — sponsor slots sold so far (baked at build time; Skynet bumps
+   this one constant as slots sell). The sponsor panel's NEXT SLOT
+   price derives from it: slotUsd(SPONSORS_SOLD) = $1.00 x 2^sold. */
+const SPONSORS_SOLD = 0;
 
 /* ---------------- sponsor data (read path) ---------------- */
 let sponsors = [];           // [{username, imageUrl, paidSats, createdAt}]
@@ -590,6 +658,22 @@ function preloadBillboardImages() {
    every screen height — no base-coat bar. (3) BILLBOARD HARDWARE:
    the legacy code-drawn posts + cross-brace under the board are
    removed; Kenn's frame plate is the complete object.
+   v16 (2026-10-20): THE EGGS + SPONSOR PANEL. Kenn's Family A birds
+   (art/bird-green/orange/gold.png, keyed from his masters) replace
+   the retired painted bird-hq — same 48u footprint, same hitbox,
+   content-bbox normalised so all three skins sit identically.
+   THE FLIPPENING: a tight double-tap (two flaps <=500ms apart)
+   arms the egg; clearing 2 more pipes unlocks the orange BTC bird
+   PERMANENTLY (flag on the account record) with splash character
+   select (locked slot = silhouette + "???"). THE 21 CLUB: 21
+   deaths in one session (sessionStorage — no visible counter)
+   turns on a session phase mode: the bird steps green->gold->
+   orange->gold... one step per pipe cleared, overriding skin
+   selection until the tab closes; death #21's game-over screen
+   flickers gold. SPONSOR PANEL: splash sponsor button opens the
+   honest beta panel (doubling ladder, NEXT SLOT from the baked
+   SPONSORS_SOLD constant, house address tap-to-copy, DM intake).
+   Eggs are COSMETIC ONLY — they never touch sats, score or pipes.
    ===================================================================== */
 /* v15 layout — ONE unit-space parameter set (the portrait canon
    Kenn playtested), derived from the v6–v14 device tables at their
@@ -720,6 +804,7 @@ function resetGame() {
   game.score = 0; game.t = 0; game.warmup = 0; game.pauseSteps = 0;
   game.hoverTheta = 0; game.flashT = -1; game.deathT = 0; game.deathByPipe = false;
   game.phase = "ready";
+  if (window.Eggs) Eggs.onRunStart();    // v16: per-run egg state resets (phase mode persists)
 }
 function startGame() {
   goFullscreenPortrait();   // v9.1: every run start re-attempts fullscreen + portrait lock
@@ -751,6 +836,7 @@ function startDeath(byPipe) {
   game.flashT = 0;                       // white flash starts now (spec §6)
   if (!byPipe) { game.bird.v = 0; game.bird.g = 0; }  // ground hit: already down
   sfx("hit");
+  if (window.Eggs) Eggs.onDeath();       // v16: 21 Club session death count + Flippening disarm
   if (typeof Player !== "undefined") Player.onRunEnd(game.score);
 }
 
@@ -786,6 +872,7 @@ function showGameOver() {
     bn.textContent = best > 0 ? "BEST — " + best + " pipes" : "";
   }
   document.getElementById("gameover").classList.remove("hidden");
+  if (window.Eggs) Eggs.onGameOver();    // v16: 21 Club — death #21's screen flickers gold
   sfx("swoosh");
   // score counts up 0 → final over 0.5 s (spec §6)
   const fs = document.getElementById("finalScore"), t0 = performance.now();
@@ -806,6 +893,7 @@ function doFlap() {
 }
 function flap() {
   if (game.state !== "play") return;
+  if (window.Eggs) Eggs.onFlap();        // v16: Flippening double-tap observer (observes only — every flap still flaps)
   if (game.phase === "ready") {          // first flap: hover → physics, warm-up starts
     game.phase = "flying";
     game.warmup = 66;
@@ -933,6 +1021,7 @@ function step() {
     if (!p.scored && (p.x === BIRD_X || p.x === BIRD_X - 1)) {
       p.scored = true;
       game.score++;
+      if (window.Eggs) Eggs.onPipeCleared();   // v16: eggs observe the clear (Flippening countdown / 21 Club phase step) — score itself untouched
       sfx("point");
       if (game.score === 20) game.pauseSteps = 27;   // 19 → 20 transition beat
     }
@@ -974,7 +1063,10 @@ const ART = {
      One sprite per column, mouth-anchored — see drawPipeColumn.
      HQ bird character */
   colOHang: null, colOStand: null, colFHang: null, colFStand: null,
-  birdHQ: null,
+  /* v16 — Kenn's Family A birds (keyed from his masters): green =
+     the BCH bird (default), orange = the BTC bird (Flippening
+     unlock), gold = the 21 Club phase skin. bird-hq retired. */
+  birdGreen: null, birdOrange: null, birdGold: null,
   bbGlow: null, bbFrame: null, bbPlaceholder: null,
   /* the zombie wall (v9) + legacy road plate slot */
   zoms: null, road: null, crowd: null, wall: null, wallStrips: null,
@@ -1019,6 +1111,32 @@ function measureColumn(im) {
       im._cw = med(spans); im._ccx = med(centres);
     }
   } catch (e) { /* canvas metrics fallback in drawPipeColumn */ }
+}
+/* v16 — measure a Family A bird sprite's CONTENT bbox (alpha>=128),
+   the same discipline as measureColumn: drawBirdU draws from this
+   box at a fixed 48u content width, so green/orange/gold — whose
+   source canvases pad the bird differently — sit identically on
+   the hitbox anchor. Falls back silently to the full canvas when
+   pixels are unreadable (rig file:// taint); harmless either way
+   because the shipped PNGs are already tight-cropped. */
+function measureBird(im) {
+  if (!im || !im.naturalWidth) return;
+  try {
+    const c = mkCanvas(im.naturalWidth, im.naturalHeight);
+    const g = c.getContext("2d", { willReadFrequently: true });
+    g.drawImage(im, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+    for (let y = 0; y < c.height; y++) {
+      for (let x = 0; x < c.width; x++) {
+        if (d[(y * c.width + x) * 4 + 3] >= 128) {
+          if (x < x0) x0 = x; if (x > x1) x1 = x;
+          if (y < y0) y0 = y; if (y > y1) y1 = y;
+        }
+      }
+    }
+    if (x1 > x0 && y1 > y0) im._bb = { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+  } catch (e) { /* full-canvas fallback in birdSkinImage() */ }
 }
 function mulberry(seed) {
   let a = seed >>> 0;
@@ -1471,7 +1589,9 @@ artLoadPng("colOHang", "col-o-hang", () => measureColumn(ART.colOHang));
 artLoadPng("colOStand", "col-o-stand", () => measureColumn(ART.colOStand));
 artLoadPng("colFHang", "col-f-hang", () => measureColumn(ART.colFHang));
 artLoadPng("colFStand", "col-f-stand", () => measureColumn(ART.colFStand));
-artLoadPng("birdHQ", "bird-hq");
+artLoadPng("birdGreen", "bird-green", () => measureBird(ART.birdGreen));
+artLoadPng("birdOrange", "bird-orange", () => measureBird(ART.birdOrange));
+artLoadPng("birdGold", "bird-gold", () => measureBird(ART.birdGold));
 bakeHalo();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (ART.bbFrame) ART.bbPlaceholder = bakePlaceholder(); });
 
@@ -1628,22 +1748,38 @@ function drawWingU(side, angDeg) {
   }
   ctx.restore();
 }
+/* v16 — the drawn bird is Kenn's Family A sprite for the active
+   skin (Eggs.currentSkin(): 21 Club phase > selection > green).
+   Content-bbox normalised (measureBird): every skin's content is
+   drawn at exactly 48u wide, content-centred on the hitbox centre,
+   so a skin swap never moves the bird. Falls back to the green
+   bird, then to the v8 vector roundel if no sprite has loaded. */
+const SKIN_ART = { green: "birdGreen", orange: "birdOrange", gold: "birdGold" };
+function birdSkinImage() {
+  const key = window.Eggs ? Eggs.currentSkin() : "green";
+  let img = ART[SKIN_ART[key] || "birdGreen"];
+  if (!img || !img.naturalWidth) img = ART.birdGreen;
+  if (!img || !img.naturalWidth) return null;
+  const bb = img._bb || { x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight };
+  return { img, bb };
+}
 function drawBirdU() {
-  // v9: the bird is Kenn's HQ coin-bird character (art/bird-hq.png,
-  // as-is sprite) — single frame, bob + tilt only, exactly like the
+  // The bird is Kenn's Family A character (v16; v9's painted bird-hq
+  // retired) — single frame, bob + tilt only, exactly like the
   // original's design. The visual (48u wide) is deliberately larger
-  // than the measured 20×20 hitbox: the forgiving-graze rule from the
-  // mechanics spec. Rotation follows the spec rotation machine.
+  // than the measured 20×20 hitbox: the forgiving-graze rule from
+  // the mechanics spec. Rotation follows the spec rotation machine.
   // The v8 vector roundel remains only as a load fallback.
   const b = game.bird;
   const hov = (game.phase === "ready" || game.phase === "menu")
     ? 4 * Math.sin(game.hoverTheta * Math.PI / 180) : 0;   // spec §2 hover bob (draw-only)
-  if (ART.birdHQ) {
+  const skin = birdSkinImage();
+  if (skin) {
     ctx.save();
     ctx.translate(b.x + 10, b.y + 10 + hov);   // hitbox center
     ctx.rotate(b.angle * Math.PI / 180);
-    const BW = 48, BH = BW * ART.birdHQ.naturalHeight / ART.birdHQ.naturalWidth;
-    ctx.drawImage(ART.birdHQ, -BW / 2, -BH / 2, BW, BH);
+    const BW = 48, BH = BW * skin.bb.h / skin.bb.w;
+    ctx.drawImage(skin.img, skin.bb.x, skin.bb.y, skin.bb.w, skin.bb.h, -BW / 2, -BH / 2, BW, BH);
     ctx.restore();
   } else {
   // wing phase: fast flutter for ~0.3 s after each flap, then a slow glide sweep
@@ -1820,6 +1956,7 @@ document.addEventListener("keydown", e => {
   if (e.code === "Space") {
     if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return; // typing (auth/sponsor forms)
     if (document.getElementById("modal").classList.contains("open")) return;
+    if (document.getElementById("sponsorPanel").classList.contains("open")) return;
     if (document.getElementById("stackModal").classList.contains("open")) return;
     e.preventDefault();
     if (game.state === "splash") startGame(); else if (game.state === "play") flap();
@@ -1869,9 +2006,26 @@ function openModal() {
   if (POPICOIN_CONFIG.firebaseProjectId) loadSponsors().then(renderPrice);
 }
 function closeModal() { modal.classList.remove("open"); }
-document.getElementById("btnSponsor").addEventListener("click", openModal);
-document.getElementById("btnOverSponsor").addEventListener("click", openModal);
 document.getElementById("btnClose").addEventListener("click", closeModal);
+
+/* v16 — SPONSOR PANEL: the splash/game-over sponsor buttons open the
+   honest beta panel (doubling ladder + NEXT SLOT from the baked
+   SPONSORS_SOLD constant + house address + DM intake). The full
+   self-serve modal above (openModal) stays dormant in the demo: its
+   verify-and-go-live flow belongs to the server build. */
+const sponsorPanel = document.getElementById("sponsorPanel");
+function openSponsorPanel() {
+  const usd = slotUsd(SPONSORS_SOLD);
+  document.getElementById("spNextSlot").textContent = "#" + (SPONSORS_SOLD + 1) + " — $" + usd.toFixed(2);
+  document.getElementById("spAddr").textContent = POPICOIN_CONFIG.sponsorAddress;
+  sponsorPanel.classList.add("open");
+}
+function closeSponsorPanel() { sponsorPanel.classList.remove("open"); }
+document.getElementById("btnSponsor").addEventListener("click", openSponsorPanel);
+document.getElementById("btnOverSponsor").addEventListener("click", openSponsorPanel);
+document.getElementById("btnCloseSponsorPanel").addEventListener("click", closeSponsorPanel);
+document.getElementById("btnCopySpAddr").addEventListener("click", e => copyText(POPICOIN_CONFIG.sponsorAddress, e.target));
+window.__popicoin.sponsorsSold = SPONSORS_SOLD;
 document.getElementById("btnRefresh").addEventListener("click", refreshPrice);
 document.getElementById("fUser").addEventListener("input", renderPrice);
 
@@ -2003,6 +2157,7 @@ const Player = (() => {
     const paid = demoPaidClaims(rec);
     return {
       username: rec.username, bchAddress: rec.bchAddress, balanceSats: rec.balanceSats || 0,
+      flipUnlocked: !!rec.flipUnlocked, skin: rec.skin === "orange" ? "orange" : "green",
       earnedToday: rec.earnDay === utcDay() ? (rec.earnedToday || 0) : 0,
       pendingClaim: claims.find(c => c.status === "pending") || null,
       lastClaim: claims[0] || null,
@@ -2015,6 +2170,26 @@ const Player = (() => {
         referralsMax: 10
       }
     };
+  }
+
+  /* ---------- v16 skins (Flippening unlock + character selection) ----------
+     flipUnlocked + skin live ON THE ACCOUNT RECORD (the demo record
+     in localStorage here; the server-side record at deploy — the
+     landscapeUnlocked pattern). Cosmetic only: never sats/score. */
+  function skinState() {
+    if (!profile) return { flipUnlocked: false, skin: "green" };
+    return { flipUnlocked: !!profile.flipUnlocked, skin: profile.skin === "orange" ? "orange" : "green" };
+  }
+  function saveSkin(patch) {
+    if (!profile) return;
+    if (patch.flipUnlocked !== undefined) profile.flipUnlocked = !!patch.flipUnlocked;
+    if (patch.skin) profile.skin = patch.skin === "orange" ? "orange" : "green";
+    if (DEMO) {
+      const users = demoLoad(); const key = localStorage.getItem(DS); const rec = key && users[key];
+      if (rec) { rec.flipUnlocked = !!profile.flipUnlocked; rec.skin = profile.skin; demoSave(users); }
+    }
+    // live mode: profile fields ride along locally; server write joins
+    // the deploy pass with the other account-record fields.
   }
 
   /* ---------- live calls ---------- */
@@ -2042,6 +2217,7 @@ const Player = (() => {
     $("splash").classList.remove("hidden");
     $("hud").classList.add("show");
     renderHud();
+    if (window.Eggs && Eggs.onProfile) Eggs.onProfile();   // v16: skins follow the account
     ensurePrice().then(() => { renderHud(); if ($("stackModal").classList.contains("open")) renderStack(); });
   }
   function renderHud() {
@@ -2326,8 +2502,148 @@ const Player = (() => {
     }
   }
 
-  return { isAuthed, showAuth, onRunStart, onRunEnd, init };
+  return { isAuthed, showAuth, onRunStart, onRunEnd, init, skinState, saveSkin };
 })();
+
+/* ================= EGGS (v16) =================
+   COSMETIC ONLY — a hard rule: nothing in here touches sats, score,
+   pipes, physics or the economy. The eggs only OBSERVE play (flap
+   timestamps, pipe clears, deaths) and choose which bird sprite is
+   drawn.
+
+   THE FLIPPENING (Kenn's egg): two flap inputs <=500 ms apart during
+   a run arm the egg; clearing 2 more pipes before dying completes
+   it — flipUnlocked=true persists on the account record (Player.
+   saveSkin), the bird swaps to the orange BTC bird mid-run, and a
+   toast announces it. Death disarms; after unlock the trigger is
+   inert. Character select lives on the splash: green always,
+   orange once unlocked (the locked slot shows the orange sprite as
+   a pure-black silhouette under "???"). Gold is never selectable.
+
+   THE 21 CLUB: deaths are counted in sessionStorage (survives a
+   refresh, dies with the tab; NO visible counter anywhere). Death
+   #21 exactly activates PHASE MODE for the rest of the session and
+   that game-over screen flickers gold for ~400 ms. Phase mode
+   overrides character selection: the skin starts GREEN and steps
+   one colour per pipe cleared, ping-ponging green->gold->orange->
+   gold->green... across runs, advancing only on pipe clears. */
+const Eggs = (() => {
+  const DEATHS_KEY = "popicoin_sess_deaths_v1";
+  const PHASE_KEY = "popicoin_sess_phase_v1";
+  const PHASE_SKINS = ["green", "gold", "orange"];
+  let unlocked = false, selected = "green";
+  let armed = false, armClears = 0, lastFlapAt = 0;
+  let deaths = 0;
+  let phase = { active: false, idx: 0, dir: 1 };
+  let goldFlashPending = false, lastGoldFlashAt = 0;
+  try {
+    deaths = parseInt(sessionStorage.getItem(DEATHS_KEY) || "0", 10) || 0;
+    const p = JSON.parse(sessionStorage.getItem(PHASE_KEY) || "null");
+    if (p && p.active) phase = { active: true, idx: Math.min(2, Math.max(0, p.idx | 0)), dir: p.dir < 0 ? -1 : 1 };
+  } catch (e) { /* fresh session */ }
+  function savePhase() { try { sessionStorage.setItem(PHASE_KEY, JSON.stringify(phase)); } catch (e) {} }
+
+  function currentSkin() {
+    if (phase.active) return PHASE_SKINS[phase.idx] || "green";
+    return selected === "orange" && unlocked ? "orange" : "green";
+  }
+
+  /* ---------- character select (splash) ---------- */
+  function renderCharSelect() {
+    const g = document.getElementById("slotGreen"), o = document.getElementById("slotOrange");
+    if (!g || !o) return;
+    g.classList.toggle("sel", selected !== "orange");
+    o.classList.toggle("sel", selected === "orange" && unlocked);
+    o.classList.toggle("locked", !unlocked);
+    const lbl = document.getElementById("orangeLabel");
+    if (lbl) lbl.textContent = unlocked ? "BTC" : "???";
+    const img = document.getElementById("imgOrange");
+    if (img) img.style.filter = unlocked ? "" : "brightness(0)";
+  }
+  function selectSkin(k) {
+    if (k === "orange" && !unlocked) return;
+    selected = k === "orange" ? "orange" : "green";
+    if (typeof Player !== "undefined" && Player.saveSkin) Player.saveSkin({ skin: selected });
+    renderCharSelect();
+  }
+  function onProfile() {
+    if (typeof Player === "undefined" || !Player.skinState) return;
+    const s = Player.skinState();
+    unlocked = !!s.flipUnlocked;
+    selected = s.skin === "orange" ? "orange" : "green";
+    renderCharSelect();
+  }
+
+  /* ---------- toast ---------- */
+  function toast(msg) {
+    const t = document.getElementById("toast");
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._h);
+    toast._h = setTimeout(() => t.classList.remove("show"), 2800);
+  }
+
+  /* ---------- play observers (called from the game loop) ---------- */
+  function onFlap() {
+    const now = performance.now();
+    if (unlocked) { lastFlapAt = now; return; }        // trigger inert after unlock
+    if (!armed && lastFlapAt && now - lastFlapAt <= 500) { armed = true; armClears = 0; }
+    lastFlapAt = now;
+  }
+  function onPipeCleared() {
+    if (phase.active) {                                 // 21 Club: one colour step per clear
+      phase.idx += phase.dir;
+      if (phase.idx >= 2) { phase.idx = 2; phase.dir = -1; }
+      else if (phase.idx <= 0) { phase.idx = 0; phase.dir = 1; }
+      savePhase();
+    }
+    if (armed && !unlocked) {                           // Flippening countdown
+      armClears++;
+      if (armClears >= 2) {
+        unlocked = true; armed = false; selected = "orange";
+        if (typeof Player !== "undefined" && Player.saveSkin) Player.saveSkin({ flipUnlocked: true, skin: "orange" });
+        toast("⚡ THE FLIPPENING — BTC BIRD UNLOCKED");
+        try { tone(784, 784, .09, "square", .05); tone(988, 988, .09, "square", .05, .09); tone(1319, 1319, .16, "square", .05, .18); } catch (e) {}
+        renderCharSelect();
+      }
+    }
+  }
+  function onDeath() {
+    armed = false; armClears = 0;                       // death disarms the Flippening
+    try {                                               // count from storage so the count
+      deaths = (parseInt(sessionStorage.getItem(DEATHS_KEY) || "0", 10) || 0) + 1;   // is always
+      sessionStorage.setItem(DEATHS_KEY, String(deaths));                            // session-true
+    } catch (e) { deaths++; }
+    if (deaths === 21 && !phase.active) {
+      phase = { active: true, idx: 0, dir: 1 };
+      savePhase();
+      goldFlashPending = true;
+    }
+  }
+  function onGameOver() {
+    if (!goldFlashPending) return;
+    goldFlashPending = false;
+    lastGoldFlashAt = performance.now();
+    const f = document.getElementById("goldFlash");
+    if (f) { f.classList.add("on"); setTimeout(() => f.classList.remove("on"), 400); }
+  }
+  function onRunStart() { armed = false; armClears = 0; lastFlapAt = 0; }
+
+  function state() {
+    return { deaths, phaseActive: phase.active, phaseIdx: phase.idx,
+             armed, unlocked, selected, skin: currentSkin(), lastGoldFlashAt };
+  }
+
+  const sg = document.getElementById("slotGreen"), so = document.getElementById("slotOrange");
+  if (sg) sg.addEventListener("click", () => selectSkin("green"));
+  if (so) so.addEventListener("click", () => selectSkin("orange"));
+  renderCharSelect();
+  return { onFlap, onPipeCleared, onDeath, onGameOver, onRunStart, onProfile,
+           currentSkin, renderCharSelect, selectSkin, toast, state };
+})();
+window.Eggs = Eggs;
+if (window.__popicoin) window.__popicoin.eggs = Eggs;
 
 
 /* ================= LEADERBOARD (v6) =================
@@ -2441,7 +2757,7 @@ requestAnimationFrame(loop);
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
-/* ---- FLAPPY SATS v15.1 — end of build ---- */
+/* ---- FLAPPY SATS v16 — end of build ---- */
 </script>
 </body>
 </html>
