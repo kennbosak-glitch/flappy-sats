@@ -6,6 +6,7 @@
 <title>FLAPPY SATS — ESCAPE FIAT TRASH</title>
 <meta name="description" content="FLAPPY SATS — trash-world flappy. Escape fiat trash. Sponsored by the people, priced in Bitcoin Cash.">
 <meta name="theme-color" content="#0a0f0a">
+<!-- FLAPPY SATS v14 — true-tile parallax background: Kenn's far/mid/fg layers, mirror plates + duct tape retired. -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -230,7 +231,7 @@
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v14 • Trash world bg • Scrap pipes • Neon #00FF88<br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -556,15 +557,24 @@ function preloadBillboardImages() {
    gated by POPICOIN_CONFIG.WAVE_PIPES — the flight model underneath
    stays spec-exact either way. No dotGEARS assets/code/art anywhere:
    numbers and behavior only, everything drawn is POPICOIN's own.
+   v14 (2026-10-20): background rebuilt on Kenn's purpose-made layers
+   (art/bg-far.webp, bg-mid.webp, bg-fg.webp) in TRUE wrap tiling —
+   the v6 mirror plates and the duct-tape seam strip are retired.
+   Render only; sim, pipes, crowd, billboard, economy untouched.
    ===================================================================== */
 /* v6 layout tables — device-space values per orientation. The sim
    never sees these; only the render mapping + DOM chrome do. */
-const LAY_P = { portrait: true,  W: 1080, H: 1920, bgKey: "bgPortrait",
-  bFar: [0, 0.425], bMid: [0.39, 0.79], bFg: 0.76, fgY: 1440,
+/* v14 background layer rects — [y, h] as fractions of stage height H
+   (fractions are RSCALE-immune, like the rest of the render mapping).
+   FAR is opaque and overlaps MID's top; MID's bottom overlaps FG's top,
+   so the stack has no void rows. Drawn widths follow each image's own
+   aspect (far/mid 2:1, fg 4:1) — see drawBackground. */
+const LAY_P = { portrait: true,  W: 1080, H: 1920,
+  bgFar: [0, 0.521], bgMid: [0.292, 0.469], bgFg: [0.66, 0.25],
   roadY: 1829, roadH: 91, feetY: 1846,
   crowdCount: 25, crowdPeriod: 2160, crowdBaseH: 246 };
-const LAY_L = { portrait: false, W: 960, H: 540, bgKey: "bgLandscape",
-  bFar: [0, 0.435], bMid: [0.38, 0.765], bFg: 0.72, fgY: 405,
+const LAY_L = { portrait: false, W: 960, H: 540,
+  bgFar: [0, 0.521], bgMid: [0.292, 0.469], bgFg: [0.66, 0.25],
   roadY: 459, roadH: 81, feetY: 474,
   crowdCount: 34, crowdPeriod: 1920, crowdBaseH: 106 };
 let LAY = LAY_P;
@@ -898,9 +908,10 @@ function step() {
 
 /* ---------------- drawing ---------------- */
 /* =====================================================================
-   ART LAYER (v6) — Kenn's masters, at his quality bar (art-bible
-   Addendum 3). The world is his painted wasteland, sliced into
-   parallax bands that scroll right-to-left with wrap tiling; the
+   ART LAYER (v6, v14 background) — Kenn's masters, at his quality bar
+   (art-bible Addendum 3). The world is his painted wasteland: three
+   purpose-made layers (far sky, mid trash fields, foreground mounds)
+   in true wrap tiling — no mirror fold, no plates; the
    pipes are his own extracted trash columns (art/pipe-*.webp, from
    art-lab/extract/) drawn into the spec collision column; the
    billboard keeps the neon light system (glow PRE-BAKED into sprites,
@@ -910,16 +921,16 @@ function step() {
    ===================================================================== */
 const ART = {
   scrollU: 0, _lastLandOff: 0, pulseA: 0.5, pulseB: 0.5,
-  bgPortrait: null, bgLandscape: null, pileTex: null, frameTex: null, medallion: null,
+  bgFar: null, bgMid: null, bgFg: null, pileTex: null, frameTex: null, medallion: null,
   halo: null, tubeGrad: null,
   pipeCap: null, pipeBody: null,
   /* v10 — Kenn's purpose-made full pipe columns (lossless PNG keyed
      from his 508x2048 masters, native resolution, tight-cropped):
      regular set = pipes idx < 20, fire set = wave pipes (idx >= 20).
      One sprite per column, mouth-anchored — see drawPipeColumn.
-     HQ bird character, duct-tape seam strip */
+     HQ bird character */
   colOHang: null, colOStand: null, colFHang: null, colFStand: null,
-  birdHQ: null, tapeStrip: null, tapeBaked: null, tapeW: 0,
+  birdHQ: null,
   bbGlow: null, bbFrame: null, bbPlaceholder: null,
   /* the zombie wall (v9) + legacy road plate slot */
   zoms: null, road: null, crowd: null, wall: null, wallStrips: null,
@@ -1211,52 +1222,11 @@ function computeBB() {
            ox: bx - m, oy: by - m, cw: bw + 2 * m, ch: bh + m + Math.round(120 * k) };
 }
 
-/* PARALLAX PLATES (v6) — the Kenn plates are sliced into horizontal
-   bands and re-baked as 2x-stage-width mirror-tiled plates so the world
-   scrolls endlessly with two drawImage calls per band and no per-frame
-   filters. Far = skyline/industry at 0.3x lane speed, mid = trash
-   fields at 0.6x, near foreground stays static (Kenn's plates carry
-   their own painted foreground). */
-function bakeBandPlate(img, y0, y1, fadeTop) {
-  const iw = img.naturalWidth, ih = img.naturalHeight;
-  const sy = Math.round(y0 * ih), sh = Math.round((y1 - y0) * ih);
-  const c = document.createElement("canvas"); c.width = W * 2; c.height = Math.max(2, Math.round(sh * (W / iw)));
-  const g = c.getContext("2d");
-  g.drawImage(img, 0, sy, iw, sh, 0, 0, W, c.height);
-  g.save(); g.translate(2 * W, 0); g.scale(-1, 1); g.drawImage(img, 0, sy, iw, sh, 0, 0, W, c.height); g.restore();
-  if (fadeTop > 0) { // soften the band's top edge into the band above
-    g.globalCompositeOperation = "destination-out";
-    const gr = g.createLinearGradient(0, 0, 0, fadeTop);
-    gr.addColorStop(0, "rgba(0,0,0,1)"); gr.addColorStop(1, "rgba(0,0,0,0)");
-    g.fillStyle = gr; g.fillRect(0, 0, W * 2, fadeTop);
-    g.globalCompositeOperation = "source-over";
-  }
-  return c;
-}
-function buildPlates() {
-  LAY.plates = null; LAY.midY = 0;
-  const img = ART[LAY.bgKey];
-  if (!img || !img.naturalWidth) return;
-  const ih = img.naturalHeight, iw = img.naturalWidth, sc = W / iw;
-  const far = bakeBandPlate(img, LAY.bFar[0], LAY.bFar[1], 0);
-  const mid = bakeBandPlate(img, LAY.bMid[0], LAY.bMid[1], Math.round(0.05 * H));
-  const fgC = document.createElement("canvas"); fgC.width = W; fgC.height = H - LAY.fgY;
-  const fg = fgC.getContext("2d");
-  const fgSy = Math.round(LAY.bFg * ih);
-  fg.drawImage(img, 0, fgSy, iw, ih - fgSy, 0, 0, W, fgC.height);
-  fg.globalCompositeOperation = "destination-out";
-  const gr = fg.createLinearGradient(0, 0, 0, Math.round(0.06 * H));
-  gr.addColorStop(0, "rgba(0,0,0,1)"); gr.addColorStop(1, "rgba(0,0,0,0)");
-  fg.fillStyle = gr; fg.fillRect(0, 0, W, Math.round(0.06 * H));
-  fg.globalCompositeOperation = "source-over";
-  LAY.midY = Math.round(LAY.bMid[0] * ih * sc);
-  LAY.plates = { far, mid, fg: fgC };
-}
-function drawBand(plate, y, speed) {
-  if (!plate) return;
-  let off = -((ART.scrollU * S * speed) % W); if (off > 0) off -= W;
-  ctx.drawImage(plate, off, y);
-}
+/* v14 — the v6 mirror-plate system is GONE (the band baker, the
+   plate builder and the band blitter are all deleted). Kenn's new
+   background layers are drawn as true wrap tiles straight from
+   their source images in drawBackground — no baking, no mirror
+   fold, nothing for a seam strip to hide. */
 /* v9 quality mandate: the canvas backing store scales with
    devicePixelRatio (cap 3). The v8 geometry baseline assumed a ~2x
    backing (1080x1920 portrait), so RSCALE = clamp(dpr,1,3)/2 — a DPR-3
@@ -1281,7 +1251,7 @@ function applyLayout(portrait) {
   RSCALE = Math.max(0.5, Math.min(window.devicePixelRatio || 1, 3) / 2);
   LAY = Object.assign({}, base, {
     W: Math.round(base.W * RSCALE), H: Math.round(base.H * RSCALE),
-    fgY: Math.round(base.fgY * RSCALE), roadY: Math.round(base.roadY * RSCALE),
+    roadY: Math.round(base.roadY * RSCALE),
     roadH: Math.round(base.roadH * RSCALE), feetY: Math.round(base.feetY * RSCALE),
     crowdBaseH: base.crowdBaseH * RSCALE, crowdPeriod: base.crowdPeriod * RSCALE
   });
@@ -1293,7 +1263,7 @@ function applyLayout(portrait) {
   stage.style.aspectRatio = portrait ? "9 / 16" : "16 / 9";
   stage.style.maxWidth = portrait ? "470px" : "980px";
   BB = computeBB();
-  buildPlates(); buildWall(); bakeTape();
+  buildWall();
   { // lane wash, pre-baked (art bible: no per-frame gradient raster)
     const wc = document.createElement("canvas"); wc.width = W; wc.height = H;
     const wg = wc.getContext("2d");
@@ -1493,8 +1463,8 @@ function bakePlaceholder() {
   try { g.letterSpacing = "0px"; } catch (e) {}
   return c;
 }
-/* boot the plates; every plate has a vector fallback until it lands */
-artLoad("bgPortrait", "bg-portrait", buildPlates); artLoad("bgLandscape", "bg-landscape", buildPlates);
+/* boot the art; the background has a vector fallback until it lands */
+artLoad("bgFar", "bg-far"); artLoad("bgMid", "bg-mid"); artLoad("bgFg", "bg-fg");
 artLoad("pipeCap", "pipe-cap"); artLoad("pipeBody", "pipe-body");
 artLoad("pileTex", "pile-texture");
 artLoad("frameTex", "frame-tex", bakeBillboard); artLoad("medallion", "medallion", bakeBillboard);
@@ -1504,7 +1474,7 @@ artLoadPng("colOHang", "col-o-hang", () => measureColumn(ART.colOHang));
 artLoadPng("colOStand", "col-o-stand", () => measureColumn(ART.colOStand));
 artLoadPng("colFHang", "col-f-hang", () => measureColumn(ART.colFHang));
 artLoadPng("colFStand", "col-f-stand", () => measureColumn(ART.colFStand));
-artLoadPng("birdHQ", "bird-hq"); artLoadPng("tapeStrip", "tape-strip", bakeTape);
+artLoadPng("birdHQ", "bird-hq");
 bakeHalo();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (ART.bbFrame) ART.bbPlaceholder = bakePlaceholder(); });
 
@@ -1519,13 +1489,33 @@ function drawBackgroundFallback() {
     ctx.beginPath(); ctx.moveTo(fx * W, gy); ctx.lineTo((fx + fw / 2) * W, fp * H); ctx.lineTo((fx + fw) * W, gy); ctx.fill();
   }
 }
+/* v14 TRUE WRAP TILE — one parallax layer drawn straight from its
+   source image: height from the LAY rect (fraction of H), width from
+   the image's own aspect, repeated along x at the layer's parallax
+   speed off the same scroll source the plates used (ART.scrollU,
+   units * S px/unit). NO mirror: the join is the image's own left
+   edge meeting its own right edge, exactly as Kenn generated it. */
+function drawTiledLayer(img, rect, speed) {
+  const h = rect[1] * H, w = h * (img.naturalWidth / img.naturalHeight);
+  let off = -((ART.scrollU * S * speed) % w); if (off > 0) off -= w;
+  for (let x = off; x < W; x += w) ctx.drawImage(img, x, rect[0] * H, w, h);
+}
 function drawBackground() {
   artAdvanceScroll();
-  // v6 parallax: far skyline/industry 0.3x lane speed, mid trash fields
-  // 0.6x — Kenn's plates, pre-baked mirror tiles, endless right-to-left.
-  if (!LAY.plates) { drawBackgroundFallback(); return; }
-  drawBand(LAY.plates.far, 0, 0.3);
-  drawBand(LAY.plates.mid, LAY.midY, 0.6);
+  // v14 parallax: Kenn's purpose-made layers in true wrap tiling —
+  // far sky+skyline 0.3x lane speed, mid trash fields 0.6x, foreground
+  // mounds static, centered. Layer rects live in the LAY tables.
+  if (!ART.bgFar || !ART.bgMid) { drawBackgroundFallback(); return; }
+  // base coat: the same deep green-black the v6 ground band used. The
+  // mid/fg art is a keyed texture (real alpha holes between trash), so
+  // this guarantees no void pixel ever shows through the stack.
+  ctx.fillStyle = "#0c120c"; ctx.fillRect(0, 0, W, H);
+  drawTiledLayer(ART.bgFar, LAY.bgFar, 0.3);
+  drawTiledLayer(ART.bgMid, LAY.bgMid, 0.6);
+  if (ART.bgFg) {
+    const h = LAY.bgFg[1] * H, w = h * (ART.bgFg.naturalWidth / ART.bgFg.naturalHeight);
+    ctx.drawImage(ART.bgFg, (W - w) / 2, LAY.bgFg[0] * H, w, h);
+  }
 }
 function drawBillboard(t) {
   const { bw, bh, bx, by, win } = BB, k = BB.k, FS = win.w / 431.2;
@@ -1701,32 +1691,9 @@ function drawBirdU() {
     });
   }
 }
-/* ---- Kenn's duct tape (v9) ------------------------------------------
-   The world is held together with duct tape: a real tape strip (cut
-   from Kenn's taped plate, edges feathered in the sprite's own alpha)
-   rides the background's wrap seam in world space — full stage height,
-   once per loop. Anchored to the MID band's mirror fold (the only
-   on-screen join in the plate system), scrolling at that band's 0.6x
-   parallax speed. Drawn as part of the background, under everything. */
-function bakeTape() {
-  // The strip is resampled to its draw size ONCE per layout (608 -> full
-  // stage height under high-quality smoothing); per frame it is a 1:1
-  // blit — live-upscaling it every frame was a measurable frame cost.
-  ART.tapeBaked = null; ART.tapeW = 0;
-  const im = ART.tapeStrip;
-  if (!im || !im.naturalWidth) return;
-  const tw = Math.round(W * 0.245);   // stage fraction the strip spans on Kenn's plate
-  const c = document.createElement("canvas"); c.width = tw; c.height = H;
-  const g = c.getContext("2d");
-  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
-  g.drawImage(im, 0, 0, tw, H);
-  ART.tapeBaked = c; ART.tapeW = tw;
-}
-function drawTape() {
-  if (!ART.tapeBaked || !LAY.plates) return;
-  const seam = W - ((ART.scrollU * S * 0.6) % W);
-  for (const cx of [seam - W, seam, seam + W]) ctx.drawImage(ART.tapeBaked, cx - ART.tapeW / 2, 0);
-}
+/* ---- Kenn's duct tape (v9) — RETIRED in v14 (Kenn's ruling): the
+   strip existed to hide the mirror fold in the v6 plate system. True
+   wrap tiles have no fold, so the tape's job no longer exists. */
 function draw(tSec) {
   // the two neon circuits breathe on one clock, phase-shifted (bible)
   ART.pulseA = 0.5 + 0.5 * Math.sin(tSec * (2 * Math.PI / 2.6));
@@ -1735,21 +1702,14 @@ function draw(tSec) {
   drawBillboard(tSec);
   // flight-lane wash, feathered at the sides (pre-baked per layout;
   // v4's flat fill left hard vertical tonal steps at the playfield edges).
-  // Drawn over the background + billboard only — never over the wall,
-  // the tape, or the pipes (v8 relative order preserved).
+  // Drawn over the background + billboard only — never over the wall
+  // or the pipes (v8 relative order preserved).
   if (ART.washCv) ctx.drawImage(ART.washCv, 0, 0);
-  /* foreground plate — part of the background (v9.2 order: background →
-     billboard → tape → pipes → zombie wall → bird → HUD). The plate's
-     painted foreground trash sits behind the wall; the spec ground
-     LINE is unchanged. The v8 debug strips that used to mark it (a 2px
-     #3E7A4E line + shadow) are GONE — no green line anywhere. */
-  if (LAY.plates) {
-    ctx.fillStyle = "#0c120c"; ctx.fillRect(0, GROUND_Y * S, W, Math.round(0.07 * H));
-    ctx.drawImage(LAY.plates.fg, 0, LAY.fgY);
-  } else {
-    ctx.fillStyle = "#131c14"; ctx.fillRect(0, GROUND_Y * S, W, H - GROUND_Y * S);
-  }
-  drawTape();
+  /* draw order (v14): background (far/mid/fg layers, inside
+     drawBackground) → billboard → wash → pipes → zombie wall → bird →
+     HUD. The foreground layer rides inside the background pass now;
+     its mounds sit behind the wall like the v6 plate's did, and the
+     spec ground LINE is unchanged. */
   /* world pass — unit space, clipped to the playfield. Pipes draw
      BEHIND the zombie wall (v9.2, Kenn's playtest order 2026-10-20
      04:26): their bottoms run to the bottom edge and disappear
@@ -2480,6 +2440,7 @@ requestAnimationFrame(loop);
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
+/* ---- FLAPPY SATS v14 — end of build ---- */
 </script>
 </body>
 </html>
