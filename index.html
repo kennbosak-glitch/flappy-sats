@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>FLAPPY SATS — ESCAPE FIAT TRASH</title>
+<meta name="description" content="FLAPPY SATS — trash-world flappy. Escape fiat trash. Sponsored by the people, priced in Bitcoin Cash.">
+<meta name="theme-color" content="#0a0f0a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --neon:#00FF88; --neon-dim:#0a3; --ink:#eafff3; --bg:#0a0f0a; --panel:#101a12;
+    --line:#1e3325; --warn:#ffb300; --bad:#ff5252; --gold:#ffd54f;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    min-height:100%; overscroll-behavior:none}
+  #wrap{max-width:980px;margin:0 auto;padding:10px 10px 28px}
+  header.brand{text-align:center;padding:14px 0 4px}
+  header.brand h1{margin:0;font-family:Syne, system-ui, sans-serif;font-weight:800;
+    font-size:44px;letter-spacing:2px;color:#fff;
+    text-shadow:0 0 18px rgba(0,255,136,.55), 0 0 46px rgba(0,255,136,.25)}
+  header.brand h1 .coin{color:var(--gold);text-shadow:0 0 18px rgba(255,213,79,.6)}
+  header.brand p.tag{margin:4px 0 0;color:var(--neon);letter-spacing:4px;font-size:13px}
+  #stage{position:relative;width:100%;aspect-ratio:9/16;max-width:470px;margin-left:auto;margin-right:auto;background:#060906;
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:12px;
+    box-shadow:0 0 0 1px #000, 0 18px 50px rgba(0,0,0,.6)}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:14px;background:rgba(4,8,5,.72);text-align:center;padding:20px}
+  .overlay.hidden{display:none}
+  .overlay h2{margin:0;font-family:Syne, system-ui, sans-serif;font-size:34px;letter-spacing:2px;color:#fff}
+  .overlay h2.crash{color:var(--bad);text-shadow:0 0 16px rgba(255,82,82,.5)}
+  .overlay p{margin:0;color:#bfe9cf;font-size:13px;line-height:1.55;max-width:36ch}
+  .btn{appearance:none;border:1px solid var(--neon);background:#062b18;color:var(--ink);
+    font:inherit;font-weight:700;letter-spacing:1px;padding:13px 26px;border-radius:10px;
+    cursor:pointer;font-size:16px;box-shadow:0 0 14px rgba(0,255,136,.25)}
+  .btn:hover{background:#0a3d22}
+  .btn.gold{border-color:var(--gold);background:#2b2106;box-shadow:0 0 14px rgba(255,213,79,.25)}
+  .btn.ghost{background:transparent;border-color:var(--line);box-shadow:none;font-size:13px;padding:9px 16px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .score-big{font-size:52px;font-weight:700;color:#fff}
+  footer{margin-top:14px;text-align:center;color:#5f7a66;font-size:11px;line-height:1.7}
+  /* sponsor modal */
+  #modal{position:fixed;inset:0;background:rgba(2,5,3,.86);display:none;z-index:50;
+    overflow-y:auto;padding:18px 12px}
+  #modal.open{display:block}
+  .card{max-width:460px;margin:0 auto;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:20px}
+  .card h2{margin:0 0 4px;font-family:Syne, system-ui, sans-serif;letter-spacing:1px;font-size:24px}
+  .card h3{margin:20px 0 8px;font-size:13px;letter-spacing:2px;color:var(--neon)}
+  .card p{font-size:13px;line-height:1.6;color:#cfe9d8}
+  .pricebox{background:#0a140c;border:1px solid var(--neon-dim);border-radius:10px;padding:14px}
+  .pricebox .row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0}
+  .pricebox .row.total{border-top:1px dashed var(--neon-dim);margin-top:8px;padding-top:10px;
+    font-size:16px;font-weight:700;color:#fff}
+  .stale{display:inline-block;background:#3a2a00;color:var(--warn);border:1px solid var(--warn);
+    border-radius:6px;padding:1px 7px;font-size:11px;font-weight:700;letter-spacing:1px}
+  .addr{word-break:break-all;background:#0a140c;border:1px solid var(--line);border-radius:8px;
+    padding:10px;font-size:12px;line-height:1.5}
+  label{display:block;font-size:11px;letter-spacing:2px;color:#9fd4b2;margin:14px 0 5px}
+  input[type=text],input[type=url],input[type=password]{width:100%;background:#0a140c;border:1px solid var(--line);
+    border-radius:8px;color:var(--ink);font:inherit;font-size:14px;padding:11px}
+  input[type=file]{width:100%;color:#cfe9d8;font-size:12px}
+  .copyrow{display:flex;gap:8px;margin-top:8px}
+  .status{margin-top:14px;border-radius:10px;padding:12px;font-size:13px;line-height:1.55;display:none}
+  .status.show{display:block}
+  .status.ok{background:#07301b;border:1px solid var(--neon);color:#d9ffe9}
+  .status.err{background:#330d0d;border:1px solid var(--bad);color:#ffd9d9}
+  .status.info{background:#0d2033;border:1px solid #3a7bd5;color:#d9ebff}
+  .x{float:right;background:none;border:none;color:#9fd4b2;font-size:20px;cursor:pointer;line-height:1}
+  small.hint{color:#7fae8d;font-size:11px;line-height:1.5;display:block;margin-top:5px}
+  /* ---- v2: HUD, auth gate, stack panel ---- */
+  #hud{display:none;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;
+    margin-top:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  #hud.show{display:flex}
+  #hud .who{font-weight:700;color:#fff;font-size:13px}
+  #hud .bal{color:var(--gold);font-weight:700;font-size:13px}
+  #hud .today{color:#9fd4b2;font-size:12px}
+  #hud .spacer{flex:1}
+  #hud .btn{padding:6px 12px;font-size:12px}
+  .demobadge{display:inline-block;background:#3a2a00;color:var(--warn);border:1px solid var(--warn);
+    border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:1px}
+  .authtabs{display:flex;gap:8px}
+  .authtabs .btn{padding:8px 18px;font-size:13px}
+  .authtabs .btn.off{background:transparent;border-color:var(--line);box-shadow:none;color:#9fd4b2}
+  #authgate{overflow-y:auto;justify-content:flex-start}
+  .authform{width:100%;max-width:320px;text-align:left}
+  .authform label{margin:10px 0 4px}
+  .authform .btn{width:100%;margin-top:14px}
+  .authstatus{font-size:12px;line-height:1.5;margin-top:10px;min-height:16px;text-align:center}
+  .authstatus.err{color:#ff9d9d}.authstatus.ok{color:#8dffc0}
+  a.btnlink{display:inline-block;text-decoration:none;text-align:center}
+  .selene{border-color:#26a17b !important;background:#062b21 !important;width:100%;margin-top:8px}
+  .bar{height:14px;background:#0a140c;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:8px 0 4px}
+  .bar > div{height:100%;background:linear-gradient(90deg,#0a3d22,var(--neon));width:0%;transition:width .4s}
+  #stackModal{position:fixed;inset:0;background:rgba(2,5,3,.86);display:none;z-index:50;overflow-y:auto;padding:18px 12px}
+  #stackModal.open{display:block}
+  #settingsModal,#unlockModal{position:fixed;inset:0;background:rgba(2,5,3,.86);display:none;z-index:50;overflow-y:auto;padding:18px 12px}
+  #settingsModal.open,#unlockModal.open{display:block}
+  .balbig{font-size:38px;font-weight:700;color:var(--gold);text-align:center;margin:6px 0 0}
+  /* ---- v3: medal row on the game-over panel (original thresholds) ---- */
+  #medalRow{display:flex;gap:12px;justify-content:center;min-height:64px}
+  /* ---- v6: leaderboard — tight 3-row block under the medals ---- */
+  #boardBlock{width:100%;max-width:290px;background:rgba(5,18,10,.62);border:1px solid var(--line);
+    border-radius:10px;padding:8px 14px 9px;margin-top:2px}
+  #boardBlock .boardTitle{font-family:Syne,sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;
+    color:var(--gold);text-align:center;margin-bottom:5px}
+  #boardRows .brow{display:flex;justify-content:space-between;gap:10px;font-family:'JetBrains Mono',monospace;
+    font-size:13px;color:#cfe9d8;padding:1.5px 0}
+  #boardRows .brow.first{color:var(--gold);font-weight:700}
+  #boardRows .brow .bname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase}
+  #boardYou{border-top:1px dashed rgba(0,255,136,.35);margin-top:5px;padding-top:5px;text-align:center;
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--neon);font-weight:700}
+  #boardNote{text-align:center;font-size:10px;color:#7fae8d;margin-top:3px;letter-spacing:.5px}
+  .medal{display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.25;filter:grayscale(.8)}
+  .medal .disc{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:21px;border:2px solid rgba(0,0,0,.45);box-shadow:inset 0 0 9px rgba(0,0,0,.5)}
+  .medal small{font-size:9px;letter-spacing:1px;color:#cfe9d8}
+  .medal.earned{opacity:1;filter:none}
+  .medal.top .disc{box-shadow:0 0 16px currentColor, inset 0 0 9px rgba(0,0,0,.5)}
+  .medal.bronze .disc{background:#8c5a2b;color:#ffcf9e}
+  .medal.silver .disc{background:#9aa3a8;color:#ffffff}
+  .medal.gold .disc{background:#c9a227;color:#fff3c4}
+  .medal.platinum .disc{background:#7fb6c9;color:#eafcff}
+  .mark{filter:drop-shadow(0 0 10px rgba(10,193,142,.45))}
+  .splashtag{color:var(--neon);letter-spacing:4px;font-size:13px;font-weight:700}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header class="brand">
+    <h1>FLAPPY <span class="coin">SATS</span></h1>
+    <p class="tag">PLAY. EARN. REPEAT.</p>
+  </header>
+
+  <div id="hud">
+    <span class="who" id="hudUser">👤 —</span>
+    <span class="bal" id="hudBal">🪙 0 sats</span>
+    <span class="today" id="hudToday">today $0.00 / $0.10</span>
+    <span class="spacer"></span>
+    <button class="btn ghost" id="btnStack">STACK SATS</button>
+    <button class="btn ghost" id="btnSettings">⚙ SETTINGS</button>
+    <button class="btn ghost" id="btnLogout">LOG OUT</button>
+  </div>
+
+  <div id="stage">
+    <canvas id="game" width="1080" height="1920"></canvas>
+
+    <div class="overlay" id="authgate">
+      <svg class="mark" viewBox="0 0 120 90" width="92" height="69" aria-hidden="true">
+        <path d="M58 40 Q30 12 6 18 Q16 40 52 52 Z" fill="#35e0ac"/>
+        <path d="M62 40 Q90 12 114 18 Q104 40 68 52 Z" fill="#35e0ac"/>
+        <circle cx="60" cy="45" r="27" fill="#0AC18E" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
+        <text x="60" y="47" text-anchor="middle" dominant-baseline="central" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="34" fill="#fff" transform="rotate(-15 60 45)">₿</text>
+      </svg>
+      <h2 id="authTitle">SIGN UP TO PLAY</h2>
+      <span class="demobadge" id="demoBadge" style="display:none">DEMO MODE — LOCAL FAKE ACCOUNTS · NO REAL SATS</span>
+      <p>Earn <b>1 sat per pipe</b> — every pipe counts, up to <b>$0.10 worth per day</b>.
+         Cash out from <b>$1.00 worth</b> to your own Bitcoin Cash wallet. No account, no game.</p>
+      <div class="authtabs">
+        <button class="btn" id="tabSignup">SIGN UP</button>
+        <button class="btn off" id="tabLogin">LOG IN</button>
+      </div>
+
+      <form class="authform" id="formSignup" autocomplete="off">
+        <label for="suUser">USERNAME</label>
+        <input type="text" id="suUser" maxlength="24" placeholder="2–24 chars: letters, digits, _ . -" autocomplete="off">
+        <label for="suPass">PASSWORD</label>
+        <input type="password" id="suPass" placeholder="min 6 characters" autocomplete="new-password">
+        <label for="suAddr">YOUR BITCOIN CASH ADDRESS (where your sats get paid)</label>
+        <input type="text" id="suAddr" placeholder="bitcoincash:q…" autocomplete="off">
+        <label for="suInvite">INVITE CODE (optional — if a partner invited you)</label>
+        <input type="text" id="suInvite" maxlength="10" placeholder="FS-XXXXXX" autocomplete="off">
+        <small class="hint">A partner's code ties you to them: when you complete your first claim, they earn a $0.01 bonus in sats. No code? No problem — play without one.</small>
+        <a class="btn btnlink selene" href="https://selene.cash/" target="_blank" rel="noopener">GET SELENE WALLET ↗</a>
+        <small class="hint">No BCH wallet yet? Selene is a free Bitcoin Cash wallet for iOS &amp; Android —
+          install it, copy your receive address, paste it above. One account per address.</small>
+        <button class="btn" type="submit" id="btnSignup">CREATE ACCOUNT &amp; PLAY →</button>
+        <div class="authstatus" id="suStatus"></div>
+      </form>
+
+      <form class="authform" id="formLogin" style="display:none" autocomplete="off">
+        <label for="liUser">USERNAME</label>
+        <input type="text" id="liUser" maxlength="24" autocomplete="username">
+        <label for="liPass">PASSWORD</label>
+        <input type="password" id="liPass" autocomplete="current-password">
+        <button class="btn" type="submit" id="btnLogin">LOG IN →</button>
+        <div class="authstatus" id="liStatus"></div>
+      </form>
+    </div>
+
+    <div class="overlay hidden" id="splash">
+      <svg class="mark" viewBox="0 0 120 90" width="92" height="69" aria-hidden="true">
+        <path d="M58 40 Q30 12 6 18 Q16 40 52 52 Z" fill="#35e0ac"/>
+        <path d="M62 40 Q90 12 114 18 Q104 40 68 52 Z" fill="#35e0ac"/>
+        <circle cx="60" cy="45" r="27" fill="#0AC18E" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
+        <text x="60" y="47" text-anchor="middle" dominant-baseline="central" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="34" fill="#fff" transform="rotate(-15 60 45)">₿</text>
+      </svg>
+      <h2>FLAPPY SATS</h2>
+      <p class="splashtag">PLAY. EARN. REPEAT.</p>
+      <span class="demobadge" id="betaBadge">BETA</span>
+      <p>Trash-world flappy with a live billboard behind the pipes. Sponsors rotate every 10s.
+         Pipes start moving after pipe 20 — watch for the dust telegraph.</p>
+      <p style="color:var(--gold);font-size:12px">🪙 You earn 1 sat per pipe — up to $0.10 worth a day.</p>
+      <button class="btn" id="btnPlay">▶ PLAY GAME</button>
+      <button class="btn gold" id="btnSponsor">SPONSOR ME</button>
+      <p style="font-size:11px;color:#7fae8d">Tap / click / spacebar to flap.</p>
+    </div>
+
+    <div class="overlay hidden" id="gameover">
+      <h2 class="crash">CRASHED</h2>
+      <div class="score-big" id="finalScore">0</div>
+      <div id="medalRow" aria-label="Medals"></div>
+      <p id="bestNote" style="color:var(--gold);font-weight:700"></p>
+      <div id="boardBlock" aria-label="Leaderboard">
+        <div class="boardTitle">🏆 TOP OF THE HEAP</div>
+        <div id="boardRows"></div>
+        <div id="boardYou"></div>
+        <div id="boardNote"></div>
+      </div>
+      <p id="finalNote">The yard claims another coin.</p>
+      <p id="earnNote" style="color:var(--gold);font-weight:700"></p>
+      <button class="btn" id="btnAgain">PLAY AGAIN</button>
+      <button class="btn ghost" id="btnOverSponsor">SPONSOR ME</button>
+    </div>
+  </div>
+
+  <footer>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
+  </footer>
+</div>
+
+<!-- ============ SPONSOR MODAL ============ -->
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="card">
+    <button class="x" id="btnClose" aria-label="Close">✕</button>
+    <h2 id="modalTitle">SPONSOR THE BILLBOARD</h2>
+    <p>Your image rides the in-game billboard, rotating every 10 seconds, in every copy of the game.
+       Payment is verified on-chain before your ad goes live — no accounts, no passwords, no trust required.</p>
+
+    <h3>GAME DATA — VERIFY IT YOURSELF</h3>
+    <div class="pricebox" id="statsbox">
+      <div class="row"><span>Players live now</span><span id="stLive">…</span></div>
+      <div class="row"><span>Active players · 24h</span><span id="st24">…</span></div>
+      <div class="row"><span>Active players · 7 days</span><span id="st7">…</span></div>
+      <div class="row"><span>Active players · 30 days</span><span id="st30">…</span></div>
+      <div class="row"><span>Total player partners</span><span id="stPlayers">…</span></div>
+      <div class="row"><span>Total time played</span><span id="stHours">…</span></div>
+      <div class="row"><span>Total pipes flown</span><span id="stPipes">…</span></div>
+      <div class="row"><span>Sats earned by players</span><span id="stEarned">…</span></div>
+      <div class="row"><span>Sats PAID OUT to players</span><span id="stPaid">…</span></div>
+      <div class="row"><span>Sponsors live</span><span id="stSponsors">…</span></div>
+      <div class="row"><span>Player pool balance</span><span id="stPool">…</span></div>
+      <div class="row total"><span>Today's earn cap per player</span><span id="stCap">…</span></div>
+    </div>
+    <small class="hint" id="statsNote">Counted server-side from validated play sessions — “live now” means a partner played in the
+      last 15 minutes; “active” means played inside the window. Money totals are on-chain: check the game wallet
+      (the address in step 1 below) on any BCH explorer. Players are partners — 50% of every sponsorship funds
+      the player pool that pays their claims.</small>
+
+    <h3>CURRENT SLOT</h3>
+    <div class="pricebox" id="pricebox">
+      <div class="row"><span>Slot</span><span id="pSlot">…</span></div>
+      <div class="row"><span>Price (USD)</span><span id="pUsd">…</span></div>
+      <div class="row"><span>BCH/USD price</span><span id="pPrice">fetching…</span></div>
+      <div class="row"><span>Base amount</span><span id="pBase">…</span></div>
+      <div class="row"><span>Your unique dust</span><span id="pDust">enter username ↓</span></div>
+      <div class="row total"><span>PAY EXACTLY</span><span id="pTotal">…</span></div>
+      <div class="row"><span></span><span id="pTotalBch" style="color:#9fd4b2;font-size:13px"></span></div>
+    </div>
+    <small class="hint">Pricing: $1.00 for the first sponsor, doubling every slot ($1 × 2<sup>sponsors</sup>),
+      converted at the live BCH price. The <b>unique dust</b> (100–999 sats, hashed from your username)
+      makes your exact total one-of-a-kind, so your payment can be matched to you on-chain.</small>
+
+    <h3>1 · PAY THIS ADDRESS</h3>
+    <div class="addr" id="payAddr">bitcoincash:qz40helxvypa8u698hxl2thsypmhlqudncygfnrh3k</div>
+    <div class="copyrow">
+      <button class="btn ghost" id="btnCopyAddr">COPY ADDRESS</button>
+      <button class="btn ghost" id="btnCopyAmt">COPY EXACT SATS</button>
+    </div>
+    <small class="hint">Send the EXACT total (base + your dust) from any BCH wallet. Wait for 1 confirmation, then submit below.</small>
+
+    <h3>2 · SUBMIT YOUR SPONSORSHIP</h3>
+    <label for="fUser">USERNAME (2–24 characters)</label>
+    <input type="text" id="fUser" maxlength="24" placeholder="e.g. satoshi_jr" autocomplete="off">
+    <label for="fTxid">TXID (64 hex characters)</label>
+    <input type="text" id="fTxid" maxlength="64" placeholder="paste your transaction id" autocomplete="off">
+    <label for="fImgUrl">BILLBOARD IMAGE URL (https) — or upload a file</label>
+    <input type="url" id="fImgUrl" placeholder="https://example.com/your-ad.png" autocomplete="off">
+    <label for="fImgFile">…OR UPLOAD IMAGE (≤ 700 KB)</label>
+    <input type="file" id="fImgFile" accept="image/*">
+    <small class="hint">16:9 works best — the billboard is a 16:9 board behind the pipes.</small>
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="btnSubmit">VERIFY &amp; GO LIVE →</button>
+      <button class="btn ghost" id="btnRefresh">↻ REFRESH PRICE</button>
+    </div>
+    <div class="status" id="submitStatus"></div>
+  </div>
+</div>
+
+<!-- ============ STACK SATS MODAL ============ -->
+<div id="stackModal" role="dialog" aria-modal="true" aria-labelledby="stackTitle">
+  <div class="card">
+    <button class="x" id="btnCloseStack" aria-label="Close">✕</button>
+    <h2 id="stackTitle">STACK SATS</h2>
+    <p id="stackUser" style="color:#9fd4b2;margin-top:0">—</p>
+    <div class="balbig"><span id="stackBal">0</span> <span style="font-size:16px">sats</span></div>
+    <div id="stackUsd" style="text-align:center;color:#9fd4b2;font-size:14px">≈ $0.00</div>
+    <div class="bar"><div id="stackBarFill"></div></div>
+    <small class="hint" id="stackProgress">0% toward the $1.00 claim</small>
+    <div class="pricebox" style="margin-top:14px">
+      <div class="row"><span>Earned today</span><span id="stackToday">$0.00 / $0.10</span></div>
+      <div class="row"><span>Payout address</span><span id="stackAddr" style="word-break:break-all;font-size:11px">—</span></div>
+      <div class="row"><span>Claim status</span><span id="stackClaim">no claims yet</span></div>
+    </div>
+    <h3>PARTNER INVITES</h3>
+    <div id="inviteLocked">
+      <small class="hint">🔒 Complete your first claim to unlock invites — partners get paid when partners get paid.
+        Once unlocked, every partner who joins with your code earns you a $0.01 bonus in sats when THEY complete
+        their first claim (max 10 partners).</small>
+    </div>
+    <div id="inviteOpen" style="display:none">
+      <label>YOUR INVITE CODE</label>
+      <div class="addr" id="inviteCodeBox">FS-XXXXXX</div>
+      <div class="copyrow">
+        <button class="btn ghost" id="btnCopyInvite">COPY INVITE CODE</button>
+      </div>
+      <div class="pricebox" style="margin-top:12px">
+        <div class="row"><span>Partners who paid you</span><span id="invitePaidCount">0 / 10</span></div>
+        <div class="row"><span>Partners on their way</span><span id="invitePending">0</span></div>
+        <div class="row"><span>Referral sats earned</span><span id="inviteSats">0 sats</span></div>
+      </div>
+      <small class="hint">You earn $0.01 in sats each time a partner you invited completes their first claim.
+        Bonus sats stack onto your balance — they count toward your next claim and never eat your daily play cap.</small>
+    </div>
+    <div style="margin-top:16px">
+      <button class="btn gold" id="btnClaim" disabled>CLAIM</button>
+    </div>
+    <small class="hint">You earn 1 sat per pipe — every pipe counts — up to $0.10 worth per day.
+      At $1.00 worth you can claim — the sats leave your in-game balance and queue for payout
+      to your BCH address. <b>Claims are paid in batches by Skynet — usually within a day.</b></small>
+    <div class="status" id="stackStatus"></div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="card">
+    <button class="x" id="btnCloseSettings" aria-label="Close">✕</button>
+    <h2 id="settingsTitle">SETTINGS</h2>
+    <h3>DISPLAY</h3>
+    <div class="pricebox">
+      <div class="row"><span>Stage layout</span><span id="setLayoutNow">PORTRAIT</span></div>
+      <div class="row"><span>LANDSCAPE MODE</span><span id="setLandStatus">🔒 LOCKED</span></div>
+    </div>
+    <p><b>LANDSCAPE MODE — $1.00 in BCH.</b> The game is built portrait-first.
+       Landscape is a paid unlock: pay $1.00 worth of BCH once and the wide
+       stage is yours on every device, tied to your account — the unlock flag
+       lives on your server-side account record, never in the app.</p>
+    <button class="btn gold" id="btnUnlockOpen" style="width:100%">UNLOCK LANDSCAPE — $1.00 IN BCH</button>
+    <div id="demoPreviewRow">
+      <h3>DEMO PREVIEW</h3>
+      <p style="font-size:12px">DEMO only: peek at the landscape layout without paying.
+         This is a local layout preview — <b>not</b> an unlock, and it buys nothing.</p>
+      <button class="btn ghost" id="btnPreviewLand" style="width:100%">PREVIEW LANDSCAPE LAYOUT (DEMO)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LANDSCAPE UNLOCK MODAL (purchase confirmation) ============ -->
+<div id="unlockModal" role="dialog" aria-modal="true" aria-labelledby="unlockTitle">
+  <div class="card">
+    <button class="x" id="btnCloseUnlock" aria-label="Close">✕</button>
+    <h2 id="unlockTitle">UNLOCK LANDSCAPE MODE</h2>
+    <p>Your clear-eyes moment — read the terms before any sats move.</p>
+    <div class="pricebox">
+      <div class="row"><span>Unlock</span><span>LANDSCAPE MODE (account-wide)</span></div>
+      <div class="row"><span>Price (USD)</span><span>$1.00</span></div>
+      <div class="row"><span>Pay in</span><span>Bitcoin Cash (BCH) — exact sats set at the live rate when unlock opens</span></div>
+      <div class="row"><span>Pay to</span><span style="word-break:break-all;font-size:11px">bitcoincash:qz40helxvypa8u698hxl2thsypmhlqudncygfnrh3k</span></div>
+    </div>
+    <h3>THE TERMS</h3>
+    <p>· <b>Payment is final — no refunds.</b> BCH payments cannot be reversed.<br>
+       · The unlock is verified on-chain, then written to your account record
+         (<i>landscapeUnlocked</i>) server-side — it follows your account, not a device.<br>
+       · One payment unlocks landscape for this account forever. No subscription.<br>
+       · Paying from a fresh wallet is fine; the payment is matched to your
+         account at checkout when unlock opens.</p>
+    <button class="btn gold" id="btnUnlockPay" disabled style="width:100%">UNLOCK OPENS AT LAUNCH</button>
+    <small class="hint">This build is a DEMO — the pay button is disabled and nothing can be charged.
+      At launch this button becomes “I understand — pay” and opens checkout.</small>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script>
+"use strict";
+/* =====================================================================
+   POPICOIN CONFIG — edit these when deploying.
+   firebaseProjectId: your Firebase project id (e.g. "popicoin-billboard").
+   Leave it "" and the game runs with an empty billboard (placeholder) and
+   slot-1 pricing until you wire Firebase + the Netlify function up.
+   firebaseApiKey + firebaseAuthDomain (Firebase console → Project
+   settings → Your apps → Web app): set BOTH (with firebaseProjectId) to
+   switch player accounts ON. Leave them "" and the game runs in DEMO
+   mode — full account UI with local fake accounts, clearly badged,
+   nothing real. Passwords only ever live in Firebase Auth, never here.
+   ===================================================================== */
+const POPICOIN_CONFIG = {
+  firebaseProjectId: "",
+  firebaseApiKey: "",
+  firebaseAuthDomain: "",
+  sponsorAddress: "bitcoincash:qz40helxvypa8u698hxl2thsypmhlqudncygfnrh3k",
+  baseUsd: 1,
+  /* Player economy anchors (USD; sat amounts derive from the live BCH
+     price — mirrored as constants in netlify/functions/player.js). */
+  satsPerPipe: 1,
+  dailyCapUsd: 0.10,
+  claimUsd: 1.00,
+  /* POPICOIN signature layer on top of the original flight model:
+     pipes with idx >= 20 wave (sine + dust telegraph). Set false for
+     the pure original pipe behavior. The flight model is unaffected. */
+  WAVE_PIPES: true
+};
+
+/* ---------------- sponsor data (read path) ---------------- */
+let sponsors = [];           // [{username, imageUrl, paidSats, createdAt}]
+let sponsorsLoadedAt = null;
+
+async function loadSponsors() {
+  const pid = POPICOIN_CONFIG.firebaseProjectId;
+  if (!pid) { sponsors = []; return; }
+  try {
+    const url = "https://firestore.googleapis.com/v1/projects/" + encodeURIComponent(pid) +
+      "/databases/(default)/documents/sponsors?pageSize=100";
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("firestore " + res.status);
+    const data = await res.json();
+    const docs = (data.documents || []).map(d => {
+      const f = d.fields || {};
+      return {
+        username: (f.username && f.username.stringValue) || "anon",
+        imageUrl: (f.imageUrl && f.imageUrl.stringValue) || "",
+        paidSats: parseInt((f.paidSats && f.paidSats.integerValue) || "0", 10),
+        createdAt: (f.createdAt && f.createdAt.timestampValue) || ""
+      };
+    });
+    docs.sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
+    sponsors = docs;
+    sponsorsLoadedAt = new Date();
+    preloadBillboardImages();
+  } catch (e) {
+    sponsors = []; // fail safe: placeholder billboard, slot pricing from 0
+  }
+}
+
+/* ---------------- pricing ---------------- */
+function dustFor(username) {
+  let h = 0;
+  for (let i = 0; i < username.length; i++) h = (h * 31 + username.charCodeAt(i)) % 1000000;
+  return h % 900 + 100;
+}
+function slotUsd(count) { return POPICOIN_CONFIG.baseUsd * Math.pow(2, count); }
+function satsFor(usd, bchPrice) { return Math.round(usd / bchPrice * 1e8); }
+
+let priceState = { price: null, source: null, at: null, stale: false };
+async function fetchBchPrice() {
+  // 1) CoinGecko
+  try {
+    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin-cash&vs_currencies=usd");
+    if (r.ok) {
+      const j = await r.json();
+      const p = j["bitcoin-cash"] && j["bitcoin-cash"].usd;
+      if (p > 0) return { price: p, source: "CoinGecko", at: new Date(), stale: false };
+    }
+  } catch (e) { /* fall through */ }
+  // 2) Coinbase
+  try {
+    const r = await fetch("https://api.coinbase.com/v2/prices/BCH-USD/spot");
+    if (r.ok) {
+      const j = await r.json();
+      const p = parseFloat(j.data && j.data.amount);
+      if (p > 0) return { price: p, source: "Coinbase", at: new Date(), stale: false };
+    }
+  } catch (e) { /* fall through */ }
+  // 3) cached fallback (clearly flagged STALE)
+  try {
+    const c = JSON.parse(localStorage.getItem("popicoin_bch_price") || "null");
+    if (c && c.price > 0) return { price: c.price, source: "cached " + (c.source || ""), at: new Date(c.at), stale: true };
+  } catch (e) { /* ignore */ }
+  return { price: 300, source: "last-resort estimate", at: null, stale: true };
+}
+async function refreshPrice() {
+  priceState = await fetchBchPrice();
+  if (!priceState.stale) {
+    try { localStorage.setItem("popicoin_bch_price",
+      JSON.stringify({ price: priceState.price, source: priceState.source, at: priceState.at.toISOString() })); } catch (e) {}
+  }
+  renderPrice();
+}
+function currentQuote() {
+  const count = sponsors.length;
+  const usd = slotUsd(count);
+  if (!priceState.price) return null;
+  const base = satsFor(usd, priceState.price);
+  const user = (document.getElementById("fUser").value || "").trim();
+  const dust = user ? dustFor(user) : null;
+  return { count, slot: count + 1, usd, base, dust, total: dust === null ? null : base + dust };
+}
+function fmtSats(n) { return n.toLocaleString("en-US") + " sats"; }
+function renderPrice() {
+  const q = currentQuote();
+  const el = id => document.getElementById(id);
+  if (!q) { el("pPrice").textContent = "fetching…"; return; }
+  el("pSlot").textContent = "#" + q.slot + "  (" + q.count + " sponsor" + (q.count === 1 ? "" : "s") + " live)";
+  el("pUsd").textContent = "$" + q.usd.toFixed(2);
+  el("pPrice").innerHTML = "$" + priceState.price.toFixed(2) + " / BCH · " + priceState.source +
+    (priceState.at ? " · " + priceState.at.toLocaleTimeString() : "") +
+    (priceState.stale ? ' <span class="stale">STALE</span>' : "");
+  el("pBase").textContent = fmtSats(q.base);
+  el("pDust").textContent = q.dust === null ? "enter username ↓" : "+" + q.dust + " sats";
+  el("pTotal").textContent = q.total === null ? "…" : fmtSats(q.total);
+  el("pTotalBch").textContent = q.total === null ? "" : "= " + (q.total / 1e8).toFixed(8) + " BCH";
+}
+
+/* ---------------- billboard images ---------------- */
+const bbImages = {}; // imageUrl -> HTMLImageElement
+function preloadBillboardImages() {
+  for (const s of sponsors) {
+    if (s.imageUrl && !bbImages[s.imageUrl]) {
+      const im = new Image();
+      im.crossOrigin = "anonymous";
+      im.src = s.imageUrl;
+      bbImages[s.imageUrl] = im;
+    }
+  }
+}
+
+/* =====================================================================
+   GAME — the ORIGINAL Flappy Bird flight model (constants measured
+   from the 2014 APK; see mechanics-spec.md), POPICOIN skin + systems.
+   The simulation runs in the original 288×512 unit space with the
+   original per-frame constants at a FIXED 60 steps/sec (accumulator —
+   rendering never integrates; spec §5). Stage (v6): PORTRAIT by
+   default — 540×960 logical, 1080×1920 backing @2x, scale s = 3.75,
+   playfield fills the width. The v1–v5 landscape stage (960×540,
+   s ≈ 1.0547, playfield centered) survives behind the paid
+   landscape-unlock flag (LAY_L below).
+   Signature layer: pipes with idx >= 20 wave (sine + dust telegraph),
+   gated by POPICOIN_CONFIG.WAVE_PIPES — the flight model underneath
+   stays spec-exact either way. No dotGEARS assets/code/art anywhere:
+   numbers and behavior only, everything drawn is POPICOIN's own.
+   ===================================================================== */
+/* v6 layout tables — device-space values per orientation. The sim
+   never sees these; only the render mapping + DOM chrome do. */
+const LAY_P = { portrait: true,  W: 1080, H: 1920, bgKey: "bgPortrait",
+  bFar: [0, 0.425], bMid: [0.39, 0.79], bFg: 0.76, fgY: 1440,
+  roadY: 1829, roadH: 91, feetY: 1846,
+  crowdCount: 25, crowdPeriod: 2160, crowdBaseH: 246 };
+const LAY_L = { portrait: false, W: 960, H: 540, bgKey: "bgLandscape",
+  bFar: [0, 0.435], bMid: [0.38, 0.765], bFg: 0.72, fgY: 405,
+  roadY: 459, roadH: 81, feetY: 474,
+  crowdCount: 34, crowdPeriod: 1920, crowdBaseH: 106 };
+let LAY = LAY_P;
+let W = LAY.W, H = LAY.H;                  // device px (canvas backing)
+const UW = 288, UH = 512;                  // original unit space
+let S = H / UH;                            // 3.75 portrait / 1.0547 landscape
+let OX = (W - UW * S) / 2;                 // playfield left edge (device px)
+let BB = null;                             // billboard geometry — computeBB()
+const GROUND_Y = 400;                      // ground line, units (spec §1)
+
+/* original constants, units per frame @ 60 Hz — mechanics-spec.md §2–§4 */
+const BIRD_X = 80, HIT = 20;               // hitbox anchor x + AABB size
+const FLAP_V = -5.0, GRAV = 0.3, MAXFALL = 8.0;
+const PIPE_WU = 52, GAP_H = 96, PITCH = 157, SCROLL = 2;
+const GAP_MIN = 180, GAP_SPAN = 180;       // gapBottom ∈ [180, 360)
+const ROT_MIN = -20, ROT_MAX = 90;         // rotation clamp, degrees
+
+const cv = document.getElementById("game"), ctx = cv.getContext("2d");
+
+const game = {
+  state: "splash",       // splash | play | over — DOM overlay flow (as v2)
+  phase: "menu",         // menu | ready | flying | dying
+  bird: { x: 134, y: 218, v: 0, g: GRAV, angle: 0, omega: 0, alpha: 0, wingT: 999 },
+  pipes: [],             // {x, gapBottom, effGap, idx, scored, tele, phase, amp}
+  particles: [],
+  score: 0, t: 0, spawnCounter: 0,
+  warmup: 0, pauseSteps: 0, hoverTheta: 0, landOff: 0,
+  flashT: -1, deathT: 0, deathByPipe: false
+};
+const perfStats = { steps: 0, frames: 0 };
+
+/* ---------- tiny WebAudio blips: POPICOIN's own sounds, no assets ------ */
+let AC = null;
+function ac() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; } }
+  if (AC && AC.state === "suspended") AC.resume().catch(() => {});
+  return AC;
+}
+function tone(f0, f1, dur, type, vol, delay) {
+  const a = ac(); if (!a) return;
+  try {
+    const t0 = a.currentTime + (delay || 0);
+    const o = a.createOscillator(), gn = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t0);
+    if (f1) o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t0 + dur);
+    gn.gain.setValueAtTime(vol, t0);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(gn); gn.connect(a.destination);
+    o.start(t0); o.stop(t0 + dur + 0.03);
+  } catch (e) { /* audio is garnish */ }
+}
+function sfx(name) {
+  if (name === "flap") tone(560, 300, 0.08, "square", 0.035);
+  else if (name === "point") { tone(988, 988, 0.07, "sine", 0.06); tone(1319, 1319, 0.14, "sine", 0.06, 0.07); }
+  else if (name === "hit") tone(150, 40, 0.3, "sawtooth", 0.11);
+  else if (name === "die") tone(600, 110, 0.5, "sine", 0.07);
+  else if (name === "swoosh") tone(280, 880, 0.22, "sine", 0.025);
+}
+
+/* ---- the Wilhelm (v6): the 1951 master take, CC0 (USC / Sunset
+   Editorial session via Freesound) — audio/wilhelm.ogg. It owns the
+   death choreography's die slot (spec §6: ≈0.28 s after a PIPE hit
+   only; ground deaths stay silent). We play the short core wail
+   (~1 s from just inside the attack) with a slight per-death pitch
+   jitter. The synth "die" tone remains only as a load-failure fallback. */
+let wilhelmEl = null, wilhelmBroken = false;
+function wilhelmWarm() {
+  if (wilhelmEl || wilhelmBroken) return;
+  try {
+    wilhelmEl = new Audio("audio/wilhelm.ogg");
+    wilhelmEl.preload = "auto";
+    wilhelmEl.addEventListener("error", () => { wilhelmBroken = true; });
+    wilhelmEl.load();
+  } catch (e) { wilhelmBroken = true; }
+}
+function wilhelmPlay() {
+  wilhelmWarm();
+  if (!wilhelmEl || wilhelmBroken) { sfx("die"); return; }
+  try {
+    const rate = 0.94 + Math.random() * 0.12;      // 0.94–1.06 per death
+    wilhelmEl.playbackRate = rate;
+    wilhelmEl.currentTime = 0.12;                  // skip the breath, start at the wail
+    const p = wilhelmEl.play();
+    if (p && p.catch) p.catch(() => {});
+    ART.wilhelmPlays = (ART.wilhelmPlays || 0) + 1;
+    const el = wilhelmEl;
+    setTimeout(() => { try { el.pause(); } catch (e) {} }, Math.round(1000 / rate));
+  } catch (e) { sfx("die"); }
+}
+
+/* ---------------- run lifecycle ---------------- */
+function randGap() { return GAP_MIN + Math.floor(Math.random() * GAP_SPAN); }
+function makePipe(x, idx, gapBottom) {
+  return { x, gapBottom, effGap: gapBottom, idx, scored: false, tele: 0,
+           phase: Math.random() * Math.PI * 2, amp: 28 + Math.random() * 22 };
+}
+function resetGame() {
+  const b = game.bird;
+  b.x = BIRD_X; b.y = 246; b.v = 0; b.g = GRAV; b.angle = 0; b.omega = 0; b.alpha = 0; b.wingT = 999;
+  game.pipes = [79, 236, 393].map((x, i) => makePipe(x, i + 1, 274)); // spec §3 boot layout
+  game.spawnCounter = 3;
+  game.particles = [];
+  game.score = 0; game.t = 0; game.warmup = 0; game.pauseSteps = 0;
+  game.hoverTheta = 0; game.flashT = -1; game.deathT = 0; game.deathByPipe = false;
+  game.phase = "ready";
+}
+function startGame() {
+  if (typeof Player !== "undefined" && !Player.isAuthed()) { Player.showAuth(); return; }
+  resetGame();
+  game.state = "play";
+  document.getElementById("splash").classList.add("hidden");
+  document.getElementById("gameover").classList.add("hidden");
+  document.getElementById("earnNote").textContent = "";
+  if (typeof Player !== "undefined") Player.onRunStart();
+}
+function armPipes() {
+  // Warm-up over (spec §3): the first two slots park off-screen and the
+  // first live pipe starts at x = 418 — it enters the screen ≈2.2 s
+  // after the first flap and reaches the bird ≈3.9 s after it.
+  game.pipes.forEach((p, i) => {
+    p.x = 418 + i * PITCH; p.gapBottom = randGap(); p.effGap = p.gapBottom; p.scored = false;
+  });
+}
+function startDeath(byPipe) {
+  if (game.phase !== "flying") return;
+  game.phase = "dying";
+  game.deathByPipe = byPipe;
+  game.deathT = 0;
+  game.flashT = 0;                       // white flash starts now (spec §6)
+  if (!byPipe) { game.bird.v = 0; game.bird.g = 0; }  // ground hit: already down
+  sfx("hit");
+  if (typeof Player !== "undefined") Player.onRunEnd(game.score);
+}
+
+/* medals — original thresholds (spec §6), POPICOIN badge styling */
+const MEDALS = [
+  { key: "bronze",   icon: "🥉", name: "BRONZE",   at: 10 },
+  { key: "silver",   icon: "🥈", name: "SILVER",   at: 20 },
+  { key: "gold",     icon: "🥇", name: "GOLD",     at: 30 },
+  { key: "platinum", icon: "💎", name: "PLATINUM", at: 40 }
+];
+function medalFor(score) { let m = null; for (const md of MEDALS) if (score >= md.at) m = md; return m; }
+function renderMedals(score) {
+  const top = medalFor(score);
+  document.getElementById("medalRow").innerHTML = MEDALS.map(m =>
+    '<div class="medal ' + m.key + (score >= m.at ? " earned" : "") + (top && top.key === m.key ? " top" : "") + '">' +
+    '<div class="disc">' + m.icon + '</div><small>' + m.name + " " + m.at + "+</small></div>").join("");
+}
+function showGameOver() {
+  game.state = "over";
+  document.getElementById("finalNote").textContent =
+    game.score >= 20 ? "You reached the moving pipes. The yard respects that." :
+    game.score >= 5  ? "The yard claims another coin. Dust yourself off." :
+                       "Straight into the scrap. It happens to every coin once.";
+  renderMedals(game.score);
+  Leaderboard.render(game.score);
+  let best = 0;
+  try { best = parseInt(localStorage.getItem("popicoin_best_v1") || "0", 10) || 0; } catch (e) {}
+  const bn = document.getElementById("bestNote");
+  if (game.score > best) {
+    try { localStorage.setItem("popicoin_best_v1", String(game.score)); } catch (e) {}
+    bn.textContent = "★ NEW BEST — " + game.score + " pipes";
+  } else {
+    bn.textContent = best > 0 ? "BEST — " + best + " pipes" : "";
+  }
+  document.getElementById("gameover").classList.remove("hidden");
+  sfx("swoosh");
+  // score counts up 0 → final over 0.5 s (spec §6)
+  const fs = document.getElementById("finalScore"), t0 = performance.now();
+  (function count() {
+    const k = Math.min(1, (performance.now() - t0) / 500);
+    fs.textContent = Math.round(game.score * k);
+    if (k < 1) requestAnimationFrame(count);
+  })();
+}
+
+/* ---------------- input ---------------- */
+function doFlap() {
+  const b = game.bird;
+  b.v = FLAP_V; b.g = GRAV;              // flap SETS velocity (spec §2)
+  b.omega = -10; b.alpha = 0.4;          // rotation machine reset (spec §2)
+  b.wingT = 0;                           // wing flutter burst starts (cosmetic)
+  sfx("flap");
+}
+function flap() {
+  if (game.state !== "play") return;
+  if (game.phase === "ready") {          // first flap: hover → physics, warm-up starts
+    game.phase = "flying";
+    game.warmup = 66;
+    doFlap();
+  } else if (game.phase === "flying") {
+    if (game.bird.y < 0) return;         // spec §2: no ceiling, flap ignored above screen
+    doFlap();
+  }
+}
+
+/* -------- particles (device space: billboard sparks + telegraph dust) -- */
+function emitDust(x, y, n, spread) {
+  for (let i = 0; i < n; i++) {
+    game.particles.push({
+      x: x + (Math.random() - 0.5) * (spread || 30),
+      y: y + (Math.random() - 0.5) * 16,
+      vx: (Math.random() - 0.5) * 70, vy: -20 - Math.random() * 50,
+      life: 0.5 + Math.random() * 0.5, age: 0, r: 1.5 + Math.random() * 2.5
+    });
+  }
+}
+function stepParticles() {
+  for (const pt of game.particles) { pt.age += 1 / 60; pt.x += pt.vx / 60; pt.y += pt.vy / 60; }
+  game.particles = game.particles.filter(p => p.age < p.life);
+  if (Math.random() < 0.06 && BB) { // billboard sparks — they pop at the neon tube joints
+    const bw2 = BB.bw, bh2 = BB.bh, bx2 = BB.bx, by2 = BB.by, j = 7 * BB.k;
+    const joints = [[bx2 + j, by2 + j], [bx2 + bw2 - j, by2 + j], [bx2 + j, by2 + bh2 - j],
+                    [bx2 + bw2 - j, by2 + bh2 - j], [bx2 + bw2 / 2, by2 + j]];
+    let sx, sy, hue;
+    if (Math.random() < 0.65) {
+      const j = joints[Math.floor(Math.random() * joints.length)];
+      sx = j[0] + (Math.random() - 0.5) * 8; sy = j[1] + (Math.random() - 0.5) * 8;
+      hue = j[0] < W / 2 ? "c" : "o";
+    } else {
+      sx = bx2 + Math.random() * bw2; sy = by2 + (Math.random() < 0.5 ? j : bh2 - j);
+      hue = Math.random() < 0.5 ? "c" : "o";
+    }
+    game.particles.push({ x: sx, y: sy, vx: (Math.random() - .5) * 36, vy: -8 - Math.random() * 26, life: .7, age: 0, r: 1.2, spark: true, hue });
+  }
+}
+
+/* ------------- the fixed-step simulation: 60 Hz, per-frame ------------- */
+function scrollGround() {
+  game.landOff -= SCROLL;
+  if (game.landOff <= -24) game.landOff += 24;   // land tile period 24 u (spec §4)
+}
+function stepBirdPhysics() {
+  const b = game.bird;
+  b.y = Math.trunc(b.y + b.v);           // spec §2: y stays an INTEGER — the
+                                         // fraction of v is discarded each frame
+  b.v = Math.min(b.v + b.g, MAXFALL);
+  b.angle += b.omega; b.omega += b.alpha;
+  if (b.angle < ROT_MIN) b.angle = ROT_MIN;
+  if (b.angle > ROT_MAX) b.angle = ROT_MAX;
+}
+function step() {
+  perfStats.steps++;
+  game.bird.wingT++;
+  stepParticles();
+  if (game.flashT >= 0) { game.flashT++; if (game.flashT > 60) game.flashT = -1; }
+  if (game.state === "splash") { game.hoverTheta += 8; scrollGround(); return; }
+  if (game.state !== "play") return;
+  if (game.pauseSteps > 0) { game.pauseSteps--; return; }  // pipe-20 transition beat
+  game.t++;
+  const b = game.bird;
+
+  if (game.phase === "ready") { game.hoverTheta += 8; scrollGround(); return; }
+
+  if (game.phase === "dying") {
+    /* death choreography (spec §6): world stopped, bird un-flappable and
+       falling with normal physics; die sound ≈0.28 s after a PIPE hit
+       only; game-over sequence ≈0.56 s after the hit. */
+    game.deathT++;
+    if (game.deathT === 17 && game.deathByPipe) wilhelmPlay();   // the die slot (spec §6) — Wilhelm, pipe deaths only
+    if (b.y < GROUND_Y - HIT) {
+      b.y = Math.trunc(b.y + b.v);
+      b.v = Math.min(b.v + GRAV, MAXFALL);
+      b.angle += b.omega; b.omega += b.alpha;
+      if (b.angle < ROT_MIN) b.angle = ROT_MIN;
+      if (b.angle > ROT_MAX) b.angle = ROT_MAX;
+      if (b.y > GROUND_Y - HIT) { b.y = GROUND_Y - HIT; b.v = 0; }
+    }
+    if (game.deathT >= 34) showGameOver();
+    return;
+  }
+
+  /* flying */
+  scrollGround();
+  if (game.warmup > 0) {
+    // spec §3 warm-up: pipes hidden/frozen/harmless for ~66 frames
+    game.warmup--;
+    if (game.warmup === 0) armPipes();
+    stepBirdPhysics();
+    if (b.y > GROUND_Y - HIT) { b.y = GROUND_Y - HIT; startDeath(false); }
+    return;
+  }
+
+  stepBirdPhysics();
+
+  for (const p of game.pipes) {
+    p.x -= SCROLL;
+    if (p.x < -PIPE_WU) {                        // recycle to the back (spec §3)
+      const back = Math.max.apply(null, game.pipes.map(q => q.x));
+      p.x = back + PITCH;
+      p.gapBottom = randGap();
+      p.scored = false;
+      p.idx = ++game.spawnCounter;
+      p.phase = Math.random() * Math.PI * 2;
+      p.amp = 28 + Math.random() * 22;
+      p.tele = (POPICOIN_CONFIG.WAVE_PIPES && p.idx >= 20) ? 27 : 0;
+    }
+    /* POPICOIN signature layer: sine wave after pipe 20, dust first */
+    let off = 0;
+    if (POPICOIN_CONFIG.WAVE_PIPES && p.idx >= 20) {
+      if (p.tele > 0) {
+        p.tele--;
+        if (game.t % 4 === 0) emitDust(OX + (p.x + PIPE_WU / 2) * S, (p.gapBottom - GAP_H / 2) * S, 2, 60);
+      } else {
+        off = Math.sin(game.t / 60 * 2.2 + p.phase) * p.amp;
+      }
+    }
+    p.effGap = p.gapBottom + off;
+    /* scoring (spec §6): +1 when the pipe's left edge crosses bird x —
+       both parities checked because the 2 u/frame step alternates them */
+    if (!p.scored && (p.x === BIRD_X || p.x === BIRD_X - 1)) {
+      p.scored = true;
+      game.score++;
+      sfx("point");
+      if (game.score === 20) game.pauseSteps = 27;   // 19 → 20 transition beat
+    }
+  }
+  /* collision (spec §2/§3): bird = 20×20 AABB at (80, y); pipes = full
+     52×320 rects — the narrower drawn body does NOT forgive, the box does */
+  for (const p of game.pipes) {
+    if (p.x + PIPE_WU <= b.x || p.x >= b.x + HIT) continue;
+    const g = p.effGap;
+    const hitTop = b.y < g - GAP_H && b.y + HIT > g - GAP_H - 320;
+    const hitBot = b.y < g + 320 && b.y + HIT > g;
+    if (hitTop || hitBot) { startDeath(true); return; }
+  }
+  if (b.y > GROUND_Y - HIT) { b.y = GROUND_Y - HIT; startDeath(false); }
+}
+
+/* ---------------- drawing ---------------- */
+/* =====================================================================
+   ART LAYER (v6) — Kenn's masters, at his quality bar (art-bible
+   Addendum 3). The world is his painted wasteland, sliced into
+   parallax bands that scroll right-to-left with wrap tiling; the
+   pipes are his own extracted trash columns (art/pipe-*.webp, from
+   art-lab/extract/) drawn into the spec collision column; the
+   billboard keeps the neon light system (glow PRE-BAKED into sprites,
+   pulse-modulated by alpha — no per-frame shadowBlur); the floor is
+   his static road + the translating zombie horde. Rendering only:
+   nothing here touches the sim.
+   ===================================================================== */
+const ART = {
+  scrollU: 0, _lastLandOff: 0, pulseA: 0.5, pulseB: 0.5,
+  bgPortrait: null, bgLandscape: null, pileTex: null, frameTex: null, medallion: null,
+  halo: null, tubeGrad: null,
+  pipeCap: null, pipeBody: null,
+  /* v9 — Kenn's as-is sprites (lossless PNG, native crop resolution):
+     outline set = regular pipes, fire set = wave pipes (idx >= 20),
+     HQ bird character, duct-tape seam strip */
+  pipeOHangTL: null, pipeOHangTR: null, pipeOStandBL: null, pipeOStandBR: null,
+  pipeFHangTL: null, pipeFStandBL: null, pipeFStandBR: null,
+  birdHQ: null, tapeStrip: null, tapeBaked: null, tapeW: 0, pipeCols: null,
+  bbGlow: null, bbFrame: null, bbPlaceholder: null,
+  /* the zombie wall (v9) + legacy road plate slot */
+  zoms: null, road: null, crowd: null, wall: null, wallStrips: null,
+  wilhelmPlays: 0
+};
+function artLoad(key, file, cb) {
+  const im = new Image();
+  im.onload = () => { ART[key] = im; if (cb) cb(); };
+  im.src = "art/" + file + ".webp";
+  return im;
+}
+function artLoadPng(key, file, cb) {
+  const im = new Image();
+  im.onload = () => { ART[key] = im; if (cb) cb(); };
+  im.src = "art/" + file + ".png";
+  return im;
+}
+function mulberry(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function mkCanvas(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+
+/* scroll distance is render-side bookkeeping: it follows game.landOff
+   (which scrollGround() advances) without touching sim state. */
+function artAdvanceScroll() {
+  let d = ART._lastLandOff - game.landOff;
+  if (d < 0) d += 24;
+  if (d > 12 || d < 0) d = 0;
+  ART.scrollU += d;
+  ART._lastLandOff = game.landOff;
+}
+
+/* ---- score legibility halo: soft dark radial, pre-baked -------------- */
+function bakeHalo() {
+  const c = mkCanvas(200, 200), g = c.getContext("2d");
+  const gr = g.createRadialGradient(100, 100, 8, 100, 100, 98);
+  gr.addColorStop(0, "rgba(4,10,6,0.60)");
+  gr.addColorStop(0.55, "rgba(4,10,6,0.38)");
+  gr.addColorStop(0.82, "rgba(0,60,32,0.10)");
+  gr.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = gr; g.fillRect(0, 0, 200, 200);
+  ART.halo = c;
+}
+/* =====================================================================
+   v6 — EXTRACTED PIPES. The pillars ARE Kenn's art: pipe-cap.webp is
+   his 3-bag mouth cluster (327x270), pipe-body.webp his column sliced
+   into a seamless 264x560 tile (see art-lab/extract/NOTES.md — fringe
+   decontaminated + tightened wrap blend when the plates were baked
+   into art/). Both draw INTO the 52u collision column: sprite width =
+   column width exactly, so what you see is what kills you. No neon
+   rim on the pipes — neon lives on the billboard only. WAVE_PIPES
+   moves the whole column via effGap; the sprites just ride along.
+   ===================================================================== */
+const PIPE_CAP_U = 270 * (52 / 327);       // cap height in units at 52u wide (42.9u)
+const PIPE_TILE_U = 560 * (52 / 264);      // body tile height in units (110.3u)
+function tileBody(x, y0, y1, phase) {
+  let yy = y0 - (((phase % PIPE_TILE_U) + PIPE_TILE_U) % PIPE_TILE_U);
+  for (; yy < y1; yy += PIPE_TILE_U) ctx.drawImage(ART.pipeBody, x, yy, PIPE_WU, PIPE_TILE_U);
+}
+function drawPipeSprites(x, y, h, isTop, p) {
+  const phase = ((p ? p.idx : 0) * 37) % PIPE_TILE_U;   // per-pipe tile phase: kills the marching-same-box look
+  const flipX = !!(p && (p.idx % 2 === 1));
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, PIPE_WU, h); ctx.clip();
+  if (flipX) { ctx.translate(2 * x + PIPE_WU, 0); ctx.scale(-1, 1); }
+  if (isTop) {
+    // hanging pipe: body tiles down from the top, cap (as extracted,
+    // mouth cluster at its bottom) closes the rect at the gap edge
+    tileBody(x, y, y + h - PIPE_CAP_U, phase);
+    ctx.drawImage(ART.pipeCap, x, y + h - PIPE_CAP_U, PIPE_WU, PIPE_CAP_U);
+  } else {
+    // standing pipe: cap flipped vertically so the cluster crowns the
+    // top (mouth at the gap edge), body tiles below it
+    ctx.save();
+    ctx.translate(0, 2 * y + PIPE_CAP_U); ctx.scale(1, -1);
+    ctx.drawImage(ART.pipeCap, x, y, PIPE_WU, PIPE_CAP_U);
+    ctx.restore();
+    tileBody(x, y + PIPE_CAP_U, y + h, phase);
+  }
+  ctx.restore();
+}
+
+/* =====================================================================
+   v9 — AS-IS PIPE SPRITES. The columns are whole pieces cut from Kenn's
+   two sheets (art/pipe-o-*.png from the outline sheet, art/pipe-f-*.png
+   from the fire sheet), shipped at native crop resolution, lossless.
+   Regular pipes (idx < 20) wear the OUTLINE set; wave pipes (idx >= 20)
+   wear the FIRE set. Each piece draws at the 52u collision width with
+   its native aspect, anchored at the gap/mouth edge and extending off
+   the screen edge. Where one piece is shorter than the rect, WHOLE
+   pieces stack with the join overlapped 8% at a bag cluster — never
+   stretched, never sub-tiled, never flipped. Variant mapping:
+     hang, even idx: [TL, TR, TL, ...]   hang, odd idx: [TR, TL, TR, ...]
+     stand (any idx): [BL (mouth), BR, BL, BR, ...]
+     fire hang (single variant on the sheet): [TL, TL, ...]
+     fire stand: [BL (mouth), BR, BL, BR, ...]
+   Collision stays the spec 52x320 rect; the paint conforms to it. The
+   fire crops include their flame tips, which lick past the trash body
+   inside the column width (player-friendly overflow, Kenn-approved).
+   ===================================================================== */
+const PIPE_SETS = {
+  outline: { hang: ["pipeOHangTL", "pipeOHangTR"], stand: ["pipeOStandBL", "pipeOStandBR"] },
+  fire:    { hang: ["pipeFHangTL"],                stand: ["pipeFStandBL", "pipeFStandBR"] }
+};
+/* Stack whole pieces into a 52x320 column at the origin of g (g is
+   pre-scaled so 1 unit = S px). Hangs anchor at the mouth (bottom) and
+   stack upward; stands anchor at the mouth (top) and stack downward;
+   every join overlaps the previous piece by 8% of the incoming piece. */
+function stackInto(g, imgs, isTop, start) {
+  if (isTop) {
+    let bottom = 320, i = 0;
+    while (bottom > 0 && i < 8) {
+      const im = imgs[(start + i) % imgs.length];
+      const ih = PIPE_WU * im.naturalHeight / im.naturalWidth;
+      g.drawImage(im, 0, bottom - ih, PIPE_WU, ih);
+      bottom = bottom - ih + ih * 0.08;
+      i++;
+    }
+  } else {
+    let top = 0, i = 0;
+    while (top < 320 && i < 8) {
+      const im = imgs[i % imgs.length];
+      const ih = PIPE_WU * im.naturalHeight / im.naturalWidth;
+      g.drawImage(im, 0, top, PIPE_WU, ih);
+      top = top + ih - ih * 0.08;
+      i++;
+    }
+  }
+}
+/* Columns are pre-baked ONCE per layout at full backing resolution
+   (the codebase's plate/billboard/wall-strip discipline): per frame a
+   pipe is a single 1:1 blit, where live stacking cost ~8 high-quality
+   rescales per pipe and dragged frame rates down. Pipes are always
+   drawn as the full 52x320 spec rect, so one bake per set/orientation/
+   parity serves every pipe. */
+function bakePipeColumns() {
+  ART.pipeCols = null;
+  const need = ["pipeOHangTL", "pipeOHangTR", "pipeOStandBL", "pipeOStandBR",
+                "pipeFHangTL", "pipeFStandBL", "pipeFStandBR"];
+  if (need.some(k => !ART[k] || !ART[k].naturalWidth)) return;
+  const mk = (keys, isTop, start) => {
+    const c = document.createElement("canvas");
+    c.width = Math.ceil(PIPE_WU * S); c.height = Math.ceil(320 * S);
+    const g = c.getContext("2d");
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+    g.scale(S, S);
+    stackInto(g, keys.map(k => ART[k]), isTop, start);
+    return c;
+  };
+  ART.pipeCols = {
+    oTop: [mk(PIPE_SETS.outline.hang, true, 0), mk(PIPE_SETS.outline.hang, true, 1)],
+    oBot: mk(PIPE_SETS.outline.stand, false, 0),
+    fTop: [mk(PIPE_SETS.fire.hang, true, 0)],
+    fBot: mk(PIPE_SETS.fire.stand, false, 0)
+  };
+}
+function drawPipeColumn(x, y, h, isTop, p) {
+  const fire = !!(p && p.idx >= 20 && POPICOIN_CONFIG.WAVE_PIPES);
+  if (ART.pipeCols) {
+    const col = isTop
+      ? (fire ? ART.pipeCols.fTop[0] : ART.pipeCols.oTop[Math.abs(p ? p.idx : 0) % 2])
+      : (fire ? ART.pipeCols.fBot : ART.pipeCols.oBot);
+    ctx.drawImage(col, x, y, PIPE_WU, 320);
+    return true;
+  }
+  // live stacking fallback (sprites in, bake pending a frame)
+  const set = fire ? PIPE_SETS.fire : PIPE_SETS.outline;
+  const keys = isTop ? set.hang : set.stand;
+  const imgs = [];
+  for (const k of keys) {
+    const im = ART[k];
+    if (!im || !im.naturalWidth) return false;      // sprites not in yet — caller falls back
+    imgs.push(im);
+  }
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, PIPE_WU, h); ctx.clip();
+  ctx.translate(x, y);
+  stackInto(ctx, imgs, isTop, (isTop && p) ? Math.abs(p.idx) % imgs.length : 0);
+  ctx.restore();
+  return true;
+}
+
+/* ---- the zombie wall (v9) ------------------------------------------
+   Kenn's spec (composite mock v4, approved 03:13): the bottom band is
+   a SOLID BLACK MASS packed with zombie silhouettes — only heads,
+   shoulders and arms show above the mass line. The figures are the
+   existing zombies.webp cells (near-black silhouettes: over the black
+   mass their bodies vanish, only the skyline reads). 3 staggered rows.
+   TREADMILL: the horde translates RIGHT at exactly the world scroll
+   speed (2 u/frame) while the world scrolls left; the bob cadence is
+   driven by scroll distance, not wall-clock, so the run cycle locks
+   to the ground speed and freezes when the world freezes. */
+const ZOM_B = { 0: 10, 1: 11, 5: 12, 8: 13 };
+const WALL_ROWS = [
+  { hMul: 1.22, topMul: 0.46, count: 38, bobMul: 1.0 },   // back row — skyline highest
+  { hMul: 1.13, topMul: 0.31, count: 34, bobMul: 0.8 },
+  { hMul: 1.04, topMul: 0.18, count: 31, bobMul: 0.6 }    // front row — just heads + arms
+];
+function wallTopY() { return LAY.feetY - LAY.crowdBaseH; }
+function buildWall() {
+  const rnd = mulberry(20261020);
+  const weights = [3, 3, 2, 2, 2, 3, 2, 2, 3, 2];
+  const bag = [];
+  weights.forEach((w, i) => { for (let k = 0; k < w; k++) bag.push(i); });
+  const P = LAY.crowdPeriod, B = LAY.crowdBaseH;
+  ART.wall = WALL_ROWS.map(row => {
+    const figs = [];
+    for (let i = 0; i < row.count; i++) {
+      figs.push({
+        x: (i + rnd() * 0.35) * (P / row.count),
+        pose: bag[Math.floor(rnd() * bag.length)],
+        h: B * row.hMul * (0.94 + rnd() * 0.12),
+        topOff: B * row.topMul * (0.85 + rnd() * 0.3),
+        phase: rnd() * Math.PI * 2,
+        bob: (3 + rnd() * 3) * (B / 246) * row.bobMul
+      });
+    }
+    return figs;
+  });
+  ART.crowd = ART.wall.flat();
+  bakeWallStrips();
+}
+/* The wall is pre-rendered into per-row strip canvases (two frames per
+   row: base poses + reach-peak poses) — the same pre-bake discipline as
+   the background plates and the billboard. Per frame the wall costs a
+   few 1:1 blits instead of ~100 transformed sprite draws, which kept
+   low-end devices (and the build-check rig) at slideshow frame rates.
+   Motion is preserved: strips translate right at lane speed, each row
+   bobs on the scroll-locked cadence, and rows swap pose frames on the
+   same cadence — the treadmill reads identically. */
+function bakeWallStrips() {
+  ART.wallStrips = null;
+  if (!ART.zoms || !ART.wall) return;
+  const B = LAY.crowdBaseH, P = Math.ceil(LAY.crowdPeriod);
+  ART.wallStrips = ART.wall.map((figs, ri) => {
+    const row = WALL_ROWS[ri];
+    const maxOff = B * row.topMul * 1.15;
+    const SH = Math.ceil(B * 1.95);
+    const frames = [0, 1].map(variant => {
+      const c = document.createElement("canvas"); c.width = P; c.height = SH;
+      const g = c.getContext("2d");
+      for (const f of figs) {
+        let cell = f.pose;
+        if (variant === 1 && ZOM_B[f.pose] !== undefined) cell = ZOM_B[f.pose];
+        const cw = f.h * 300 / 460;
+        g.drawImage(ART.zoms, (cell % 4) * 300, Math.floor(cell / 4) * 460, 300, 460,
+                    f.x - cw / 2, maxOff - f.topOff, cw, f.h);
+      }
+      return c;
+    });
+    return { frames, maxOff, phase: ri * 1.7, bob: 4.5 * (B / 246) * row.bobMul };
+  });
+}
+function drawZombieWall() {
+  const top = wallTopY();
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, top, W, H - top);
+  if (!ART.wallStrips) return;
+  const scrollPx = ART.scrollU * S;
+  const P = LAY.crowdPeriod;
+  const off = ((scrollPx % P) + P) % P;
+  for (const row of ART.wallStrips) {
+    const ph = scrollPx * 0.055 + row.phase;             // cadence locked to scroll
+    const img = row.frames[Math.sin(ph) > 0.1 ? 1 : 0];
+    const dy = top - row.maxOff + Math.sin(ph) * row.bob;
+    ctx.drawImage(img, off - P, dy);
+    ctx.drawImage(img, off, dy);
+  }
+}
+function computeBB() {
+  // The billboard spans the portrait top per Kenn's mock; in landscape it
+  // keeps its v5 home at upper-center. All sizes derive from the frame
+  // width via k so one bake serves both stages.
+  let bw, bh, bx, by;
+  if (LAY.portrait) { bw = Math.round(W * 0.94); bh = Math.round(bw * 9 / 16); bx = Math.round((W - bw) / 2); by = Math.round(H * 0.028); }
+  else { bw = Math.round(W * 0.52); bh = Math.round(bw * 9 / 16); bx = Math.round((W - bw) / 2); by = Math.round(H * 0.35 - bh / 2); }
+  const k = bw / 499.2;
+  const win = { x: Math.round(bx + bw * 0.068), y: Math.round(by + bh * 0.213), w: Math.round(bw * 0.864), h: Math.round(bh * 0.605) };
+  const m = Math.round(80 * k);
+  return { bx, by, bw, bh, k, win, glow: null, frame: null, placeholder: null,
+           ox: bx - m, oy: by - m, cw: bw + 2 * m, ch: bh + m + Math.round(120 * k) };
+}
+
+/* PARALLAX PLATES (v6) — the Kenn plates are sliced into horizontal
+   bands and re-baked as 2x-stage-width mirror-tiled plates so the world
+   scrolls endlessly with two drawImage calls per band and no per-frame
+   filters. Far = skyline/industry at 0.3x lane speed, mid = trash
+   fields at 0.6x, near foreground stays static (Kenn's plates carry
+   their own painted foreground). */
+function bakeBandPlate(img, y0, y1, fadeTop) {
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const sy = Math.round(y0 * ih), sh = Math.round((y1 - y0) * ih);
+  const c = document.createElement("canvas"); c.width = W * 2; c.height = Math.max(2, Math.round(sh * (W / iw)));
+  const g = c.getContext("2d");
+  g.drawImage(img, 0, sy, iw, sh, 0, 0, W, c.height);
+  g.save(); g.translate(2 * W, 0); g.scale(-1, 1); g.drawImage(img, 0, sy, iw, sh, 0, 0, W, c.height); g.restore();
+  if (fadeTop > 0) { // soften the band's top edge into the band above
+    g.globalCompositeOperation = "destination-out";
+    const gr = g.createLinearGradient(0, 0, 0, fadeTop);
+    gr.addColorStop(0, "rgba(0,0,0,1)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = gr; g.fillRect(0, 0, W * 2, fadeTop);
+    g.globalCompositeOperation = "source-over";
+  }
+  return c;
+}
+function buildPlates() {
+  LAY.plates = null; LAY.midY = 0;
+  const img = ART[LAY.bgKey];
+  if (!img || !img.naturalWidth) return;
+  const ih = img.naturalHeight, iw = img.naturalWidth, sc = W / iw;
+  const far = bakeBandPlate(img, LAY.bFar[0], LAY.bFar[1], 0);
+  const mid = bakeBandPlate(img, LAY.bMid[0], LAY.bMid[1], Math.round(0.05 * H));
+  const fgC = document.createElement("canvas"); fgC.width = W; fgC.height = H - LAY.fgY;
+  const fg = fgC.getContext("2d");
+  const fgSy = Math.round(LAY.bFg * ih);
+  fg.drawImage(img, 0, fgSy, iw, ih - fgSy, 0, 0, W, fgC.height);
+  fg.globalCompositeOperation = "destination-out";
+  const gr = fg.createLinearGradient(0, 0, 0, Math.round(0.06 * H));
+  gr.addColorStop(0, "rgba(0,0,0,1)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+  fg.fillStyle = gr; fg.fillRect(0, 0, W, Math.round(0.06 * H));
+  fg.globalCompositeOperation = "source-over";
+  LAY.midY = Math.round(LAY.bMid[0] * ih * sc);
+  LAY.plates = { far, mid, fg: fgC };
+}
+function drawBand(plate, y, speed) {
+  if (!plate) return;
+  let off = -((ART.scrollU * S * speed) % W); if (off > 0) off -= W;
+  ctx.drawImage(plate, off, y);
+}
+/* v9 quality mandate: the canvas backing store scales with
+   devicePixelRatio (cap 3). The v8 geometry baseline assumed a ~2x
+   backing (1080x1920 portrait), so RSCALE = clamp(dpr,1,3)/2 — a DPR-3
+   phone renders at 1.5x the v8 backing, a DPR-1 screen at 0.5x, and a
+   2x pipeline (incl. the build-check rig) reproduces v8 geometry 1:1.
+   All layout absolutes scale by the same factor; fractions are immune. */
+let RSCALE = 1;
+function applyLayout(portrait) {
+  const base = portrait ? LAY_P : LAY_L;
+  RSCALE = Math.max(0.5, Math.min(window.devicePixelRatio || 1, 3) / 2);
+  LAY = Object.assign({}, base, {
+    W: Math.round(base.W * RSCALE), H: Math.round(base.H * RSCALE),
+    fgY: Math.round(base.fgY * RSCALE), roadY: Math.round(base.roadY * RSCALE),
+    roadH: Math.round(base.roadH * RSCALE), feetY: Math.round(base.feetY * RSCALE),
+    crowdBaseH: base.crowdBaseH * RSCALE, crowdPeriod: base.crowdPeriod * RSCALE
+  });
+  W = LAY.W; H = LAY.H; S = H / 512; OX = (W - UW * S) / 2;
+  cv.width = W; cv.height = H;
+  ctx.imageSmoothingEnabled = true;               // v9 quality mandate
+  ctx.imageSmoothingQuality = "high";
+  const stage = document.getElementById("stage");
+  stage.style.aspectRatio = portrait ? "9 / 16" : "16 / 9";
+  stage.style.maxWidth = portrait ? "470px" : "980px";
+  BB = computeBB();
+  buildPlates(); buildWall(); bakePipeColumns(); bakeTape();
+  { // lane wash, pre-baked (art bible: no per-frame gradient raster)
+    const wc = document.createElement("canvas"); wc.width = W; wc.height = H;
+    const wg = wc.getContext("2d");
+    const grad = wg.createLinearGradient(OX, 0, OX + UW * S, 0);
+    grad.addColorStop(0, "rgba(8,16,10,0)"); grad.addColorStop(0.08, "rgba(8,16,10,0.35)");
+    grad.addColorStop(0.92, "rgba(8,16,10,0.35)"); grad.addColorStop(1, "rgba(8,16,10,0)");
+    wg.fillStyle = grad;
+    const bbBot = BB.by + BB.bh;
+    wg.fillRect(OX, bbBot, UW * S, H - bbBot);                       // lane below the board
+    wg.fillRect(OX, 0, Math.max(0, BB.bx - 8 - OX), bbBot);         // margins beside it
+    wg.fillRect(BB.bx + BB.bw + 8, 0, Math.max(0, OX + UW * S - (BB.bx + BB.bw + 8)), bbBot);
+    wg.globalCompositeOperation = "destination-out";                // feather the seam
+    const fg2 = wg.createLinearGradient(0, bbBot - 4, 0, bbBot + Math.round(46 * BB.k));
+    fg2.addColorStop(0, "rgba(0,0,0,0.55)"); fg2.addColorStop(1, "rgba(0,0,0,0)");
+    wg.fillStyle = fg2; wg.fillRect(OX, bbBot - 4, UW * S, Math.round(46 * BB.k) + 4);
+    wg.globalCompositeOperation = "source-over";
+    ART.washCv = wc;
+  }
+  if (ART.frameTex || ART.medallion) bakeBillboard();
+  if (window.__popicoin) { window.__popicoin.U.S = S; window.__popicoin.U.OX = OX; }
+  if (typeof renderSettings === "function") renderSettings();
+}
+
+function bakeBillboard() {
+  if (!ART.frameTex) return;
+  const { bw, bh, bx, by, win } = BB, k = BB.k, X = x => x - BB.ox, Y = y => y - BB.oy;
+  /* glow plate: neon spill + ground pool + tube bloom (alpha-pulsed) */
+  const glow = mkCanvas(BB.cw, BB.ch), g = glow.getContext("2d");
+  let gr = g.createRadialGradient(X(bx + bw / 2), Y(by + bh / 2), 40 * k, X(bx + bw / 2), Y(by + bh / 2), 400 * k);
+  gr.addColorStop(0, "rgba(110,255,190,0.13)"); gr.addColorStop(1, "rgba(110,255,190,0)");
+  g.fillStyle = gr; g.fillRect(0, 0, BB.cw, BB.ch);
+  g.save();
+  g.translate(X(bx + bw / 2), Y(Math.min(GROUND_Y * S + 26 * k, by + bh + 110 * k))); g.scale(1, 26 / 280);
+  gr = g.createRadialGradient(0, 0, 10 * k, 0, 0, 280 * k);
+  gr.addColorStop(0, "rgba(0,255,136,0.07)"); gr.addColorStop(1, "rgba(0,255,136,0)");
+  g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 280, 0, 7); g.fill();
+  g.restore();
+  const tube = g2 => {
+    g2.beginPath();
+    if (g2.roundRect) g2.roundRect(X(bx + 7 * k), Y(by + 7 * k), bw - 14 * k, bh - 14 * k, 10 * k);
+    else g2.rect(X(bx + 7 * k), Y(by + 7 * k), bw - 14 * k, bh - 14 * k);
+  };
+  const tg = g.createLinearGradient(X(bx), Y(by), X(bx + bw), Y(by + bh));
+  tg.addColorStop(0, "#37E6FF"); tg.addColorStop(0.5, "#37E6FF"); tg.addColorStop(1, "#FF8C1A");
+  g.strokeStyle = tg;
+  g.globalAlpha = 0.10; g.lineWidth = 18 * k; tube(g); g.stroke();
+  g.globalAlpha = 0.16; g.lineWidth = 11 * k; tube(g); g.stroke();
+  g.globalAlpha = 0.28; g.lineWidth = 6 * k; tube(g); g.stroke();
+  g.globalAlpha = 1;
+  ART.bbGlow = glow;
+  ART.tubeGrad = tg;
+  /* frame plate: patchwork borders + rivets + medallion, window hollow */
+  const fr = mkCanvas(BB.cw, BB.ch), f = fr.getContext("2d");
+  const tex = ART.frameTex;
+  const border = (dx, dy, dw, dh, sx, sy, sw, sh) => {
+    f.fillStyle = "#0A120C"; f.fillRect(dx, dy, dw, dh);
+    if (tex) f.drawImage(tex, sx, sy, sw, sh, dx, dy, dw, dh);
+  };
+  border(X(bx), Y(by), bw, 60 * k, 180, 120, 180, 70);                 // top
+  border(X(bx), Y(by + bh - 48 * k), bw, 48 * k, 180, 760, 180, 60);       // bottom
+  border(X(bx), Y(by + 60 * k), 34 * k, bh - 108 * k, 6, 60, 100, 950);        // left
+  border(X(bx + bw - 34 * k), Y(by + 60 * k), 34 * k, bh - 108 * k, 186, 60, 100, 950); // right
+  /* corner blocks */
+  border(X(bx), Y(by), 34 * k, 60 * k, 6, 60, 100, 130);
+  border(X(bx + bw - 34 * k), Y(by), 34 * k, 60 * k, 186, 60, 100, 130);
+  border(X(bx), Y(by + bh - 48 * k), 34 * k, 48 * k, 6, 700, 100, 110);
+  border(X(bx + bw - 34 * k), Y(by + bh - 48 * k), 34 * k, 48 * k, 186, 700, 100, 110);
+  /* shading: outer edge + window lip shadow + top light */
+  f.strokeStyle = "rgba(0,0,0,0.65)"; f.lineWidth = Math.max(1.5, 2 * k);
+  f.strokeRect(X(bx) + 1, Y(by) + 1, bw - 2, bh - 2);
+  f.strokeStyle = "rgba(0,0,0,0.55)"; f.lineWidth = 6 * k;
+  f.strokeRect(X(win.x), Y(win.y), win.w, win.h);
+  f.fillStyle = "rgba(255,255,255,0.07)"; f.fillRect(X(bx), Y(by), bw, 2 * k);
+  /* rivets along the window lip */
+  f.fillStyle = "#6E9277";
+  const rivet = (x, y) => {
+    f.beginPath(); f.arc(x, y, 2.2 * k, 0, 7); f.fill();
+    f.fillStyle = "rgba(0,0,0,0.5)"; f.beginPath(); f.arc(x + 0.7 * k, y + 0.8 * k, 0.9 * k, 0, 7); f.fill();
+    f.fillStyle = "#6E9277";
+  };
+  for (let x = win.x + 12 * k; x < win.x + win.w - 6 * k; x += 26 * k) { rivet(X(x), Y(win.y) - 5 * k); rivet(X(x), Y(win.y + win.h) + 5 * k); }
+  for (let y = win.y + 12 * k; y < win.y + win.h - 6 * k; y += 26 * k) { rivet(X(win.x) - 5 * k, Y(y)); rivet(X(win.x + win.w) + 5 * k, Y(y)); }
+  /* the BCH medallion crowns the frame, overlapping the top strip */
+  if (ART.medallion) {
+    f.save();
+    f.fillStyle = "rgba(0,0,0,0.35)";
+    f.beginPath(); f.ellipse(X(bx + bw / 2), Y(by) + 34 * k, 30 * k, 30 * k, 0, 0, 7); f.fill();
+    f.drawImage(ART.medallion, X(bx + bw / 2) - 30 * k, Y(by) - 2 * k, 60 * k, 60 * k);
+    f.restore();
+  }
+  ART.bbFrame = fr;
+  ART.bbPlaceholder = bakePlaceholder();
+}
+/* placeholder creative: SPONSOR ME — YOUR LOGO HERE (Kenn's copy, exact).
+   No price on the board, ever. Baked once; re-baked when fonts land. */
+function bakePlaceholder() {
+  const { win } = BB, F = win.w / 431.2; // type scale vs the v5 window
+  const c = mkCanvas(Math.round(win.w), Math.round(win.h)), g = c.getContext("2d");
+  /* v4.1: the empty board must read as a LIT SIGN, like Kenn's ref —
+     warm scrap patchwork behind glowing type. v4's near-black fill +
+     dim texture read as a black void in the middle of the board. */
+  g.fillStyle = "#241A10"; g.fillRect(0, 0, win.w, win.h);
+  const tex = ART.frameTex || ART.pileTex;
+  if (tex) {
+    g.save(); g.globalAlpha = 0.9;
+    if (ART.frameTex) g.drawImage(tex, 20, 420, 320, 128, 0, 0, win.w, win.h);  // patchwork band, window aspect
+    else g.drawImage(tex, 0, 0, win.w, win.h);
+    g.restore();
+    // dim the metal so the neon owns the window: a lit sign is bright
+    // type on DARKER scrap (first v4.1 pass left rust-on-rust contrast)
+    g.fillStyle = "rgba(10,8,8,0.24)"; g.fillRect(0, 0, win.w, win.h);
+  }
+  // warm light: glowing heart, shaded rim — a sign burning on scrap metal
+  let gr = g.createRadialGradient(win.w / 2, win.h * 0.44, 20, win.w / 2, win.h * 0.5, win.w * 0.62);
+  gr.addColorStop(0, "rgba(255,176,92,0.32)"); gr.addColorStop(0.6, "rgba(255,140,50,0.09)"); gr.addColorStop(1, "rgba(0,0,0,0.22)");
+  g.fillStyle = gr; g.fillRect(0, 0, win.w, win.h);
+  const lg = g.createLinearGradient(0, 0, 0, win.h);
+  lg.addColorStop(0, "rgba(255,220,160,0.08)"); lg.addColorStop(0.25, "rgba(0,0,0,0)"); lg.addColorStop(1, "rgba(0,0,0,0.26)");
+  g.fillStyle = lg; g.fillRect(0, 0, win.w, win.h);
+  // (no medallion in the window — the frame already crowns the board with one)
+  g.textAlign = "center";
+  const tg = g.createLinearGradient(0, 40 * F, 0, 84 * F);
+  tg.addColorStop(0, "#FFEDBE"); tg.addColorStop(1, "#FF9416");
+  g.shadowColor = "rgba(255,140,26,0.95)"; g.shadowBlur = 27 * F;   // bake-time glow only: the sprite is pre-baked
+  g.fillStyle = tg; g.font = "800 " + Math.round(36 * F) + "px Syne, sans-serif";
+  g.fillText("SPONSOR ME", win.w / 2, 84 * F);
+  g.fillText("SPONSOR ME", win.w / 2, 84 * F);                        // extra passes: hotter neon core
+  g.fillText("SPONSOR ME", win.w / 2, 84 * F);
+  g.shadowBlur = 0;
+  try { g.letterSpacing = Math.round(5 * F) + "px"; } catch (e) {}
+  g.shadowColor = "rgba(89,232,255,0.85)"; g.shadowBlur = 12 * F;
+  g.fillStyle = "#BFF4FF"; g.font = "700 " + Math.round(15 * F) + "px 'JetBrains Mono', monospace";
+  g.fillText("YOUR LOGO HERE", win.w / 2, 122 * F);
+  g.fillText("YOUR LOGO HERE", win.w / 2, 122 * F);
+  g.fillText("YOUR LOGO HERE", win.w / 2, 122 * F);
+  g.shadowBlur = 6 * F;
+  g.fillStyle = "rgba(120,240,255,0.85)"; g.fillRect(win.w / 2 - 62 * F, 136 * F, 124 * F, 2 * F);
+  g.shadowBlur = 0; g.shadowColor = "rgba(0,0,0,0)";
+  try { g.letterSpacing = "0px"; } catch (e) {}
+  return c;
+}
+/* boot the plates; every plate has a vector fallback until it lands */
+artLoad("bgPortrait", "bg-portrait", buildPlates); artLoad("bgLandscape", "bg-landscape", buildPlates);
+artLoad("pipeCap", "pipe-cap"); artLoad("pipeBody", "pipe-body");
+artLoad("pileTex", "pile-texture");
+artLoad("frameTex", "frame-tex", bakeBillboard); artLoad("medallion", "medallion", bakeBillboard);
+artLoad("zoms", "zombies", buildWall); artLoad("road", "road");
+/* v9 as-is sprites (lossless PNG at native crop resolution) */
+artLoadPng("pipeOHangTL", "pipe-o-hang-tl", bakePipeColumns); artLoadPng("pipeOHangTR", "pipe-o-hang-tr", bakePipeColumns);
+artLoadPng("pipeOStandBL", "pipe-o-stand-bl", bakePipeColumns); artLoadPng("pipeOStandBR", "pipe-o-stand-br", bakePipeColumns);
+artLoadPng("pipeFHangTL", "pipe-f-hang-tl", bakePipeColumns);
+artLoadPng("pipeFStandBL", "pipe-f-stand-bl", bakePipeColumns); artLoadPng("pipeFStandBR", "pipe-f-stand-br", bakePipeColumns);
+artLoadPng("birdHQ", "bird-hq"); artLoadPng("tapeStrip", "tape-strip", bakeTape);
+bakeHalo();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (ART.bbFrame) ART.bbPlaceholder = bakePlaceholder(); });
+
+function drawBackgroundFallback() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#0b1410"); g.addColorStop(0.6, "#0a0f0a"); g.addColorStop(1, "#070907");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#0e1a12";
+  const gy = GROUND_Y * S;
+  const piles = [[-0.02, 0.30, 0.33], [0.16, 0.345, 0.45], [0.64, 0.32, 0.42], [0.92, 0.285, 0.25]];
+  for (const [fx, fp, fw] of piles) {
+    ctx.beginPath(); ctx.moveTo(fx * W, gy); ctx.lineTo((fx + fw / 2) * W, fp * H); ctx.lineTo((fx + fw) * W, gy); ctx.fill();
+  }
+}
+function drawBackground() {
+  artAdvanceScroll();
+  // v6 parallax: far skyline/industry 0.3x lane speed, mid trash fields
+  // 0.6x — Kenn's plates, pre-baked mirror tiles, endless right-to-left.
+  if (!LAY.plates) { drawBackgroundFallback(); return; }
+  drawBand(LAY.plates.far, 0, 0.3);
+  drawBand(LAY.plates.mid, LAY.midY, 0.6);
+}
+function drawBillboard(t) {
+  const { bw, bh, bx, by, win } = BB, k = BB.k, FS = win.w / 431.2;
+  const idx = sponsors.length ? Math.floor(t / 10) % sponsors.length : -1;
+  const s = idx >= 0 ? sponsors[idx] : null;
+  // posts: rusty scrap columns cut from the frame atlas + a warm edge
+  // light and a cross-brace — v4's flat #233528 rects read as black
+  // slabs under the board (v4.1)
+  const post = (px) => {
+    if (ART.frameTex) ctx.drawImage(ART.frameTex, 40, 200, 60, 700, px, by + bh, 9 * k, 92 * k);
+    else { ctx.fillStyle = "#233528"; ctx.fillRect(px, by + bh, 9 * k, 92 * k); }
+    ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(px, by + bh, 2 * k, 92 * k);
+    ctx.fillStyle = "rgba(255,190,120,0.28)"; ctx.fillRect(px + 7 * k, by + bh, 2 * k, 92 * k);
+  };
+  post(bx + 14 * k); post(bx + bw - 23 * k);
+  if (ART.frameTex) ctx.drawImage(ART.frameTex, 200, 500, 140, 40, bx + 20 * k, by + bh + 40 * k, bw - 40 * k, 9 * k);
+  else { ctx.fillStyle = "#1d2b20"; ctx.fillRect(bx + 20 * k, by + bh + 40 * k, bw - 40 * k, 9 * k); }
+  ctx.fillStyle = "rgba(255,190,120,0.18)"; ctx.fillRect(bx + 20 * k, by + bh + 40 * k, bw - 40 * k, 1.5 * k);
+  // neon spill + tube bloom: pre-baked, breathing on the pulse
+  if (ART.bbGlow) {
+    ctx.save();
+    ctx.globalAlpha = 0.70 + 0.30 * ART.pulseA;
+    ctx.drawImage(ART.bbGlow, BB.ox, BB.oy);
+    ctx.restore();
+  }
+  // the ad window — sponsor creative composites INSIDE the frame
+  ctx.save();
+  ctx.beginPath(); ctx.rect(win.x, win.y, win.w, win.h); ctx.clip();
+  if (s && s.imageUrl && bbImages[s.imageUrl] && bbImages[s.imageUrl].complete && bbImages[s.imageUrl].naturalWidth) {
+    const im = bbImages[s.imageUrl], ir = im.naturalWidth / im.naturalHeight, br = win.w / win.h;
+    let dw = win.w, dh = win.h, dx = win.x, dy = win.y;
+    if (ir > br) { dw = win.h * ir; dx = win.x - (dw - win.w) / 2; } else { dh = win.w / ir; dy = win.y - (dh - win.h) / 2; }
+    ctx.drawImage(im, dx, dy, dw, dh);
+  } else if (s) {
+    ctx.fillStyle = "#14301f"; ctx.fillRect(win.x, win.y, win.w, win.h);
+    ctx.fillStyle = "#6dffb0"; ctx.font = "700 " + Math.round(20 * FS) + "px Syne, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(s.username.toUpperCase(), win.x + win.w / 2, win.y + win.h / 2 + 2);
+  } else if (ART.bbPlaceholder) {
+    ctx.drawImage(ART.bbPlaceholder, win.x, win.y);
+  } else {
+    ctx.fillStyle = "#102018"; ctx.fillRect(win.x, win.y, win.w, win.h);
+    ctx.fillStyle = "#3f7d58"; ctx.font = "700 " + Math.round(15 * FS) + "px Syne, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("YOUR AD HERE", win.x + win.w / 2, win.y + win.h / 2 - 4);
+  }
+  ctx.restore();
+  // painted scrap frame over the window edges
+  if (ART.bbFrame) {
+    ctx.drawImage(ART.bbFrame, BB.ox, BB.oy);
+    // the tube itself: a live core stroke over the baked bloom
+    ctx.save();
+    ctx.globalAlpha = 0.55 + 0.45 * ART.pulseA;
+    if (!ART.tubeGradMain) {
+      const tg2 = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
+      tg2.addColorStop(0, "#37E6FF"); tg2.addColorStop(0.5, "#37E6FF"); tg2.addColorStop(1, "#FF8C1A");
+      ART.tubeGradMain = tg2;
+    }
+    ctx.strokeStyle = ART.tubeGradMain; ctx.lineWidth = 2.6 * k;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(bx + 7 * k, by + 7 * k, bw - 14 * k, bh - 14 * k, 10 * k); else ctx.rect(bx + 7 * k, by + 7 * k, bw - 14 * k, bh - 14 * k);
+    ctx.stroke();
+    ctx.globalAlpha = 0.30 * ART.pulseA;
+    ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = Math.max(1, k);
+    ctx.stroke();
+    ctx.restore();
+  } else {
+    // fallback while plates load: the v3 neon frame
+    ctx.save();
+    ctx.shadowColor = "#00FF88"; ctx.shadowBlur = 20 + ART.pulseA * 25;
+    ctx.strokeStyle = "#00FF88"; ctx.lineWidth = 3;
+    ctx.strokeRect(bx, by, bw, bh);
+    ctx.restore();
+  }
+  // caption bar (as shipped)
+  ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.fillRect(bx, by + bh - 22 * k, bw, 22 * k);
+  ctx.fillStyle = "#00FF88"; ctx.font = "700 " + Math.round(11 * FS) + "px 'JetBrains Mono', monospace"; ctx.textAlign = "left";
+  if (s) ctx.fillText("SPONSORED BY " + s.username.toUpperCase() + " • " + s.paidSats.toLocaleString("en-US") + " SATS", bx + 8 * k, by + bh - 7 * k);
+  else ctx.fillText("PLACEHOLDER • SPONSOR TO REPLACE", bx + 8, by + bh - 7);
+}
+function drawPipeU(x, y, h, isTop, slot, p) {
+  // v9: Kenn's as-is sheet pieces (outline set / fire set), drawn into
+  // the spec 52x320 collision rect — the paint conforms to the rect,
+  // never the reverse. Falls back to the v6 extraction, then to flat
+  // scrap, only while sprites are still loading.
+  if (drawPipeColumn(x, y, h, isTop, p)) return;
+  if (ART.pipeBody && ART.pipeCap) { drawPipeSprites(x, y, h, isTop, p); return; }
+  // fallback while the sprites load: flat scrap column + lip
+  ctx.fillStyle = "#2b3a2e"; ctx.fillRect(x, y, PIPE_WU, h);
+  if (ART.pileTex) ctx.drawImage(ART.pileTex, 0, (slot * 97) % 220, 110, 440, x, y, PIPE_WU, h);
+  const rimY = isTop ? y + h - 24 : y;
+  ctx.fillStyle = "#41584a"; ctx.fillRect(x - 2, rimY, PIPE_WU + 4, 24);
+  ctx.fillStyle = "#18251b"; ctx.fillRect(x - 2, isTop ? y + h - 3 : y, PIPE_WU + 4, 3);
+}
+function drawWingU(side, angDeg) {
+  // One wing, drawn in local space extending +x and mirrored by `side`;
+  // rotates around its shoulder pivot. Purely cosmetic — the wings are
+  // NOT part of the 20×20 spec hitbox and never affect collision.
+  ctx.save();
+  ctx.translate(side * 10, -1);
+  ctx.scale(side, 1);
+  ctx.rotate(-angDeg * Math.PI / 180);
+  const wg = ctx.createLinearGradient(0, 0, 30, 0);
+  wg.addColorStop(0, "#0a9e77");
+  wg.addColorStop(1, "#4dedbb");
+  ctx.fillStyle = wg;
+  ctx.strokeStyle = "rgba(4,60,42,0.5)"; ctx.lineWidth = 1.1;
+  // three segmented feathers fanned from the shoulder pivot (art bible §1)
+  const feathers = [{ len: 27, w: 5.4, a: -17 }, { len: 24, w: 5.8, a: -1 }, { len: 19, w: 5.2, a: 15 }];
+  for (const f of feathers) {
+    ctx.save();
+    ctx.rotate(f.a * Math.PI / 180);
+    ctx.beginPath();
+    ctx.moveTo(0, -f.w * 0.4);
+    ctx.quadraticCurveTo(f.len * 0.55, -f.w, f.len, 0);
+    ctx.quadraticCurveTo(f.len * 0.55, f.w * 0.8, 0, f.w * 0.5);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function drawBirdU() {
+  // v9: the bird is Kenn's HQ coin-bird character (art/bird-hq.png,
+  // as-is sprite) — single frame, bob + tilt only, exactly like the
+  // original's design. The visual (48u wide) is deliberately larger
+  // than the measured 20×20 hitbox: the forgiving-graze rule from the
+  // mechanics spec. Rotation follows the spec rotation machine.
+  // The v8 vector roundel remains only as a load fallback.
+  const b = game.bird;
+  const hov = (game.phase === "ready" || game.phase === "menu")
+    ? 4 * Math.sin(game.hoverTheta * Math.PI / 180) : 0;   // spec §2 hover bob (draw-only)
+  if (ART.birdHQ) {
+    ctx.save();
+    ctx.translate(b.x + 10, b.y + 10 + hov);   // hitbox center
+    ctx.rotate(b.angle * Math.PI / 180);
+    const BW = 48, BH = BW * ART.birdHQ.naturalHeight / ART.birdHQ.naturalWidth;
+    ctx.drawImage(ART.birdHQ, -BW / 2, -BH / 2, BW, BH);
+    ctx.restore();
+  } else {
+  // wing phase: fast flutter for ~0.3 s after each flap, then a slow glide sweep
+  const wt = b.wingT;
+  const wang = wt < 18
+    ? Math.sin(wt * 1.05) * 32
+    : 8 + Math.sin((wt - 18) * (Math.PI * 2 / 100)) * 9;
+  ctx.save();
+  ctx.translate(b.x + 9, b.y + 10 + hov);   // measured art anchor: hitbox +(9,10)
+  ctx.rotate(b.angle * Math.PI / 180);
+  drawWingU(-1, wang);
+  drawWingU(1, wang);
+  // BCH roundel
+  ctx.fillStyle = "#0AC18E";
+  ctx.beginPath(); ctx.arc(0, 0, 12.5, 0, 7); ctx.fill();
+  ctx.strokeStyle = "rgba(3,80,58,0.6)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(0, 0, 10.8, 0, 7); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.arc(0, 0, 12.5, 0, 7); ctx.stroke();
+  // ₿ glyph, tilted counterclockwise ≈ −15° (BCH style)
+  ctx.save();
+  ctx.rotate(-15 * Math.PI / 180);
+  ctx.fillStyle = "#ffffff"; ctx.font = "700 16px 'JetBrains Mono', monospace"; ctx.textAlign = "center";
+  ctx.fillText("₿", 0, 5.5);
+  ctx.restore();
+  ctx.restore();
+  }
+  // flap sparkle trail (art bible §1): gold + neon stars shed for ~0.3 s
+  // after each flap. Particles live in device space; purely cosmetic.
+  if (game.state === "play" && game.phase === "flying" && b.wingT < 16) {
+    game.particles.push({
+      x: OX + (b.x - 2) * S + Math.random() * 6,
+      y: (b.y + 14 + hov) * S + (Math.random() - 0.5) * 8,
+      vx: -50 - Math.random() * 50, vy: (Math.random() - 0.5) * 36,
+      life: 0.35, age: 0, r: 1 + Math.random() * 1.3,
+      spark: true, star: true, hue: Math.random() < 0.5 ? "gold" : "g"
+    });
+  }
+}
+/* ---- Kenn's duct tape (v9) ------------------------------------------
+   The world is held together with duct tape: a real tape strip (cut
+   from Kenn's taped plate, edges feathered in the sprite's own alpha)
+   rides the background's wrap seam in world space — full stage height,
+   once per loop. Anchored to the MID band's mirror fold (the only
+   on-screen join in the plate system), scrolling at that band's 0.6x
+   parallax speed. Drawn as part of the background, under everything. */
+function bakeTape() {
+  // The strip is resampled to its draw size ONCE per layout (608 -> full
+  // stage height under high-quality smoothing); per frame it is a 1:1
+  // blit — live-upscaling it every frame was a measurable frame cost.
+  ART.tapeBaked = null; ART.tapeW = 0;
+  const im = ART.tapeStrip;
+  if (!im || !im.naturalWidth) return;
+  const tw = Math.round(W * 0.245);   // stage fraction the strip spans on Kenn's plate
+  const c = document.createElement("canvas"); c.width = tw; c.height = H;
+  const g = c.getContext("2d");
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+  g.drawImage(im, 0, 0, tw, H);
+  ART.tapeBaked = c; ART.tapeW = tw;
+}
+function drawTape() {
+  if (!ART.tapeBaked || !LAY.plates) return;
+  const seam = W - ((ART.scrollU * S * 0.6) % W);
+  for (const cx of [seam - W, seam, seam + W]) ctx.drawImage(ART.tapeBaked, cx - ART.tapeW / 2, 0);
+}
+function draw(tSec) {
+  // the two neon circuits breathe on one clock, phase-shifted (bible)
+  ART.pulseA = 0.5 + 0.5 * Math.sin(tSec * (2 * Math.PI / 2.6));
+  ART.pulseB = 0.5 + 0.5 * Math.sin(tSec * (2 * Math.PI / 2.6) + Math.PI / 2);
+  drawBackground();
+  drawBillboard(tSec);
+  // flight-lane wash, feathered at the sides (pre-baked per layout;
+  // v4's flat fill left hard vertical tonal steps at the playfield edges).
+  // Drawn over the background + billboard only — never over the wall,
+  // the tape, or the pipes (v8 relative order preserved).
+  if (ART.washCv) ctx.drawImage(ART.washCv, 0, 0);
+  /* foreground plate — part of the background (v9 order: background →
+     billboard → tape → zombie wall → pipes → bird → HUD). The plate's
+     painted foreground trash sits behind the wall; the spec ground
+     LINE is unchanged. The v8 debug strips that used to mark it (a 2px
+     #3E7A4E line + shadow) are GONE — no green line anywhere. */
+  if (LAY.plates) {
+    ctx.fillStyle = "#0c120c"; ctx.fillRect(0, GROUND_Y * S, W, Math.round(0.07 * H));
+    ctx.drawImage(LAY.plates.fg, 0, LAY.fgY);
+  } else {
+    ctx.fillStyle = "#131c14"; ctx.fillRect(0, GROUND_Y * S, W, H - GROUND_Y * S);
+  }
+  drawTape();
+  drawZombieWall();
+  /* world pass — unit space, clipped to the playfield. Pipes draw IN
+     FRONT of the zombie wall, bottoms running to the bottom edge
+     (approved mock v4). */
+  ctx.save();
+  ctx.beginPath(); ctx.rect(OX, 0, UW * S, H); ctx.clip();
+  ctx.setTransform(S, 0, 0, S, OX, 0);
+  const showPipes = game.state === "play" && game.phase !== "ready" && game.warmup <= 0;
+  if (showPipes) {
+    game.pipes.forEach((p, slot) => {
+      const g = p.effGap;
+      drawPipeU(p.x, g - GAP_H - 320, 320, true, slot, p);
+      drawPipeU(p.x, g, 320, false, slot, p);
+      if (p.tele > 0) { // telegraph shimmer
+        ctx.fillStyle = "rgba(255,213,79," + (0.10 + 0.08 * Math.sin(game.t / 60 * 20)) + ")";
+        ctx.fillRect(p.x - 3, g - GAP_H - 4, PIPE_WU + 6, GAP_H + 8);
+      }
+    });
+  }
+  ctx.restore();
+  // particles (device space)
+  for (const pt of game.particles) {
+    const a = 1 - pt.age / pt.life;
+    if (pt.star) { // 4-point sparkle (bird trail)
+      ctx.fillStyle = pt.hue === "gold" ? "rgba(255,213,79," + (a * 0.95) + ")" : "rgba(125,255,196," + (a * 0.95) + ")";
+      const r = pt.r * 2.2, q = r * 0.32;
+      ctx.beginPath();
+      ctx.moveTo(pt.x, pt.y - r); ctx.quadraticCurveTo(pt.x, pt.y, pt.x + r, pt.y);
+      ctx.quadraticCurveTo(pt.x, pt.y, pt.x, pt.y + r); ctx.quadraticCurveTo(pt.x, pt.y, pt.x - r, pt.y);
+      ctx.quadraticCurveTo(pt.x, pt.y, pt.x, pt.y - r);
+      ctx.fill();
+      void q;
+    } else if (pt.spark) {
+      ctx.fillStyle = pt.hue === "c" ? "rgba(80,230,255," + (a * 0.9) + ")"
+        : pt.hue === "o" ? "rgba(255,160,60," + (a * 0.9) + ")"
+        : "rgba(0,255,136," + (a * 0.9) + ")";
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, 7); ctx.fill();
+    } else {
+      ctx.fillStyle = "rgba(214,196,150," + (a * 0.7) + ")";
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, 7); ctx.fill();
+    }
+  }
+  /* bird + score pass — unit space */
+  ctx.save();
+  ctx.beginPath(); ctx.rect(OX, 0, UW * S, H); ctx.clip();
+  ctx.setTransform(S, 0, 0, S, OX, 0);
+  drawBirdU();
+  if (game.state === "play" || game.state === "over") {
+    // legibility halo (pre-baked sprite) — bright sponsor art can never
+    // wash the score out now; no per-frame shadowBlur (art bible §1)
+    if (ART.halo) ctx.drawImage(ART.halo, UW / 2 - 80, 70, 160, 128);
+    ctx.font = "800 44px Syne, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillText(String(game.score), UW / 2, 102);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(String(game.score), UW / 2, 100);   // spec §6 placement
+    ctx.textBaseline = "alphabetic";
+    if (game.score >= 19 && game.score < 21 && game.state === "play") {
+      ctx.fillStyle = "#ffd54f"; ctx.font = "700 13px 'JetBrains Mono', monospace";
+      ctx.fillText("⚠ MOVING PIPES AHEAD ⚠", UW / 2, 152);
+    }
+  }
+  ctx.restore();
+  // death flash: white, alpha 1 → 0 over 1 s, smooth ease-out (spec §6)
+  if (game.flashT >= 0) {
+    const k = Math.min(1, game.flashT / 60), e = 1 - Math.pow(1 - k, 3);
+    ctx.fillStyle = "rgba(255,255,255," + (1 - e) + ")";
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+/* ---------- main loop: fixed-step accumulator (spec §5) ---------- */
+let lastTs = 0, accMs = 0;
+const STEP_MS = 1000 / 60;
+function loop(ts) {
+  requestAnimationFrame(loop);
+  perfStats.frames++;
+  if (!lastTs) lastTs = ts;
+  let el = ts - lastTs; lastTs = ts;
+  if (el > 250) el = 250;                            // tab-switch guard
+  accMs += el;
+  let n = 0;
+  while (accMs >= STEP_MS && n < 5) { step(); accMs -= STEP_MS; n++; }
+  if (n === 5) accMs = 0;   // extreme lag → slow motion, never a spiral (spec §5)
+  draw(ts / 1000);
+}
+
+/* debug / autopilot handle (harmless in shipping code) */
+window.__popicoin = { game, perfStats, flap, startGame, medalFor, art: ART,
+  setLayout: p => applyLayout(!!p), getLayout: () => (LAY.portrait ? "portrait" : "landscape"),
+  U: { S, OX, UW, UH },
+  C: { FLAP_V, GRAV, MAXFALL, SCROLL, PIPE_WU, GAP_H, PITCH, HIT, BIRD_X, GROUND_Y, ROT_MIN, ROT_MAX } };
+
+/* ---------------- wiring ---------------- */
+document.getElementById("btnPlay").addEventListener("click", startGame);
+document.getElementById("btnAgain").addEventListener("click", startGame);
+cv.addEventListener("pointerdown", e => { e.preventDefault(); flap(); });
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return; // typing (auth/sponsor forms)
+    if (document.getElementById("modal").classList.contains("open")) return;
+    if (document.getElementById("stackModal").classList.contains("open")) return;
+    e.preventDefault();
+    if (game.state === "splash") startGame(); else if (game.state === "play") flap();
+  }
+});
+
+/* ---------------- public game stats (v3 — the books, open) ----------------
+ * The sponsor modal's GAME DATA panel renders straight from the public
+ * stats feed (netlify/functions/stats.js) — the page can never show more
+ * than the raw feed says. When the feed is unreachable (demo/offline),
+ * the panel says so instead of inventing numbers. */
+async function loadGameStats() {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const sats = n => Number(n || 0).toLocaleString("en-US") + " sats";
+  try {
+    const res = await fetch("/.netlify/functions/stats", { headers: { Accept: "application/json" } });
+    if (!res.ok) throw new Error("stats " + res.status);
+    const j = await res.json();
+    if (!j || typeof j.totalPlayers !== "number") throw new Error("bad stats shape");
+    set("stLive", String(j.liveNow));
+    set("st24", String(j.active24h));
+    set("st7", String(j.active7d));
+    set("st30", String(j.active30d));
+    set("stPlayers", Number(j.totalPlayers).toLocaleString("en-US"));
+    set("stHours", Number(j.totalPlayHours).toFixed(1) + " hours");
+    set("stPipes", Number(j.totalPipes).toLocaleString("en-US"));
+    set("stEarned", sats(j.totalSatsEarned));
+    set("stPaid", sats(j.totalSatsPaidOut));
+    set("stSponsors", String(j.sponsorsLive));
+    set("stPool", sats(j.poolBalanceSats));
+    const cap = Number(j.currentDailyCapUsd);
+    set("stCap", "$" + (cap < 0.01 ? cap.toFixed(3) : cap.toFixed(2)) + " / day");
+  } catch (e) {
+    ["stLive","st24","st7","st30","stPlayers","stHours","stPipes","stEarned","stPaid","stSponsors","stPool","stCap"]
+      .forEach(id => set(id, "—"));
+    const note = document.getElementById("statsNote");
+    if (note) note.textContent = "Live stats begin counting at launch. Once the game is live, this panel is fed by the public stats feed — counted server-side from validated play sessions, with the money totals verifiable on-chain.";
+  }
+}
+
+const modal = document.getElementById("modal");
+function openModal() {
+  modal.classList.add("open");
+  renderPrice();
+  refreshPrice();
+  loadGameStats();
+  if (POPICOIN_CONFIG.firebaseProjectId) loadSponsors().then(renderPrice);
+}
+function closeModal() { modal.classList.remove("open"); }
+document.getElementById("btnSponsor").addEventListener("click", openModal);
+document.getElementById("btnOverSponsor").addEventListener("click", openModal);
+document.getElementById("btnClose").addEventListener("click", closeModal);
+document.getElementById("btnRefresh").addEventListener("click", refreshPrice);
+document.getElementById("fUser").addEventListener("input", renderPrice);
+
+function copyText(txt, btn) {
+  const done = () => { const o = btn.textContent; btn.textContent = "COPIED ✓"; setTimeout(() => btn.textContent = o, 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done).catch(done);
+  else { const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch (e) {} ta.remove(); done(); }
+}
+document.getElementById("btnCopyAddr").addEventListener("click", e => copyText(POPICOIN_CONFIG.sponsorAddress, e.target));
+document.getElementById("btnCopyAmt").addEventListener("click", e => {
+  const q = currentQuote();
+  if (q && q.total !== null) copyText(String(q.total), e.target);
+  else if (q) copyText(String(q.base), e.target);
+});
+
+/* file upload → data URL (≤700 KB, images only) */
+let uploadedDataUrl = null;
+document.getElementById("fImgFile").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0];
+  uploadedDataUrl = null;
+  if (!f) return;
+  const st = document.getElementById("submitStatus");
+  if (!f.type.startsWith("image/")) { showStatus("err", "That file is not an image."); e.target.value = ""; return; }
+  if (f.size > 700 * 1024) { showStatus("err", "Image is too big — max 700 KB. Shrink it and try again."); e.target.value = ""; return; }
+  const rd = new FileReader();
+  rd.onload = () => { uploadedDataUrl = rd.result; showStatus("info", "Image attached (" + Math.round(f.size / 1024) + " KB). It will be submitted with your txid."); };
+  rd.readAsDataURL(f);
+});
+function showStatus(kind, msg) {
+  const st = document.getElementById("submitStatus");
+  st.className = "status show " + kind;
+  st.textContent = msg;
+}
+
+document.getElementById("btnSubmit").addEventListener("click", async () => {
+  const username = (document.getElementById("fUser").value || "").trim();
+  const txid = (document.getElementById("fTxid").value || "").trim().toLowerCase();
+  const imageUrl = (document.getElementById("fImgUrl").value || "").trim();
+  const btn = document.getElementById("btnSubmit");
+  if (username.length < 2 || username.length > 24) return showStatus("err", "Username must be 2–24 characters.");
+  if (!/^[0-9a-f]{64}$/.test(txid)) return showStatus("err", "TXID must be exactly 64 hex characters — copy it from your wallet.");
+  if (!imageUrl && !uploadedDataUrl) return showStatus("err", "Give the billboard something to show: an image URL or an uploaded image.");
+  if (imageUrl && !/^https:\/\//i.test(imageUrl)) return showStatus("err", "Image URL must start with https://");
+  btn.disabled = true; btn.textContent = "VERIFYING ON-CHAIN…";
+  try {
+    const res = await fetch("/.netlify/functions/submit-sponsor", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, txid, imageUrl: imageUrl || undefined, imageDataUrl: uploadedDataUrl || undefined })
+    });
+    const j = await res.json().catch(() => ({}));
+    if (j && j.mode === "manual") {
+      showStatus("info", "This copy of the game runs in MANUAL mode — automatic verification is not switched on yet. " +
+        "Send your txid (" + txid.slice(0, 12) + "…) to the game owner and they will add your sponsorship by hand after checking the payment on-chain.");
+    } else if (j && j.status === "live") {
+      showStatus("ok", "✔ VERIFIED — payment confirmed on-chain. Your sponsorship is LIVE: “" + username +
+        "” now rotates on the billboard every 10 seconds. Paid " + (j.paidSats ? j.paidSats.toLocaleString("en-US") : "") + " sats.");
+      loadSponsors();
+    } else if (j && j.status === "rejected") {
+      showStatus("err", "✖ Not verified: " + (j.reason || "payment could not be confirmed."));
+    } else {
+      showStatus("err", "Unexpected answer from the verifier. Your payment is safe on-chain — try again in a minute, or send the txid to the game owner.");
+    }
+  } catch (e) {
+    showStatus("info", "Could not reach the verification service from this copy of the game (demo/offline mode). " +
+      "Send your txid to the game owner and they will verify the payment on-chain and add you manually.");
+  } finally {
+    btn.disabled = false; btn.textContent = "VERIFY & GO LIVE →";
+  }
+});
+
+/* =====================================================================
+   PLAYER ACCOUNTS (v2) — signup gate, earn ledger, claim queue.
+   LIVE mode: Firebase Auth holds identity+passwords; the Netlify
+   function /.netlify/functions/player verifies the ID token and does
+   every read/write server-side (clients never write data).
+   DEMO mode (no Firebase config): the same UI runs on local fake
+   accounts in localStorage — badged DEMO, nothing real, no sats move.
+   ===================================================================== */
+const Player = (() => {
+  const DEMO = !(POPICOIN_CONFIG.firebaseApiKey && POPICOIN_CONFIG.firebaseAuthDomain);
+  const CAP_USD = POPICOIN_CONFIG.dailyCapUsd || 0.10;
+  const CLAIM_USD = POPICOIN_CONFIG.claimUsd || 1.00;
+  let priceUsd = 0; // USD per BCH — server-supplied in live mode, price feed in demo
+  const satsForUsdLocal = usd => priceUsd > 0 ? Math.floor(usd / priceUsd * 1e8) : Infinity;
+  const usdOf = sats => priceUsd > 0 ? sats * priceUsd / 1e8 : 0;
+  async function ensurePrice() {
+    if (priceUsd > 0) return;
+    try { const r = await fetchBchPrice(); if (r && r.price > 0) priceUsd = r.price; } catch (e) {}
+  }
+  const CASHADDR_RE = /^(bitcoincash:)?(q[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{41})$/i;
+  const USERNAME_RE = /^[A-Za-z0-9_.-]{2,24}$/;
+  let profile = null;        // {username, bchAddress, balanceSats, earnedToday, pendingClaim, lastClaim}
+  let runStart = null;       // ms timestamp of current run (demo crediting)
+  let fbSessionId = null;    // live-mode server session id
+
+  const $ = id => document.getElementById(id);
+  const emailFor = u => u.trim().toLowerCase() + "@popicoinplayers.local";
+  function normalizeAddr(a) {
+    const m = CASHADDR_RE.exec((a || "").trim());
+    return m ? "bitcoincash:" + m[2].toLowerCase() : null;
+  }
+  function computeCreditLocal(pipes, earnedToday) {
+    // Demo mirror of the server rule: every pipe counts; only the
+    // USD-anchored daily cap clips. (No price → demo is uncapped fiction.)
+    const dailyCapSats = satsForUsdLocal(CAP_USD);
+    const credit = Math.min(Math.max(0, pipes), Math.max(0, dailyCapSats - earnedToday));
+    return { ok: true, credit };
+  }
+  function utcDay() { return new Date().toISOString().slice(0, 10); }
+
+  /* ---------- demo store (localStorage; fake by design) ---------- */
+  const DU = "popicoin_demo_users_v1", DS = "popicoin_demo_session_v1";
+  const demoLoad = () => { try { return JSON.parse(localStorage.getItem(DU) || "{}"); } catch (e) { return {}; } };
+  const demoSave = u => { try { localStorage.setItem(DU, JSON.stringify(u)); } catch (e) {} };
+  function demoPaidClaims(rec) { return (rec.claims || []).filter(c => c.status === "paid").length; }
+  // Demo mirror of the server invite code: deterministic from the
+  // username, so a partner's code is stable across sessions (demo-local).
+  function demoInviteCodeFor(key) {
+    const CH = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    const s = "flappysats-invite:demo_" + key;
+    let x = 2166136261 >>> 0;
+    for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); }
+    let out = "";
+    for (let i = 0; i < 6; i++) { x = (Math.imul(x ^ (x >>> 13), 16777619)) >>> 0; out += CH[x % CH.length]; }
+    return "FS-" + out;
+  }
+  function demoProfileOf(rec) {
+    const claims = (rec.claims || []).slice().reverse();
+    const paid = demoPaidClaims(rec);
+    return {
+      username: rec.username, bchAddress: rec.bchAddress, balanceSats: rec.balanceSats || 0,
+      earnedToday: rec.earnDay === utcDay() ? (rec.earnedToday || 0) : 0,
+      pendingClaim: claims.find(c => c.status === "pending") || null,
+      lastClaim: claims[0] || null,
+      invites: {
+        unlocked: paid >= 1,
+        code: paid >= 1 ? demoInviteCodeFor(rec.username.toLowerCase()) : null,
+        partnersPaid: rec.referralCount || 0,
+        partnersPending: rec.referralPending || 0,
+        referralSatsEarned: rec.referralSatsEarned || 0,
+        referralsMax: 10
+      }
+    };
+  }
+
+  /* ---------- live calls ---------- */
+  async function api(payload) {
+    const res = await fetch("/.netlify/functions/player", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+    });
+    return res.json().catch(() => ({ status: "rejected", reason: "Player service unreachable." }));
+  }
+  async function token() {
+    const u = window.firebase && firebase.auth().currentUser;
+    return u ? u.getIdToken() : null;
+  }
+
+  /* ---------- UI state ---------- */
+  function isAuthed() { return !!profile; }
+  function showAuth() {
+    $("authgate").classList.remove("hidden");
+    $("splash").classList.add("hidden");
+    $("hud").classList.remove("show");
+  }
+  function enter(p) {
+    profile = p;
+    $("authgate").classList.add("hidden");
+    $("splash").classList.remove("hidden");
+    $("hud").classList.add("show");
+    renderHud();
+    ensurePrice().then(() => { renderHud(); if ($("stackModal").classList.contains("open")) renderStack(); });
+  }
+  function renderHud() {
+    if (!profile) return;
+    $("hudUser").textContent = "👤 " + profile.username + (DEMO ? " (DEMO)" : "");
+    $("hudBal").textContent = "🪙 " + (profile.balanceSats || 0).toLocaleString("en-US") + " sats";
+    $("hudToday").textContent = priceUsd > 0
+      ? "today $" + usdOf(profile.earnedToday || 0).toFixed(2) + " / $" + CAP_USD.toFixed(2) + " · " + (profile.earnedToday || 0).toLocaleString("en-US") + " sats"
+      : "today " + (profile.earnedToday || 0).toLocaleString("en-US") + " sats";
+  }
+  async function refreshProfile() {
+    if (DEMO) {
+      const users = demoLoad();
+      let key = null; try { key = localStorage.getItem(DS); } catch (e) {}
+      const rec = key && users[key];
+      if (rec) { profile = demoProfileOf(rec); renderHud(); }
+      return profile;
+    }
+    const t = await token(); if (!t) return profile;
+    const j = await api({ action: "me", idToken: t });
+    if (j && j.status === "ok") {
+      profile = j.profile;
+      if (j.economy && j.economy.priceUsd > 0) priceUsd = j.economy.priceUsd; // server price is authoritative
+      renderHud();
+    }
+    return profile;
+  }
+
+  /* ---------- auth flows ---------- */
+  function authErr(which, e) {
+    const map = {
+      "auth/email-already-in-use": "That username is taken — log in, or pick another.",
+      "auth/weak-password": "Password is too weak — use at least 6 characters.",
+      "auth/user-not-found": "No account with that username. Sign up first.",
+      "auth/wrong-password": "Wrong password.",
+      "auth/invalid-credential": "Wrong username or password.",
+      "auth/invalid-email": "That username can't be used — try letters, digits, _ . -"
+    };
+    const el = $(which);
+    el.className = "authstatus err";
+    el.textContent = (e && map[e.code]) || (e && e.message) || String(e);
+  }
+  function authOk(which, msg) { const el = $(which); el.className = "authstatus ok"; el.textContent = msg; }
+
+  async function signup(username, password, addrRaw, inviteRaw) {
+    const addr = normalizeAddr(addrRaw);
+    const invite = (inviteRaw || "").trim().toUpperCase();
+    if (!USERNAME_RE.test(username)) { authErr("suStatus", { message: "Username must be 2–24 characters: letters, digits, _ . - only." }); return; }
+    if (!password || password.length < 6) { authErr("suStatus", { message: "Password needs at least 6 characters." }); return; }
+    if (!addr) { authErr("suStatus", { message: "That doesn't look like a Bitcoin Cash address. Open Selene, copy your receive address (bitcoincash:q…), paste it here." }); return; }
+    if (DEMO) {
+      const users = demoLoad(); const key = username.toLowerCase();
+      if (users[key]) { authErr("suStatus", { message: "That username is taken (demo) — pick another." }); return; }
+      if (Object.values(users).some(u => u.bchAddress === addr)) { authErr("suStatus", { message: "That BCH address already has an account (demo). One account per address." }); return; }
+      let referrerKey = "";
+      if (invite) {
+        const refEntry = Object.entries(users).find(([k, u]) => demoInviteCodeFor(k) === invite && demoPaidClaims(u) >= 1);
+        if (!refEntry) { authErr("suStatus", { message: "That invite code doesn't match an unlocked partner (demo). Check it, or sign up without one." }); return; }
+        if (refEntry[0] === key) { authErr("suStatus", { message: "You can't invite yourself (demo)." }); return; }
+        referrerKey = refEntry[0];
+        users[referrerKey].referralPending = (users[referrerKey].referralPending || 0) + 1;
+      }
+      users[key] = { username, password, bchAddress: addr, balanceSats: 0, earnedToday: 0, earnDay: "", claims: [],
+        referredBy: referrerKey, referralDone: 0, referralCount: 0, referralSatsEarned: 0, referralPending: 0 };
+      demoSave(users);
+      try { localStorage.setItem(DS, key); } catch (e) {}
+      enter(demoProfileOf(users[key]));
+      return;
+    }
+    try {
+      const cred = await firebase.auth().createUserWithEmailAndPassword(emailFor(username), password);
+      const t = await cred.user.getIdToken();
+      const j = await api({ action: "finalizeSignup", idToken: t, username, bchAddress: addr, inviteCode: invite || undefined });
+      if (j.status !== "ok") {
+        await cred.user.delete().catch(() => {});
+        authErr("suStatus", { message: j.reason || "Signup could not be completed." });
+        return;
+      }
+      enter(j.profile);
+    } catch (e) { authErr("suStatus", e); }
+  }
+
+  async function login(username, password) {
+    if (DEMO) {
+      const users = demoLoad(); const key = (username || "").toLowerCase(); const rec = users[key];
+      if (!rec) { authErr("liStatus", { message: "No demo account with that username. Sign up first." }); return; }
+      if (rec.password !== password) { authErr("liStatus", { message: "Wrong password (demo)." }); return; }
+      try { localStorage.setItem(DS, key); } catch (e) {}
+      enter(demoProfileOf(rec));
+      return;
+    }
+    try {
+      const cred = await firebase.auth().signInWithEmailAndPassword(emailFor(username), password);
+      const t = await cred.user.getIdToken();
+      const j = await api({ action: "me", idToken: t });
+      if (j.status !== "ok") { authErr("liStatus", { message: j.reason || "This account has no player profile." }); return; }
+      enter(j.profile);
+    } catch (e) { authErr("liStatus", e); }
+  }
+
+  async function logout() {
+    profile = null; fbSessionId = null;
+    if (DEMO) { try { localStorage.removeItem(DS); } catch (e) {} }
+    else if (window.firebase) { await firebase.auth().signOut().catch(() => {}); }
+    showAuth();
+  }
+
+  /* ---------- earning ---------- */
+  async function onRunStart() {
+    runStart = Date.now(); fbSessionId = null;
+    if (DEMO || !profile) return;
+    try {
+      const t = await token(); if (!t) return;
+      const j = await api({ action: "startSession", idToken: t });
+      if (j.status === "ok") fbSessionId = j.sessionId;
+    } catch (e) { /* offline run — simply earns nothing server-side */ }
+  }
+  async function onRunEnd(pipes) {
+    const note = $("earnNote");
+    if (!profile || pipes <= 0) { if (note && pipes <= 0) note.textContent = ""; return; }
+    if (DEMO) {
+      const users = demoLoad(); const key = localStorage.getItem(DS); const rec = key && users[key];
+      if (!rec) return;
+      await ensurePrice();
+      const today = utcDay();
+      const earned = rec.earnDay === today ? (rec.earnedToday || 0) : 0;
+      const r = computeCreditLocal(pipes, earned);
+      rec.balanceSats = (rec.balanceSats || 0) + r.credit;
+      rec.earnedToday = earned + r.credit; rec.earnDay = today;
+      demoSave(users);
+      profile = demoProfileOf(rec); renderHud();
+      if (note) note.textContent = r.credit > 0 ? "🪙 +" + r.credit + " sats stacked (demo)" : "Daily $0.10 cap reached — no sats this run (demo)";
+      return;
+    }
+    if (!fbSessionId) { if (note) note.textContent = "⚠ Run wasn't tracked — no sats this time."; return; }
+    try {
+      const t = await token(); if (!t) return;
+      const j = await api({ action: "submitScore", idToken: t, sessionId: fbSessionId, pipes });
+      fbSessionId = null;
+      if (j.status === "ok") {
+        if (j.priceUsd > 0) priceUsd = j.priceUsd;
+        profile.balanceSats = j.balanceSats; profile.earnedToday = j.earnedToday; renderHud();
+        if (note) note.textContent = j.credited > 0 ? "🪙 +" + j.credited + " sats stacked!" : "Daily $0.10 cap reached — no sats this run.";
+      } else if (note) note.textContent = "⚠ " + (j.reason || "Score not credited.");
+    } catch (e) { if (note) note.textContent = "⚠ Couldn't reach the stacker — sats not credited."; }
+  }
+
+  /* ---------- stack panel + claim ---------- */
+  function renderStack() {
+    if (!profile) return;
+    $("stackUser").textContent = "👤 " + profile.username + (DEMO ? " · DEMO account — fake sats" : "");
+    $("stackBal").textContent = (profile.balanceSats || 0).toLocaleString("en-US");
+    const balUsd = usdOf(profile.balanceSats || 0);
+    $("stackUsd").textContent = priceUsd > 0 ? "≈ $" + balUsd.toFixed(2) + " · BCH $" + priceUsd.toFixed(2) : "≈ $— (price unavailable)";
+    const pct = priceUsd > 0 ? Math.min(100, balUsd / CLAIM_USD * 100) : 0;
+    $("stackBarFill").style.width = pct + "%";
+    $("stackProgress").textContent = priceUsd > 0
+      ? pct.toFixed(1) + "% toward the $1.00 claim · need ≈ " + satsForUsdLocal(CLAIM_USD).toLocaleString("en-US") + " sats at this price"
+      : "Price unavailable — claim progress can't be computed right now.";
+    $("stackToday").textContent = priceUsd > 0
+      ? "$" + usdOf(profile.earnedToday || 0).toFixed(2) + " / $" + CAP_USD.toFixed(2) + " · " + (profile.earnedToday || 0).toLocaleString("en-US") + " sats"
+      : (profile.earnedToday || 0).toLocaleString("en-US") + " sats";
+    $("stackAddr").textContent = profile.bchAddress || "—";
+    const c = profile.pendingClaim, l = profile.lastClaim;
+    $("stackClaim").textContent = c ? "⏳ " + c.amount.toLocaleString("en-US") + " sats pending payout"
+      : (l && l.status === "paid") ? "✔ paid " + l.amount.toLocaleString("en-US") + " sats" + (l.txid ? " · tx " + l.txid.slice(0, 10) + "…" : "")
+      : "no claims yet";
+    const btn = $("btnClaim");
+    btn.disabled = !(priceUsd > 0 && (profile.balanceSats || 0) >= satsForUsdLocal(CLAIM_USD));
+    btn.textContent = btn.disabled ? "CLAIM (needs $1.00 worth)" : "CLAIM $" + balUsd.toFixed(2) + " →";
+    const inv = profile.invites || { unlocked: false, partnersPaid: 0, partnersPending: 0, referralSatsEarned: 0, referralsMax: 10 };
+    $("inviteLocked").style.display = inv.unlocked ? "none" : "";
+    $("inviteOpen").style.display = inv.unlocked ? "" : "none";
+    if (inv.unlocked) {
+      $("inviteCodeBox").textContent = inv.code || "—";
+      $("invitePaidCount").textContent = (inv.partnersPaid || 0) + " / " + (inv.referralsMax || 10);
+      $("invitePending").textContent = (inv.partnersPending || 0) + " joined, yet to claim";
+      $("inviteSats").textContent = (inv.referralSatsEarned || 0).toLocaleString("en-US") + " sats";
+    }
+  }
+  async function openStack() {
+    await ensurePrice();
+    await refreshProfile();
+    renderStack();
+    $("stackModal").classList.add("open");
+  }
+  async function doClaim() {
+    const st = $("stackStatus");
+    const show = (kind, msg) => { st.className = "status show " + kind; st.textContent = msg; };
+    if (DEMO) {
+      await ensurePrice();
+      const users = demoLoad(); const key = localStorage.getItem(DS); const rec = key && users[key];
+      if (!rec || !(priceUsd > 0) || (rec.balanceSats || 0) < satsForUsdLocal(CLAIM_USD)) { show("err", "Not at $1.00 worth yet."); return; }
+      const amount = rec.balanceSats; rec.balanceSats = 0;
+      rec.claims = rec.claims || [];
+      // Demo settles INSTANTLY (testability): live claims queue as
+      // "pending" until Skynet pays them in batches.
+      const txid = "demo-" + Math.random().toString(16).slice(2, 10);
+      rec.claims.push({ amount, status: "paid", createdAt: new Date().toISOString(), txid });
+      // Partner referral (demo mirror of the server rule): the penny
+      // lands when the invited partner's first claim is PAID.
+      if (rec.referredBy && !rec.referralDone) {
+        rec.referralDone = 1;
+        const ref = users[rec.referredBy];
+        if (ref) {
+          ref.referralPending = Math.max(0, (ref.referralPending || 0) - 1);
+          if ((ref.referralCount || 0) < 10) {
+            const credit = priceUsd > 0 ? Math.max(1, Math.floor(0.01 / priceUsd * 1e8)) : 0;
+            if (credit > 0) {
+              ref.balanceSats = (ref.balanceSats || 0) + credit;
+              ref.referralSatsEarned = (ref.referralSatsEarned || 0) + credit;
+            }
+            ref.referralCount = (ref.referralCount || 0) + 1;
+          }
+        }
+      }
+      demoSave(users); profile = demoProfileOf(rec); renderHud(); renderStack();
+      show("ok", "✔ Claim settled instantly (demo): " + amount.toLocaleString("en-US") + " sats → " + rec.bchAddress + " · tx " + txid + ". Live claims are paid in batches by Skynet — usually within a day.");
+      return;
+    }
+    try {
+      const t = await token(); if (!t) { show("err", "Sign in again."); return; }
+      const j = await api({ action: "claim", idToken: t });
+      if (j.status === "ok") {
+        show("ok", "✔ Claim queued: " + j.amount.toLocaleString("en-US") + " sats → your BCH address. Claims are paid in batches by Skynet — usually within a day.");
+        await refreshProfile(); renderStack();
+      } else show("err", j.reason || "Claim failed.");
+    } catch (e) { show("err", "Could not reach the claim service."); }
+  }
+
+  /* ---------- wiring + init ---------- */
+  function setTab(signup) {
+    $("formSignup").style.display = signup ? "" : "none";
+    $("formLogin").style.display = signup ? "none" : "";
+    $("tabSignup").classList.toggle("off", !signup);
+    $("tabLogin").classList.toggle("off", signup);
+    $("authTitle").textContent = signup ? "SIGN UP TO PLAY" : "WELCOME BACK";
+  }
+  function init() {
+    if (DEMO) $("demoBadge").style.display = "";
+    $("tabSignup").addEventListener("click", () => setTab(true));
+    $("tabLogin").addEventListener("click", () => setTab(false));
+    $("formSignup").addEventListener("submit", e => {
+      e.preventDefault();
+      signup($("suUser").value.trim(), $("suPass").value, $("suAddr").value, $("suInvite").value);
+    });
+    $("formLogin").addEventListener("submit", e => {
+      e.preventDefault();
+      login($("liUser").value.trim(), $("liPass").value);
+    });
+    $("btnLogout").addEventListener("click", logout);
+    $("btnCopyInvite").addEventListener("click", e => {
+      if (profile && profile.invites && profile.invites.code) copyText(profile.invites.code, e.target);
+    });
+    $("btnStack").addEventListener("click", openStack);
+    $("btnCloseStack").addEventListener("click", () => $("stackModal").classList.remove("open"));
+    $("btnClaim").addEventListener("click", doClaim);
+    setTab(true);
+
+    if (DEMO) {
+      const users = demoLoad(); const key = (() => { try { return localStorage.getItem(DS); } catch (e) { return null; } })();
+      if (key && users[key]) enter(demoProfileOf(users[key])); else showAuth();
+      return;
+    }
+    if (window.firebase && POPICOIN_CONFIG.firebaseProjectId) {
+      try {
+        firebase.initializeApp({
+          apiKey: POPICOIN_CONFIG.firebaseApiKey,
+          authDomain: POPICOIN_CONFIG.firebaseAuthDomain,
+          projectId: POPICOIN_CONFIG.firebaseProjectId
+        });
+      } catch (e) { /* already initialized */ }
+      firebase.auth().onAuthStateChanged(async user => {
+        if (!user) { profile = null; showAuth(); return; }
+        const j = await api({ action: "me", idToken: await user.getIdToken() });
+        if (j.status === "ok") enter(j.profile); else showAuth();
+      });
+    } else {
+      showAuth();
+    }
+  }
+
+  return { isAuthed, showAuth, onRunStart, onRunEnd, init };
+})();
+
+
+/* ================= LEADERBOARD (v6) =================
+   TOP 3 on the game-over screen. Entries derive ONLY from
+   server-verified run records — the same session/score records that
+   credit earnings — never client-reported totals. DEMO: a local
+   board of THIS DEVICE's own runs (recorded here at game over, the
+   same moment the demo store credits the run), labeled as such.
+   LIVE provider: reads the stats function's leaderboard aggregate
+   ({top:[{name,pipes}...], you:{pipes,rank}}); the write path
+   stays in the gate functions at deploy. */
+const Leaderboard = (() => {
+  const BOARD_KEY = "popicoin_demo_board_v1";
+  const IS_DEMO = !(POPICOIN_CONFIG.firebaseApiKey && POPICOIN_CONFIG.firebaseAuthDomain);
+  function esc(s) { const d = document.createElement("div"); d.textContent = String(s); return d.innerHTML; }
+  function demoName() {
+    try {
+      const users = JSON.parse(localStorage.getItem("popicoin_demo_users_v1") || "{}");
+      const s = JSON.parse(localStorage.getItem("popicoin_demo_session_v1") || "null");
+      if (s && s.username && users[s.username]) return s.username;
+    } catch (e) {}
+    return "you";
+  }
+  function demoBoard() {
+    try { const b = JSON.parse(localStorage.getItem(BOARD_KEY) || "[]"); return Array.isArray(b) ? b : []; }
+    catch (e) { return []; }
+  }
+  function recordDemo(score) {
+    const b = demoBoard();
+    const entry = { name: demoName(), pipes: score, at: Date.now() };
+    b.push(entry);
+    b.sort((a, z) => z.pipes - a.pipes);
+    try { localStorage.setItem(BOARD_KEY, JSON.stringify(b.slice(0, 50))); } catch (e) {}
+    return { top: b.slice(0, 3), rank: b.indexOf(entry) + 1 };
+  }
+  async function liveBoard() {
+    try {
+      const r = await fetch("/.netlify/functions/stats", { headers: { "Accept": "application/json" } });
+      const j = await r.json();
+      if (j && j.leaderboard && Array.isArray(j.leaderboard.top)) {
+        return { top: j.leaderboard.top.slice(0, 3),
+                 rank: j.leaderboard.you ? j.leaderboard.you.rank : null };
+      }
+    } catch (e) {}
+    return null;
+  }
+  function paint(top, youHTML, note) {
+    document.getElementById("boardRows").innerHTML = top.length ? top.map((e, i) =>
+      `<div class="brow${i === 0 ? " first" : ""}"><span class="bname">${i + 1} · ${esc(e.name)}</span><span>${e.pipes | 0} pipes</span></div>`).join("")
+      : `<div class="brow"><span class="bname">NO RUNS YET</span><span>—</span></div>`;
+    document.getElementById("boardYou").innerHTML = youHTML;
+    document.getElementById("boardNote").textContent = note;
+  }
+  async function render(score) {
+    if (IS_DEMO) {
+      const { top, rank } = recordDemo(score);
+      paint(top, `YOU: ${score} pipes — #${rank}`, "DEMO BOARD — THIS DEVICE'S RUNS ONLY");
+    } else {
+      paint([], "YOU: " + score + " pipes", "LOADING THE BOARD…");
+      const lb = await liveBoard();
+      if (lb) paint(lb.top, "YOU: " + score + " pipes" + (lb.rank ? " — #" + lb.rank : ""), "SERVER-VERIFIED RUNS");
+      else paint([], "YOU: " + score + " pipes — UNRANKED", "BOARD OPENS AT LAUNCH");
+    }
+  }
+  return { render };
+})();
+
+/* ================= SETTINGS + LANDSCAPE UNLOCK (v6) =================
+   Portrait is the game's native stage. Landscape is a paid unlock:
+   $1.00 in BCH to the house wallet, verified on-chain, and the flag
+   lives on the player's account record (landscapeUnlocked) —
+   server-side at deploy, never trusted from the client. DEMO: the
+   purchase modal carries the full terms with the pay action disabled
+   until launch; a local preview flag lets the landscape stage be
+   seen on this device only, labeled a preview. */
+function landscapeUnlocked() {
+  try {
+    const users = JSON.parse(localStorage.getItem("popicoin_demo_users_v1") || "{}");
+    const s = JSON.parse(localStorage.getItem("popicoin_demo_session_v1") || "null");
+    if (s && s.username && users[s.username] && users[s.username].landscapeUnlocked) return true;
+    if (localStorage.getItem("popicoin_landscape_preview") === "1") return true;
+  } catch (e) {}
+  return false;
+}
+function renderSettings() {
+  const el = id => document.getElementById(id);
+  if (!el("setLayoutNow")) return;
+  const land = !LAY.portrait;
+  el("setLayoutNow").textContent = land ? "LANDSCAPE" : "PORTRAIT";
+  el("setLandStatus").textContent = landscapeUnlocked() ? "UNLOCKED ✓" : "LOCKED";
+  el("btnPreviewLand").textContent = land ? "← BACK TO PORTRAIT (DEFAULT)" : "PREVIEW LANDSCAPE ON THIS DEVICE →";
+}
+const settingsModal = document.getElementById("settingsModal");
+const unlockModal = document.getElementById("unlockModal");
+document.getElementById("btnSettings").addEventListener("click", () => { renderSettings(); settingsModal.classList.add("open"); });
+document.getElementById("btnCloseSettings").addEventListener("click", () => settingsModal.classList.remove("open"));
+document.getElementById("btnUnlockOpen").addEventListener("click", () => { settingsModal.classList.remove("open"); unlockModal.classList.add("open"); });
+document.getElementById("btnCloseUnlock").addEventListener("click", () => unlockModal.classList.remove("open"));
+document.getElementById("btnPreviewLand").addEventListener("click", () => {
+  const toLand = LAY.portrait;
+  try { localStorage.setItem("popicoin_landscape_preview", toLand ? "1" : "0"); } catch (e) {}
+  applyLayout(!toLand);
+});
+
+/* ---------------- boot ---------------- */
+document.getElementById("payAddr").textContent = POPICOIN_CONFIG.sponsorAddress;
+applyLayout(landscapeUnlocked() ? false : true);
+loadSponsors().then(preloadBillboardImages);
+Player.init();
+requestAnimationFrame(loop);
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
