@@ -63,7 +63,7 @@ This is the story of the multi-world build-off — receipts, not vibes.
 
 ## The receipts
 
-- Live: v16.4.3 at the link above (v16.5.2 ships on the builder's playtest word)
+- Live: v16.5.2 at the link above (shipped Oct 22, 2026 on the builder's playtest word)
 - Six-world build: regression 62/63 with a control-proven environment flake
 - Art-density fix: 17 stamps total, 0 new pixels drawn, coverage numbers above
 - Sponsors: 3 sold on a public $1×n ladder, paid in BCH, cards rotating live
