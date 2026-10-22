@@ -6,7 +6,7 @@
 <title>FLAPPY SATS — ESCAPE FIAT TRASH</title>
 <meta name="description" content="FLAPPY SATS — trash-world flappy. Escape fiat trash. Sponsored by the people, priced in Bitcoin Cash.">
 <meta name="theme-color" content="#0a0f0a">
-<!-- FLAPPY SATS v16.4.3 (TEST BUILD Oct 21, 2026 — five surgical fixes on live v16.4.2: (1) pipe-20 freeze + MOVING PIPES warning DELETED per Kenn's ruling (probe verdict: no rendering hitch — the designed pause WAS the glitch); (2) billboard sized from the design band (UW*S) + by clamped ~6px, fits any screen; (3) pipe pool grows on wide screens only (VIS_W > UW) — no more pop-in on the Fold; (4) Kenn's independent parallax ramps — far 0.3->0.55, mid 0.6->0.8, never converging, FG pinned 1.0x, crowd 1->2x; (5) bg-mid/bg-fg interior alpha holes sealed (audit = 0). Base: v16.4.2 (BUILD A SHIPPED TO LIVE Oct 21, 2026 on Kenn's word; base v16.4.1 + the v16.4.1.1 counter tick carried forward) — THE LIVE FEED + THE UPDATE BUTTON. THE LIVE FEED (Kenn's design, live-feed-design.md): the billboard is a TV screen and sponsors.json is the broadcast — a same-origin PLAYLIST the loader fetches (cache-busted, cache:no-store; the SW treats sponsors.json + version.json as NETWORK-ONLY) at boot and RE-POLLS every 60 s; when the playlist changes, the rotation rebuilds LIVE in the open game — new entries join, removed entries leave, captions follow — no rebuild, no reload. Fallback stack, in order: the running list in memory → the localStorage last-good list → the baked BETA_SPONSORS → the house placeholder; a playlist entry whose image fails to load is SKIPPED for the rotation, never a broken frame. The Drive sponsor folder stays the studio (Skynet's desk sync writes the playlist); the filter stays human. THE UPDATE BUTTON: version.json is polled on the same 60 s tick; when the served version differs from BUILD_VERSION below, the game shows "🔄 UPDATE — TAP TO REFRESH" (the classic waiting-service-worker path surfaces the same button); a tap asks a waiting SW to SKIP_WAITING and reloads ONCE, sessionStorage-guarded — stale shells and ?v= rescue links are retired. SPONSORS_SOLD = 3 (the v16.4.1.1 counter tick carried forward: slots #1-#3 sold; next slot #4 at $4.00): the ladder stays code-side by design — price ticks on VERIFIED PAYMENT, desk-side in the beta, server-side at the deploy pass. (v16.4.1 — THREE SURGICAL FIXES on v16.4, nothing else moves. THE PLACEHOLDER JOINS THE ROTATION: the billboard cycle is the sponsors in purchase order PLUS one house-placeholder turn (Kenn's doctrine — the placeholder is the sales card for the next slot); the null sentinel routes through the same placeholder art + caption branch the empty board always used, on the same 3 s global clock, and an empty board is still placeholder at all times. FULLSCREEN ASKS ONCE: goFullscreenPortrait is latched (fsAsked), so requestFullscreen + the portrait lock are attempted at most once per page session, at the first run start — later run starts never re-ask, even after the player exits fullscreen, so Chrome's exit-full-screen hint stops nagging every run. CHANGE 3 — AUTO-APPLY AT SAFE MOMENTS (Kenn, later the same day: "make this more seamless"; supersedes v16.4's never-auto-reload rule): detection (the version poll or a waiting service worker) sets a pending flag; in a SAFE state (splash/menu or game-over, no modal or form open) the update applies itself through the button's exact SKIP_WAITING path after a ~1.5 s settle — at boot, before the first run starts; mid-run or with a form open it is held silently and applied the moment the game turns safe; the pill shows only in safe states as the manual accelerator; both paths share the popicoin_update_tap stamp — exactly one reload per update, and a reloaded copy that still mismatches (deploy lag) falls back to the pill instead of looping.) (v16.3 — FIRST LIVE SPONSOR: slot #1 (00TATT$, paid on-chain) rotates on the billboard from the baked-in BETA SPONSOR LIST — the beta's loader resolves to it until the server source exists; slot #2 is PAID too but its creative is PENDING, so it does not display. THE LINEAR LADDER: Kenn replaced the doubling ladder with +$1 per slot (slotUsd = $1.00 x (sold + 1)); SPONSORS_SOLD = 2 (slots #1 AND #2 both paid at the frozen $1.00 panel price and were honored at $1.00 — the panel's word is the store's word), so the panel's NEXT SLOT is #3 at $3.00. Sponsor panel gains the Drive UPLOAD LANE beside DM intake. ROTATION CADENCE 3s (was 10s): BILLBOARD_SECONDS in the config block drives drawBillboard off the same global clock, and video cards ride the same 3s clock — the USE AI prompt and all copy now say 3 seconds. (v16.2 — THE GASLIGHT RAMP: the cosmetic scroll layers (far/mid parallax + the zombie crowd's treadmill) accelerate with the score and converge to full speed by pipe 100 while the pipes and the sim NEVER change; + THE FREE FLIGHT EGG: 10 flap inputs at score 0 make the bird invincible for the run — pipes turn SOLID on a treadmill world (faces stop you, tops carry you left, only the left edge can end it) and the run earns NOTHING (no sats, no board, no stats). (v16.1: score lives in the sky strip ABOVE the billboard plate (never on the sponsor window), toast band BELOW the plate; sponsor panel gains a live CoinGecko rate + BIP21 wallet pay link + runtime QR (vendored qrcode.js); every user-visible DEMO string is now BETA (storage keys/identifiers untouched); the leaderboard records PLAYERS — one row per username, best score only, self-healing on load. v16: Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
+<!-- FLAPPY SATS v16.5.1 (TEST BUILD Oct 22, 2026 — BUGFIX PASS on v16.5.0 from Kenn's playtest: (1) the Muse FOREGROUND layer never drew — its tile loop read ART.scrollGround, a field that does not exist, so the offset was NaN (the FG lane's driver is ART.scrollU); (2) the Muse far/mid/fg tile draws fed UNIT-space scroll offsets into PIXEL tile math — the layers scrolled at 1/S speed and the mirror parity teleported the pattern at every tile boundary (the "midground shift"); all three Muse layers now ride the verified ThemeSystem.drawFar tiler with a pixel phase (scroll x S) and the true tile width, so the sky is no longer stretched either; (3) the Muse hanging column now crops to the true visible ceiling (-skyExtra) like the classic v15.1 hang — it stopped skyExtra units short of the top of tall portrait screens. Classic rendering + collision untouched. Base: v16.5.0 (TWO WORLDS: the Muse world joins Classic. ThemeSystem (verified module) owns the Theme setting — Random (default) / Classic / Muse, persisted — and rolls a new world after each game over; the new world applies at the next run start, never mid-run. Muse world: set-4 art at 100% native resolution, lossless (sky/mid 2048x1024, fg 2048x512, single-piece pipe columns 512x2048); far layer mirror-tiled via ThemeSystem.drawFar; Muse pipes drawn from the single-piece columns (source-cropped, never squashed) with silhouette collision (PipeCollision, collider built from the art's alpha at world load) fitted to the art — Kenn's demo rule; Classic rendering + collision untouched; the bird never changes. FREE FLIGHT egg threshold 10 -> 21 flap inputs (Kenn's order: in landscape the wider stage makes players flap 10+ times before pipe 1, tripping god mode unintentionally; 21 keeps the egg deliberate). Base: v16.4.3 (TEST BUILD Oct 21, 2026 — five surgical fixes on live v16.4.2: (1) pipe-20 freeze + MOVING PIPES warning DELETED per Kenn's ruling (probe verdict: no rendering hitch — the designed pause WAS the glitch); (2) billboard sized from the design band (UW*S) + by clamped ~6px, fits any screen; (3) pipe pool grows on wide screens only (VIS_W > UW) — no more pop-in on the Fold; (4) Kenn's independent parallax ramps — far 0.3->0.55, mid 0.6->0.8, never converging, FG pinned 1.0x, crowd 1->2x; (5) bg-mid/bg-fg interior alpha holes sealed (audit = 0). Base: v16.4.2 (BUILD A SHIPPED TO LIVE Oct 21, 2026 on Kenn's word; base v16.4.1 + the v16.4.1.1 counter tick carried forward) — THE LIVE FEED + THE UPDATE BUTTON. THE LIVE FEED (Kenn's design, live-feed-design.md): the billboard is a TV screen and sponsors.json is the broadcast — a same-origin PLAYLIST the loader fetches (cache-busted, cache:no-store; the SW treats sponsors.json + version.json as NETWORK-ONLY) at boot and RE-POLLS every 60 s; when the playlist changes, the rotation rebuilds LIVE in the open game — new entries join, removed entries leave, captions follow — no rebuild, no reload. Fallback stack, in order: the running list in memory → the localStorage last-good list → the baked BETA_SPONSORS → the house placeholder; a playlist entry whose image fails to load is SKIPPED for the rotation, never a broken frame. The Drive sponsor folder stays the studio (Skynet's desk sync writes the playlist); the filter stays human. THE UPDATE BUTTON: version.json is polled on the same 60 s tick; when the served version differs from BUILD_VERSION below, the game shows "🔄 UPDATE — TAP TO REFRESH" (the classic waiting-service-worker path surfaces the same button); a tap asks a waiting SW to SKIP_WAITING and reloads ONCE, sessionStorage-guarded — stale shells and ?v= rescue links are retired. SPONSORS_SOLD = 3 (the v16.4.1.1 counter tick carried forward: slots #1-#3 sold; next slot #4 at $4.00): the ladder stays code-side by design — price ticks on VERIFIED PAYMENT, desk-side in the beta, server-side at the deploy pass. (v16.4.1 — THREE SURGICAL FIXES on v16.4, nothing else moves. THE PLACEHOLDER JOINS THE ROTATION: the billboard cycle is the sponsors in purchase order PLUS one house-placeholder turn (Kenn's doctrine — the placeholder is the sales card for the next slot); the null sentinel routes through the same placeholder art + caption branch the empty board always used, on the same 3 s global clock, and an empty board is still placeholder at all times. FULLSCREEN ASKS ONCE: goFullscreenPortrait is latched (fsAsked), so requestFullscreen + the portrait lock are attempted at most once per page session, at the first run start — later run starts never re-ask, even after the player exits fullscreen, so Chrome's exit-full-screen hint stops nagging every run. CHANGE 3 — AUTO-APPLY AT SAFE MOMENTS (Kenn, later the same day: "make this more seamless"; supersedes v16.4's never-auto-reload rule): detection (the version poll or a waiting service worker) sets a pending flag; in a SAFE state (splash/menu or game-over, no modal or form open) the update applies itself through the button's exact SKIP_WAITING path after a ~1.5 s settle — at boot, before the first run starts; mid-run or with a form open it is held silently and applied the moment the game turns safe; the pill shows only in safe states as the manual accelerator; both paths share the popicoin_update_tap stamp — exactly one reload per update, and a reloaded copy that still mismatches (deploy lag) falls back to the pill instead of looping.) (v16.3 — FIRST LIVE SPONSOR: slot #1 (00TATT$, paid on-chain) rotates on the billboard from the baked-in BETA SPONSOR LIST — the beta's loader resolves to it until the server source exists; slot #2 is PAID too but its creative is PENDING, so it does not display. THE LINEAR LADDER: Kenn replaced the doubling ladder with +$1 per slot (slotUsd = $1.00 x (sold + 1)); SPONSORS_SOLD = 2 (slots #1 AND #2 both paid at the frozen $1.00 panel price and were honored at $1.00 — the panel's word is the store's word), so the panel's NEXT SLOT is #3 at $3.00. Sponsor panel gains the Drive UPLOAD LANE beside DM intake. ROTATION CADENCE 3s (was 10s): BILLBOARD_SECONDS in the config block drives drawBillboard off the same global clock, and video cards ride the same 3s clock — the USE AI prompt and all copy now say 3 seconds. (v16.2 — THE GASLIGHT RAMP: the cosmetic scroll layers (far/mid parallax + the zombie crowd's treadmill) accelerate with the score and converge to full speed by pipe 100 while the pipes and the sim NEVER change; + THE FREE FLIGHT EGG: 10 flap inputs at score 0 make the bird invincible for the run — pipes turn SOLID on a treadmill world (faces stop you, tops carry you left, only the left edge can end it) and the run earns NOTHING (no sats, no board, no stats). (v16.1: score lives in the sky strip ABOVE the billboard plate (never on the sponsor window), toast band BELOW the plate; sponsor panel gains a live CoinGecko rate + BIP21 wallet pay link + runtime QR (vendored qrcode.js); every user-visible DEMO string is now BETA (storage keys/identifiers untouched); the leaderboard records PLAYERS — one row per username, best score only, self-healing on load. v16: Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -290,7 +290,7 @@
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.4.3 • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.5.2 • Trash world bg • Scrap pipes • Neon #00FF88<br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -418,6 +418,16 @@
       <div class="row"><span>Stage layout</span><span id="setLayoutNow">PORTRAIT</span></div>
       <div class="row"><span>LANDSCAPE MODE</span><span id="setLandStatus">🔒 LOCKED</span></div>
     </div>
+    <h3>WORLD</h3>
+    <div class="pricebox">
+      <div class="row"><span>Theme</span><span id="setThemeNow">—</span></div>
+      <div class="row"><span>On the stage now</span><span id="setWorldNow">—</span></div>
+    </div>
+    <div style="display:flex;gap:6px;margin:6px 0 10px">
+      <button class="btn ghost" id="btnThemeRandom" style="flex:1">RANDOM</button>
+      <button class="btn ghost" id="btnThemeClassic" style="flex:1">CLASSIC</button>
+      <button class="btn ghost" id="btnThemeMuse" style="flex:1">MUSE</button>
+    </div>
     <p><b>LANDSCAPE MODE — $1.00 in BCH.</b> The game is built portrait-first.
        Landscape is a paid unlock: pay $1.00 worth of BCH once and the wide
        stage is yours on every device, tied to your account — the unlock flag
@@ -512,6 +522,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <!-- QR generator vendored locally (qrcode-generator 1.4.4, Kazuhiko Arase, MIT) — no CDN at runtime; the sponsor panel's QR is generated on-device. -->
 <script src="qrcode.js"></script>
+<script src="theme-system.js"></script>
+<script src="pipe-collision.js"></script>
 <script>
 "use strict";
 /* =====================================================================
@@ -587,7 +599,7 @@ const SPONSORS_SOLD = 3;
    cache:"no-store" — and sw.js treats both JSON files as
    network-only — so a playlist edit is the ONLY thing a sponsor
    change needs; the game itself is never rebuilt for art. */
-const BUILD_VERSION = "16.4.3";   // v16.4.3 test build Oct 21 2026 (mirrored in this copy's version.json so the update poll stays quiet)
+const BUILD_VERSION = "16.5.2";   // v16.5.1 test build Oct 22 2026 (mirrored in this copy's version.json so the update poll stays quiet)
 const PLAYLIST_URL = "sponsors.json";
 const VERSION_URL = "version.json";
 const FEED_POLL_MS = 60000;
@@ -1204,6 +1216,7 @@ function startGame() {
   document.getElementById("splash").classList.add("hidden");
   document.getElementById("gameover").classList.add("hidden");
   document.getElementById("earnNote").textContent = "";
+  if (window.ThemeSystem) applyWorld(ThemeSystem.current().id);   // v16.5: the rolled world takes the stage at run start — never mid-run
   if (typeof Player !== "undefined") Player.onRunStart();
 }
 function armPipes() {
@@ -1272,6 +1285,7 @@ function showGameOver() {
   }
   document.getElementById("gameover").classList.remove("hidden");
   if (window.Eggs) Eggs.onGameOver();    // v16: 21 Club — death #21's screen flickers gold
+  if (window.ThemeSystem) { ThemeSystem.rollAfterGameOver(); syncWorldAssets(); }   // v16.5: roll the next world; it applies at the next run start
   sfx("swoosh");
   // score counts up 0 → final over 0.5 s (spec §6)
   const fs = document.getElementById("finalScore"), t0 = performance.now();
@@ -1293,14 +1307,17 @@ function doFlap() {
 function flap() {
   if (game.state !== "play") return;
   if (window.Eggs) Eggs.onFlap();        // v16: Flippening double-tap observer (observes only — every flap still flaps)
-  /* v16.2 FREE FLIGHT trigger (Kenn's egg): 10 flap inputs while the
+  /* v16.2 FREE FLIGHT trigger (Kenn's egg): 21 flap inputs while the
      score is still 0 — before pipe 1 is cleared — turn the run
      invincible (see ffResolve). Observed only, exactly like the
      Flippening: every flap still flaps. Once pipe 1 falls (score > 0)
-     the window is closed for the run. */
+     the window is closed for the run. (v16.5: threshold raised 10 -> 21
+     on Kenn's order — in landscape the wider stage makes players flap
+     10+ times before pipe 1, tripping the egg unintentionally; 21
+     keeps it deliberate.) */
   if (!game.ff.active && game.score === 0 && (game.phase === "ready" || game.phase === "flying")) {
     game.ff.taps++;
-    if (game.ff.taps >= 10) {
+    if (game.ff.taps >= 21) {
       game.ff.active = true;
       if (window.Eggs) Eggs.toast("✦ FREE FLIGHT — NOTHING COUNTS, NOTHING CAN KILL YOU");
     }
@@ -1549,10 +1566,22 @@ function step() {
     return;
   }
   /* collision (spec §2/§3): bird = 20×20 AABB at (80, y); pipes = full
-     52×320 rects — the narrower drawn body does NOT forgive, the box does */
+     52×320 rects — the narrower drawn body does NOT forgive, the box does.
+     v16.5: in the MUSE world the pipe test swaps to the silhouette
+     collider (PipeCollision, built from the art's alpha at world load);
+     the bird is tested as the circle inscribed in its 20x20 box (r = 10
+     at the box centre), through the same placement the renderer used.
+     Classic keeps the legacy rects below, byte-for-byte. */
   for (const p of game.pipes) {
-    if (p.x + PIPE_WU <= b.x || p.x >= b.x + HIT) continue;
     const g = p.effGap;
+    if (WORLD.musePipes) {
+      const birdC = { x: b.x + HIT / 2, y: b.y + HIT / 2, r: HIT / 2 };
+      const sPl = musePlacement(p, false), hPl = musePlacement(p, true);
+      if ((sPl && sPl.col.hitTest(birdC, { x: p.x + sPl.dx, y: g, scale: sPl.k, flipY: false })) ||
+          (hPl && hPl.col.hitTest(birdC, { x: p.x + hPl.dx, y: hPl.drawTop, scale: hPl.k, flipY: true }))) { startDeath(true); return; }
+      continue;
+    }
+    if (p.x + PIPE_WU <= b.x || p.x >= b.x + HIT) continue;
     const hitTop = b.y < g - GAP_H && b.y + HIT > g - GAP_H - 320;
     const hitBot = b.y < g + 320 && b.y + HIT > g;
     if (hitTop || hitBot) { startDeath(true); return; }
@@ -2225,6 +2254,153 @@ artLoadPng("birdOrange", "bird-orange", () => measureBird(ART.birdOrange));
 artLoadPng("birdGold", "bird-gold", () => measureBird(ART.birdGold));
 bakeHalo();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (ART.bbFrame) ART.bbPlaceholder = bakePlaceholder(); });
+/* ================= v16.5 — TWO WORLDS (Classic + Muse) =================
+   ThemeSystem (theme-system.js, a verified module) owns the setting, the
+   per-game-over roll and asset preloading; this block adapts it to the
+   game's renderer. WORLD.applied names the world on stage; it changes
+   ONLY at run start (startGame) or on the menu — never mid-run.
+   WORLD.musePipes latches with it, so pipe art and pipe collision can
+   never switch mid-run even if assets finish loading mid-run.
+   Classic rendering and collision are untouched. The bird never changes. */
+const WORLD = { applied: "classic", musePipes: false };
+const MUSE = { sky: null, mid: null, fg: null, pipe: null, fire: null, pipeFlip: null, fireFlip: null, colPipe: null, colFire: null, ready: false };
+const WORLD_MANIFEST = [
+  { id: "classic", name: "Classic", assets: { sky: "art/bg-far.webp", mid: "art/bg-mid.webp", fg: "art/bg-fg.webp", pipe: "art/col-o-stand.png", pipeFire: "art/col-f-stand.png" } },
+  { id: "muse", name: "Muse", assets: { sky: "art/muse-sky.png", mid: "art/muse-mid.png", fg: "art/muse-fg.png", pipe: "art/muse-pipe.png", pipeFire: "art/muse-pipe-fire.png" } }
+];
+function flipCanvasOf(img) {
+  const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const g = c.getContext("2d"); g.translate(0, c.height); g.scale(1, -1); g.drawImage(img, 0, 0);
+  return c;
+}
+function colliderOf(img) {
+  const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const g = c.getContext("2d"); g.drawImage(img, 0, 0);
+  const d = g.getImageData(0, 0, c.width, c.height).data, a = new Uint8Array(c.width * c.height);
+  for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3];
+  return PipeCollision.makeCollider(a, c.width, c.height, 128);
+}
+function buildMuseAssets(images) {
+  if (!images || !images.pipe || !images.pipeFire) return;   // incomplete set: Muse pipes stay off
+  MUSE.sky = images.sky || null; MUSE.mid = images.mid || null; MUSE.fg = images.fg || null;
+  MUSE.pipe = images.pipe; MUSE.fire = images.pipeFire;
+  measureColumn(MUSE.pipe); measureColumn(MUSE.fire);   // the game's own mouth/width metrics
+  MUSE.pipeFlip = flipCanvasOf(MUSE.pipe); MUSE.fireFlip = flipCanvasOf(MUSE.fire);
+  // A canvas has no naturalWidth, so measureColumn cannot read the flips;
+  // stamp them with the source metrics instead — a vertical flip swaps
+  // the top/bottom mouth clusters, width and centre are unchanged.
+  for (const pair of [[MUSE.pipe, MUSE.pipeFlip], [MUSE.fire, MUSE.fireFlip]]) {
+    pair[1]._mwT = pair[0]._mwB; pair[1]._mwB = pair[0]._mwT;
+    pair[1]._widest = pair[0]._widest; pair[1]._ccx = pair[0]._ccx;
+  }
+  MUSE.colPipe = colliderOf(MUSE.pipe); MUSE.colFire = colliderOf(MUSE.fire);
+  MUSE.ready = true;
+}
+function syncWorldAssets() {
+  if (!window.ThemeSystem) return Promise.resolve();
+  return ThemeSystem.preload().then(images => {
+    if (ThemeSystem.current().id === "muse") buildMuseAssets(images);
+  }).catch(() => {});
+}
+/* The ONE placement transform for a Muse column, shared by the renderer
+   and the collision test so the two can never drift apart. Geometry
+   follows the game's classic v10 basis: the mouth is the cluster at the
+   image's TOP edge (source metrics: regular top cluster 169 px wide,
+   fire top cluster 383 px), scaled by the game's own rule
+   k = min(MOUTH_TARGET_U / mouth, WIDEST_CAP_U / widest); content is
+   centred on the pipe via _ccx. Standing: the bitmap's top sits at the
+   gap's bottom edge (effGap) and the art runs down, source-cropped at
+   the stage bottom UH — the column's ornate base sits below the fold by
+   design (Kenn's demo rule: collision remaps to the art; the art is
+   never squashed). Hanging: the pre-flipped bitmap with its mouth at
+   the gap's top edge (effGap - GAP_H); when the drawn height cannot
+   reach the ceiling (fire twin: drawn height ~267 u vs a gap top up to
+   210 u + sky), the whole column hangs from the ceiling exactly as the
+   classic AS-IS fallback does, and collision follows the same drawTop. */
+function musePlacement(p, isTop) {
+  if (!p || !MUSE.ready) return null;
+  const fire = !!(p.idx >= 20 && POPICOIN_CONFIG.WAVE_PIPES);
+  const src = fire ? MUSE.fire : MUSE.pipe, flip = fire ? MUSE.fireFlip : MUSE.pipeFlip;
+  const col = fire ? MUSE.colFire : MUSE.colPipe;
+  if (!src || !flip || !col) return null;
+  const bmp = isTop ? flip : src;
+  const mouth = isTop ? bmp._mwB : bmp._mwT;
+  if (!mouth || !bmp._widest || !bmp._ccx) return null;
+  const k = Math.min(MOUTH_TARGET_U / mouth, WIDEST_CAP_U / bmp._widest);
+  const dh = (bmp.naturalHeight || bmp.height) * k, dx = PIPE_WU / 2 - bmp._ccx * k;
+  let drawTop, need = 0;
+  if (!isTop) drawTop = p.effGap;
+  else {
+    need = (p.effGap - GAP_H) + skyExtra;   // gap top up to the visible ceiling (ceilY = -skyExtra, a global)
+    drawTop = dh >= need ? (p.effGap - GAP_H) - dh : -skyExtra;
+  }
+  return { bmp, col, k, dx, dh, drawTop, need };
+}
+function drawMuseColumn(x, y, h, isTop, p) {
+  const pl = musePlacement(p, isTop);
+  if (!pl) return false;
+  const bmp = pl.bmp, iw = bmp.naturalWidth || bmp.width, ih = bmp.naturalHeight || bmp.height;
+  if (!isTop) {
+    const visH = UH - p.effGap; if (visH <= 0) return true;
+    const sH = Math.min(ih, visH / pl.k);
+    ctx.drawImage(bmp, 0, 0, iw, sH, p.x + pl.dx, p.effGap, iw * pl.k, sH * pl.k);
+  } else if (pl.dh < pl.need) {
+    ctx.drawImage(bmp, p.x + pl.dx, -skyExtra, iw * pl.k, pl.dh);   // AS-IS whole column from the ceiling (classic fallback shape)
+  } else {
+    /* v16.5.1: crop to the TRUE visible ceiling (ceilY = -skyExtra),
+       exactly as the classic v15.1 hang does — v16.5.0 cropped at unit
+       0, so on tall portrait screens the hanging column stopped
+       skyExtra units short of the top of the screen and floated.
+       Source-crop the far end of the flipped bitmap; the mouth end
+       stays pixel-exact on the gap line and the mapping matches the
+       collision placement (drawTop) row for row. */
+    const cut = (pl.dh - pl.need) / pl.k, sH = ih - cut;
+    if (sH <= 0) return true;
+    ctx.drawImage(bmp, 0, cut, iw, sH, p.x + pl.dx, -skyExtra, iw * pl.k, pl.need);
+  }
+  return true;
+}
+/* v16.5.1 — the three Muse layer draws share ONE mirror-tile path: the
+   verified ThemeSystem.drawFar tiler, fed a PIXEL phase (scroll units x S)
+   and the true tile width. The v16.5.0 hand-rolled loops fed UNIT-space
+   scroll offsets into pixel tile math: the layers scrolled at 1/S speed
+   and the mirror parity (floor of a units/px quotient) teleported the
+   pattern at every tile boundary — Kenn's "midground shifts". The FG
+   loop was worse: it read ART.scrollGround, a field that does not exist
+   (the FG lane's driver is ART.scrollU), so its offset was NaN and the
+   Muse foreground NEVER DREW. Classic draws are untouched. */
+function drawMuseFar() {
+  const img = MUSE.sky, lay = LAY.bgFar, yPx = lay[0] * H, hPx = lay[1] * H;
+  const tw = hPx * (img.naturalWidth / img.naturalHeight);
+  ctx.save(); ctx.translate(0, yPx);
+  ThemeSystem.drawFar(ctx, img, -(ART.scrollFar * S), tw, hPx);
+  ctx.restore();
+}
+function drawMuseMid() {
+  const img = MUSE.mid, lay = LAY.bgMid, yPx = lay[0] * H, hPx = lay[1] * H;
+  const tw = hPx * (img.naturalWidth / img.naturalHeight);
+  ctx.save(); ctx.translate(0, yPx);
+  ThemeSystem.drawFar(ctx, img, -(ART.scrollMid * S), tw, hPx);
+  ctx.restore();
+}
+function drawMuseFg() {
+  const img = MUSE.fg, dhPx = FG_H_U * S, yPx = OY + FG_TOP_U * S;
+  const tw = dhPx * (img.naturalWidth / img.naturalHeight);
+  ctx.save(); ctx.translate(0, yPx);
+  ThemeSystem.drawFar(ctx, img, -(ART.scrollU * S), tw, dhPx);
+  ctx.restore();
+}
+function applyWorld(id) {
+  WORLD.applied = (id === "muse" && MUSE.sky) ? "muse" : "classic";
+  WORLD.musePipes = WORLD.applied === "muse" && MUSE.ready;
+  window.__worlds = { world: WORLD, muse: MUSE, placement: musePlacement };
+  try { if (window.__popicoin) window.__popicoin.worlds = window.__worlds; } catch (e) {}
+}
+if (window.ThemeSystem) {
+  ThemeSystem.init(WORLD_MANIFEST, { storageKey: "flappy.theme" });
+  syncWorldAssets().then(() => { if (game.state !== "play") applyWorld(ThemeSystem.current().id); });
+}
+
 
 /* ---------------- v16.2.3: ART WARM-UP ----------------
    THE PIPE-20 HITCH: browsers lazily decode an image on its first
@@ -2342,9 +2518,18 @@ function drawBackground() {
   // mid/fg art is a keyed texture (real alpha holes between trash), so
   // this guarantees no void pixel ever shows through the stack.
   ctx.fillStyle = "#0c120c"; ctx.fillRect(0, 0, W, H);
-  drawTiledLayer(ART.bgFar, LAY.bgFar, ART.scrollFar);   // v16.4.3: ramped 0.3x -> 0.55x (own ceiling, never converges)
-  drawTiledLayer(ART.bgMid, LAY.bgMid, ART.scrollMid);   // v16.4.3: ramped 0.6x -> 0.8x (own ceiling, never converges)
-  if (ART.bgFg) drawFgLayer(ART.bgFg);
+  if (WORLD.applied === "muse") {
+    // v16.5 Muse world: far = mirror tiling (ThemeSystem.drawFar), mid =
+    // mirrored tiles, fg = the classic ground anchor on mirrored tiles.
+    // Any layer whose art has not loaded falls back to the classic layer.
+    if (MUSE.sky) drawMuseFar(); else drawTiledLayer(ART.bgFar, LAY.bgFar, ART.scrollFar);
+    if (MUSE.mid) drawMuseMid(); else drawTiledLayer(ART.bgMid, LAY.bgMid, ART.scrollMid);
+    if (MUSE.fg) drawMuseFg(); else if (ART.bgFg) drawFgLayer(ART.bgFg);
+  } else {
+    drawTiledLayer(ART.bgFar, LAY.bgFar, ART.scrollFar);   // v16.4.3: ramped 0.3x -> 0.55x (own ceiling, never converges)
+    drawTiledLayer(ART.bgMid, LAY.bgMid, ART.scrollMid);   // v16.4.3: ramped 0.6x -> 0.8x (own ceiling, never converges)
+    if (ART.bgFg) drawFgLayer(ART.bgFg);
+  }
 }
 function drawBillboard(t) {
   const { bw, bh, bx, by, win } = BB, k = BB.k, FS = win.w / 431.2;
@@ -2408,6 +2593,9 @@ function drawBillboard(t) {
   else ctx.fillText("PLACEHOLDER • SPONSOR TO REPLACE", bx + 8, by + bh - 7);
 }
 function drawPipeU(x, y, h, isTop, slot, p) {
+  // v16.5: the Muse world draws its own single-piece columns (silhouette
+  // art at native res); the classic chain below is untouched.
+  if (WORLD.musePipes && drawMuseColumn(x, y, h, isTop, p)) return;
   // v10: Kenn's purpose-made full columns — one mouth-anchored sprite
   // per column (regular set / fire set). The paint conforms to the
   // spec 52x320 collision rect, never the reverse. Falls back to the
@@ -3609,6 +3797,11 @@ function renderSettings() {
   el("setLayoutNow").textContent = land ? "LANDSCAPE" : "PORTRAIT";
   el("setLandStatus").textContent = landscapeUnlocked() ? "UNLOCKED ✓" : "LOCKED";
   el("btnPreviewLand").textContent = land ? "← BACK TO PORTRAIT (DEFAULT)" : "PREVIEW LANDSCAPE ON THIS DEVICE →";
+  if (window.ThemeSystem && el("setThemeNow")) {
+    const themeNames = { random: "Random", classic: "Classic", muse: "Muse" };
+    el("setThemeNow").textContent = themeNames[ThemeSystem.getSetting()] || ThemeSystem.getSetting();
+    el("setWorldNow").textContent = WORLD.applied === "muse" ? "Muse" : "Classic";
+  }
 }
 const settingsModal = document.getElementById("settingsModal");
 const unlockModal = document.getElementById("unlockModal");
@@ -3620,6 +3813,15 @@ document.getElementById("btnPreviewLand").addEventListener("click", () => {
   const toLand = LAY.portrait;
   try { localStorage.setItem("popicoin_landscape_preview", toLand ? "1" : "0"); } catch (e) {}
   applyLayout(!toLand);
+});
+["Random", "Classic", "Muse"].forEach(nm => {
+  document.getElementById("btnTheme" + nm).addEventListener("click", () => {
+    if (!window.ThemeSystem) return;
+    ThemeSystem.setSetting(nm.toLowerCase());
+    if (nm === "Muse") syncWorldAssets().then(() => { if (game.state !== "play") applyWorld(ThemeSystem.current().id); renderSettings(); });
+    else if (game.state !== "play") applyWorld(ThemeSystem.current().id);
+    renderSettings();
+  });
 });
 
 /* ---------------- boot ---------------- */
