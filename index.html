@@ -6,7 +6,8 @@
 <title>FLAPPY SATS — ESCAPE FIAT TRASH</title>
 <meta name="description" content="FLAPPY SATS — trash-world flappy. Escape fiat trash. Sponsored by the people, priced in Bitcoin Cash.">
 <meta name="theme-color" content="#0a0f0a">
-<!-- FLAPPY SATS v16.5.1 (TEST BUILD Oct 22, 2026 — BUGFIX PASS on v16.5.0 from Kenn's playtest: (1) the Muse FOREGROUND layer never drew — its tile loop read ART.scrollGround, a field that does not exist, so the offset was NaN (the FG lane's driver is ART.scrollU); (2) the Muse far/mid/fg tile draws fed UNIT-space scroll offsets into PIXEL tile math — the layers scrolled at 1/S speed and the mirror parity teleported the pattern at every tile boundary (the "midground shift"); all three Muse layers now ride the verified ThemeSystem.drawFar tiler with a pixel phase (scroll x S) and the true tile width, so the sky is no longer stretched either; (3) the Muse hanging column now crops to the true visible ceiling (-skyExtra) like the classic v15.1 hang — it stopped skyExtra units short of the top of tall portrait screens. Classic rendering + collision untouched. Base: v16.5.0 (TWO WORLDS: the Muse world joins Classic. ThemeSystem (verified module) owns the Theme setting — Random (default) / Classic / Muse, persisted — and rolls a new world after each game over; the new world applies at the next run start, never mid-run. Muse world: set-4 art at 100% native resolution, lossless (sky/mid 2048x1024, fg 2048x512, single-piece pipe columns 512x2048); far layer mirror-tiled via ThemeSystem.drawFar; Muse pipes drawn from the single-piece columns (source-cropped, never squashed) with silhouette collision (PipeCollision, collider built from the art's alpha at world load) fitted to the art — Kenn's demo rule; Classic rendering + collision untouched; the bird never changes. FREE FLIGHT egg threshold 10 -> 21 flap inputs (Kenn's order: in landscape the wider stage makes players flap 10+ times before pipe 1, tripping god mode unintentionally; 21 keeps the egg deliberate). Base: v16.4.3 (TEST BUILD Oct 21, 2026 — five surgical fixes on live v16.4.2: (1) pipe-20 freeze + MOVING PIPES warning DELETED per Kenn's ruling (probe verdict: no rendering hitch — the designed pause WAS the glitch); (2) billboard sized from the design band (UW*S) + by clamped ~6px, fits any screen; (3) pipe pool grows on wide screens only (VIS_W > UW) — no more pop-in on the Fold; (4) Kenn's independent parallax ramps — far 0.3->0.55, mid 0.6->0.8, never converging, FG pinned 1.0x, crowd 1->2x; (5) bg-mid/bg-fg interior alpha holes sealed (audit = 0). Base: v16.4.2 (BUILD A SHIPPED TO LIVE Oct 21, 2026 on Kenn's word; base v16.4.1 + the v16.4.1.1 counter tick carried forward) — THE LIVE FEED + THE UPDATE BUTTON. THE LIVE FEED (Kenn's design, live-feed-design.md): the billboard is a TV screen and sponsors.json is the broadcast — a same-origin PLAYLIST the loader fetches (cache-busted, cache:no-store; the SW treats sponsors.json + version.json as NETWORK-ONLY) at boot and RE-POLLS every 60 s; when the playlist changes, the rotation rebuilds LIVE in the open game — new entries join, removed entries leave, captions follow — no rebuild, no reload. Fallback stack, in order: the running list in memory → the localStorage last-good list → the baked BETA_SPONSORS → the house placeholder; a playlist entry whose image fails to load is SKIPPED for the rotation, never a broken frame. The Drive sponsor folder stays the studio (Skynet's desk sync writes the playlist); the filter stays human. THE UPDATE BUTTON: version.json is polled on the same 60 s tick; when the served version differs from BUILD_VERSION below, the game shows "🔄 UPDATE — TAP TO REFRESH" (the classic waiting-service-worker path surfaces the same button); a tap asks a waiting SW to SKIP_WAITING and reloads ONCE, sessionStorage-guarded — stale shells and ?v= rescue links are retired. SPONSORS_SOLD = 3 (the v16.4.1.1 counter tick carried forward: slots #1-#3 sold; next slot #4 at $4.00): the ladder stays code-side by design — price ticks on VERIFIED PAYMENT, desk-side in the beta, server-side at the deploy pass. (v16.4.1 — THREE SURGICAL FIXES on v16.4, nothing else moves. THE PLACEHOLDER JOINS THE ROTATION: the billboard cycle is the sponsors in purchase order PLUS one house-placeholder turn (Kenn's doctrine — the placeholder is the sales card for the next slot); the null sentinel routes through the same placeholder art + caption branch the empty board always used, on the same 3 s global clock, and an empty board is still placeholder at all times. FULLSCREEN ASKS ONCE: goFullscreenPortrait is latched (fsAsked), so requestFullscreen + the portrait lock are attempted at most once per page session, at the first run start — later run starts never re-ask, even after the player exits fullscreen, so Chrome's exit-full-screen hint stops nagging every run. CHANGE 3 — AUTO-APPLY AT SAFE MOMENTS (Kenn, later the same day: "make this more seamless"; supersedes v16.4's never-auto-reload rule): detection (the version poll or a waiting service worker) sets a pending flag; in a SAFE state (splash/menu or game-over, no modal or form open) the update applies itself through the button's exact SKIP_WAITING path after a ~1.5 s settle — at boot, before the first run starts; mid-run or with a form open it is held silently and applied the moment the game turns safe; the pill shows only in safe states as the manual accelerator; both paths share the popicoin_update_tap stamp — exactly one reload per update, and a reloaded copy that still mismatches (deploy lag) falls back to the pill instead of looping.) (v16.3 — FIRST LIVE SPONSOR: slot #1 (00TATT$, paid on-chain) rotates on the billboard from the baked-in BETA SPONSOR LIST — the beta's loader resolves to it until the server source exists; slot #2 is PAID too but its creative is PENDING, so it does not display. THE LINEAR LADDER: Kenn replaced the doubling ladder with +$1 per slot (slotUsd = $1.00 x (sold + 1)); SPONSORS_SOLD = 2 (slots #1 AND #2 both paid at the frozen $1.00 panel price and were honored at $1.00 — the panel's word is the store's word), so the panel's NEXT SLOT is #3 at $3.00. Sponsor panel gains the Drive UPLOAD LANE beside DM intake. ROTATION CADENCE 3s (was 10s): BILLBOARD_SECONDS in the config block drives drawBillboard off the same global clock, and video cards ride the same 3s clock — the USE AI prompt and all copy now say 3 seconds. (v16.2 — THE GASLIGHT RAMP: the cosmetic scroll layers (far/mid parallax + the zombie crowd's treadmill) accelerate with the score and converge to full speed by pipe 100 while the pipes and the sim NEVER change; + THE FREE FLIGHT EGG: 10 flap inputs at score 0 make the bird invincible for the run — pipes turn SOLID on a treadmill world (faces stop you, tops carry you left, only the left edge can end it) and the run earns NOTHING (no sats, no board, no stats). (v16.1: score lives in the sky strip ABOVE the billboard plate (never on the sponsor window), toast band BELOW the plate; sponsor panel gains a live CoinGecko rate + BIP21 wallet pay link + runtime QR (vendored qrcode.js); every user-visible DEMO string is now BETA (storage keys/identifiers untouched); the leaderboard records PLAYERS — one row per username, best score only, self-healing on load. v16: Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
+<!-- FLAPPY SATS v16.6.5 (MVP SHIP CANDIDATE Oct 23, 2026 — THE LAYER-ALIGNMENT PASS on v16.6.3-behind, Kenn's playtest verdict: BEHIND wins on native-resolution art at proper size ('AAA HD'), but the five parallax tiers sat 'a little too big and a little too out of position' — visible rectangular seams/band edges, doubled tiers out of register. SLOT-UNIVERSAL GEOMETRY (Kenn's design lock Oct 23 05:52-05:54): anchors, speeds and scale register are properties of the SLOT (sky/mid/fg/pipe), identical for every asset in the slot — no world identity in geometry; worlds are interchangeable art sets (every sky 2048x1024, mid 2048x1024, fg 2048x512, pipe set 512x2048) ahead of the v16.6.5 per-slot randomizer (re-roll on every death; NOT built here). FIXES: (1) SKY HANDS OFF (Kenn's standing art directive, Oct 23 05:50) — the v16.6.3 sky extension (a scan-chosen strip of the sky stretched below the skyline) is REMOVED entirely: the sky tier draws the authored file exactly as authored, full-frame, centre-anchored tiling only; no re-sourcing, no scan-baked substitutes, no synthesis touches the far background. (2) MID2 RETUNED 450u -> 360u tall (1.875x -> 1.5x of mid1), bottom unchanged at 335u — its junction art row moves 0.849 -> 0.811, still on the mid image's dense lower mass in every world (simulated worst-case junction union coverage vs v16.6.3: within 0.03-0.10 per world; Haz darkRunFrac stays in the fixed 0.15-0.25 band on rendered frames — BUILD-REPORT-v1664.md). (3) FG2 RETUNED 187.5u -> 168.75u tall (1.25x -> 1.125x of fg1) with its bottom raised 438u -> 414u = fg1's bottom, so both foreground tiers' bottoms register on one line above the crowd and neither tier sinks below the other between worlds. Tier joins remain centre-anchored butt joins (Kenn's model: no mirroring, no stretching, no crossfade); joins are staggered across tiers by tile width, half-tile phase on the doubled tiers, and five distinct scroll lanes, so joins never stack into one vertical line. SPACE PIPE ORIENTATION: pixel-proven CORRECT AS SHIPPED in v16.6.3 (see BUILD-REPORT-v1664.md) — no pipe change. DEMO LOCKS (Kenn, Oct 23 06:02-06:04): this package is a ONE-WORLD DEMO pinned to the Junkfall lab stack (junk sky/mid/fg/pipes; other worlds' art stays in the package untouched, off the demo path); a NEW FRONT LAYER — the fg slot's own lower band, authored as-is — passes IN FRONT OF the crowd (which is unchanged) on the fastest world lane (0.96-0.99); and the billboard renders BEHIND the pipes per Kenn's 06:04 call, superseding the behind-fork draw order for the demo. Sponsors, economy, accounts and EVERY art/audio file untouched (byte-identical). v16.6.4-demo.1 (A5 FIX PASS — Kenn's playtest fixes, Oct 23): (1) MID2_BOT_U 335 -> 345: the black sliver at the mid/fg junction was a coverage hole at design 335-345u (mid2's opaque bottom ended at 335u; mid1's full-width rows begin at ~345u; fg cover in the band ~0-15%) — mid2's bottom now meets mid1's full region, AND the mid slot's draw window ends at source row 1021 (MID_SRC_H_FRAC): the mid files' last ~2 rows are a near-black edge strip that printed as a hard line at the tier's bottom edge. Proven: zero uncovered pixels in the junction band at 14 phases (sentinel test), no fixed dark line in the phase-averaged row profile, sky/mid junction metric unchanged. (2) PIXEL-TRUE BIRD CONTACT in column worlds: the bird is tested as its own alpha mask (0.25u grid, alpha>=128 — the pipes' silhouette basis), rotated by b.angle as drawn, against the same placement + spans; the r=10u circle let the 48u-wide sprite sink up to 14.0u past the pipe face before registering. Circle kept as the no-mask fallback; classic, Free Flight and egg tests untouched. (3) PIPE SCALE MEASURED, UNCHANGED: one scalar k on both axes (Junkfall k = 52/212 = 0.24528) — no distortion exists; the drawn median body is exactly the 52u design width. Demo locks unchanged. v16.6.4-demo.2 (A5, Kenn's demo.1 playtest): ONE fix, generalized — NO layer's straight rectangular edge may terminate in the open. Kenn circled a straight horizontal line just above the crowd in demo.1: measured to MID2_BOT_U 345u (probe scan: the stack's only exposed edge, run-median 0.125 vs 0.00-0.07 for every other tier edge; tier-kill probes confirm mid2). At 345u the fg cover in front of mid2 is only 0.29 union and mid1 behind it shows the same image at 1.0x from different source rows, so the rect bottom printed as a full-width step. Fix: MID2_BOT_U 345 -> 375 (shift only) — the edge now terminates inside the fg pair's opaque mass (union coverage 0.91 at 375u; 57% of the fg content span — Kenn's midpoint rule), with mid1's solid deep pile behind it on both sides. Every other named edge audited buried at 14 phases; demo.1 junction band stays doubly covered. Collision, art, all other geometry untouched. v16.6.4-demo.3 (Gate 1 fix — Kenn's demo.2 playtest, Oct 23 09:13, amended 09:18): the pipes gain a thick WHITE STICKER BORDER (render-time only: stickerCanvasOf dilates each painted bitmap's alpha silhouette in solid white under the art, PIPE_OUTLINE_U = 1.6u ≈ 6 device px at the 1080-wide reference render, precomputed once per bitmap; NO art file edited/rescaled/recompressed) — under Kenn's GAP INVIOLABILITY rule: the 96u gap band is sacred, so (a) every pipe set is NORMALIZED at load (trimPipeOf crops transparent row padding; the art's extreme pixel lands exactly ON the gap edge — Junkfall's mouth floated 56 source px = 13.7u short of the line before this), (b) the same-size sticker twin caps the contour flush at the pipe end, and both pipe draw paths hard-clip at the gap edge — no pipe pixel, art or border, can enter the band; and (c) COLLISION = THE ART: the classic world retires its 52x320 spec rect for the same silhouette path the column worlds use (bird mask vs the sprite's own spans via classicPlacement, the exact transform drawPipeColumn paints with), and the column colliders now derive from the normalized bitmaps so their spans terminate at the gap lines too. Free Flight's solid-pipe treadmill model is a separate egg mechanic and is unchanged, deliberately. Layer geometry, sponsors, economy, demo locks untouched. v16.6.4-demo.4 (Gate 1 fix — Kenn's demo.3 verdict, Oct 23 13:56): ONE change — THE BIRD AT ORIGINAL SIZE. Demo.3's bird mask measured 47.75u wide x 36.0u tall (37.5% of the 96u gap) where the original Flappy bird is 24px tall in a 100px gap (24%, same 512-tall field); Kenn: match the original exactly, then freeze — muscle memory is calibrated to the original. A single constant BIRD_W_U = 32 (48u x 24/36, a uniform render-time scale of 0.6667; NO art file edited) now feeds both drawBirdU (paint) and measureBird (the collision mask), so paint and collision scale together and cannot drift: mask height 24.0u, width ~31.8u, centred clearance in the 96u gap 72u. The 20u hitbox anchor, the r=10 circle fallback, and every other system — sticker border, gap inviolability, collision = the art, layer geometry, sponsors, economy, demo locks — are untouched. v16.6.4-demo.5 (Gate 1 fix — Kenn's demo.4 PHONE playtest, Oct 23 14:36): THE BLANK-BAKE FIX. On Kenn's Fold7 cover (1080x2520) demo.4 rendered broken: billboard a bare sponsor rectangle (frame plate missing), pipes invisible for a full 35 s session while score and collisions ran. Diagnosis: NOT the layout math (demo.2/.3/.4 all render clean at 1080x2520 in the harness, DSF 1 and DSF 3, and the deployed bytes are hash-identical) — the game's one-time canvas bakes ran while their source images were loaded but not yet drawable, produced blank canvases, and every bake is cached/published permanently with its fallback suppressed: the plate published fully transparent (the AUDIT2 guard checks the image object, not its pixels — the loaded-but-not-drawable case of the shot1 bug), the pipe solid/sticker twins cached blank while JS-span colliders kept scoring and killing. (The sky seam in the recording is the authored butt join of Kenn's no-crossfade tier model — present in clean renders too; not a bake defect, untouched per the art lock.) Fixes, all render-layer: (1) bakeBillboard verifies the plate's pixels before publishing (blank plate never publishes — the neon fallback covers the board — and the bake retries on a timer); (2) the bb-frame load callback decode()s before baking; (3) buildColumnAssets decode()s the world's five images before the bake chain reads them; (4) solidCanvasOf / stickerCanvasOf / bakeWrapTile return their SOURCE when a bake reads or composes blank, and the WeakMap caches never store a fallback, so every bake retries until it lands. Bird (BIRD_W_U 32, mask 24.0u), sticker border, MID2_BOT_U 375, gap doctrine, layer geometry, sponsors, economy, demo locks — untouched. v16.6.5 (MVP SHIP CANDIDATE Oct 23, 2026 — Kenn's ruling 15:49 ET: NO randomizer, NO traveling billboard for the MVP; ONE WORLD, perfected): (1) SINGLE WORLD — WORLD_MANIFEST ships the Junkfall entry ONLY, so no code path can select, roll, or fall back to another world (a stored setting naming a removed world resolves to Junkfall, the sole entry; the boot pin to junkfall stands); the Settings WORLD row presents JUNKFALL only (the RANDOM and other-world buttons are removed from the modal). The other worlds' art files remain in the package byte-identical, off every path — the randomizer and the other worlds are post-launch work, not built here. (2) SPONSORS COMPLETE — art/sponsor-002.jpg (Commitment 2 Love) joins the package byte-identical, sponsors.json ships all three paid boards in purchase order, and the baked BETA_SPONSORS rung mirrors all three, so the billboard rotation cycles 00TATT$ / Commitment 2 Love / CASPER404 + the house placeholder in menus and gameplay alike. (3) STAMPS — 16.6.5 / popicoin-shell-v41. Geometry FROZEN at the demo.5 baseline: BIRD_W_U 32 (mask 31.75 x 24.0u), gap 96.0u, PIPE_OUTLINE_U 1.6u, MID2_BOT_U 375, the demo.4 layer stack, loader decode-gates — zero drift; no art rescaled, recompressed, or refit. -->
+<!-- FLAPPY SATS v16.6.1 (TEST BUILD Oct 23, 2026 — KENN'S WALKTHROUGH FIXES on v16.6.0: (1) HANGING COLUMNS NEVER DANGLE — a column whose scaled height cannot reach its gap no longer hangs from the ceiling with its mouth floating mid-sky (Space Trash: drawn 237u vs need up to 464u — the "pipes face the wrong way" read); the mouth now lands ON the gap line and the flipped bitmap's trunk band repeats upward to the ceiling, with the silhouette collider wrapping through the same band (pipe-collision ext fields) so render and collision still cannot drift; (2) FULL-HEIGHT STACK — the sky's own horizon rows extend from the far band's bottom edge to the screen bottom in every world (classic included), so mid/fg transparency and the crowd zone sit on world atmosphere, never bare base coat; the zombie mass keeps its black (Kenn's design) but falls off over a gradient lip of foreground art instead of a hard slab edge; (3) NO MIRRORING ANYWHERE — world sky/mid/fg are baked once per world into seamless wrap tiles (right edge crossfaded into the art's own left edge — derived from the world's existing art only) and plain-wrap tiled; the ThemeSystem.drawFar mirror tiler is retired from the game draws; (4) STRICT SPEED LADDER — the foreground gets its OWN scroll lane (ART.scrollFg, 0.82x -> 0.90x on the gaslight ramp): far 0.3-0.55 < mid 0.6-0.8 < fg 0.82-0.90 < pipes 1.0, bands never touch, FG never locked to pipe speed again (supersedes the v15/v16.4.3 FG-pinned law on Kenn's Oct 23 order); (5) HAZ-SCRAP PIPE SCALE (walkthrough Issue 6) — Haz's columns scale by CONTENT width (median span -> PIPE_WU, the v10.1 basis): its trunk rendered ~38u on the mouth basis against the 52u spec body of the cap/body family, k 0.198 -> 0.268 (fire 0.175 -> 0.221), body 38u -> 52u, mouth bulging to ~68u like a cap, widest capped; (6) SOLID PIPES (walkthrough Issue 7) — every pipe bitmap in all six worlds (classic sprites included) paints from a baked solid twin: each row backed across its full alpha span with a dark shade of the art's own average color, the original art composited on top unchanged — the silhouette collider always treated rows as solid spans, now the paint matches; measured interior see-through before the bake: Junkfall 16.0% of span area, Space 14.4%, Muse 13.6%, E-Waste 11.9%, Haz-Scrap 3.5% (fire 8.5%); (7) WRONG-WORLD START GUARD — a run start while the rolled/picked world's assets are still building waits for the build instead of starting a full run on the fallback stage, and the game-over roll sync now re-applies at the menu when the build lands (the catch-up the boot and settings paths always had); (8) BILLBOARD ROTATION SHUFFLED (Kenn's ruling, Oct 23) — the cycle (sponsors + the house placeholder turn) is Fisher-Yates shuffled each time a new cycle begins and each time the playlist rebuilds, stable within a cycle; 3s/card global clock, 60s polling, fallback stack and captions unchanged. Sponsors (SPONSORS_SOLD=3), economy, accounts and self-update untouched. Base: v16.6.0 (TEST BUILD Oct 22, 2026 — SIX WORLDS: the wiring build. Space Trash (the art-lab set), Junkfall (free-gen set 1), E-Waste (free-gen set 2) and Haz-Scrap (free-gen set 3) join Classic + Muse in the ThemeSystem random roll — six worlds total, never-repeat rule unchanged, Settings -> WORLD lists all six. Every new world is single-piece column art (512x2048) and wires through the SAME generalized column path the Muse world proved in v16.5.x: silhouette collision (PipeCollision, collider built from the art's alpha at world load), far/mid/fg layers at 100% native resolution mirror-tiled via ThemeSystem.drawFar with a pixel phase (the v16.5.0 unit-space bug class does not recur — the layer draws read the active world's holder, nothing else changed). Junkfall has NO fire pipe in its source set: its pipeFire manifest entry points at the regular column, so its fire phase shows the regular column — no art invented. Set 1's mid uses the magenta-keyed take (the art-bible house key; a black-keyed alternate take exists in the art lab and can be swapped in one file). Kenn's art ships byte-identical; the bird never changes; economy, billboard, Free Flight (21), admin and self-update untouched. Base: v16.5.1 (TEST BUILD Oct 22, 2026 — BUGFIX PASS on v16.5.0 from Kenn's playtest: (1) the Muse FOREGROUND layer never drew — its tile loop read ART.scrollGround, a field that does not exist, so the offset was NaN (the FG lane's driver is ART.scrollU); (2) the Muse far/mid/fg tile draws fed UNIT-space scroll offsets into PIXEL tile math — the layers scrolled at 1/S speed and the mirror parity teleported the pattern at every tile boundary (the "midground shift"); all three Muse layers now ride the verified ThemeSystem.drawFar tiler with a pixel phase (scroll x S) and the true tile width, so the sky is no longer stretched either; (3) the Muse hanging column now crops to the true visible ceiling (-skyExtra) like the classic v15.1 hang — it stopped skyExtra units short of the top of tall portrait screens. Classic rendering + collision untouched. Base: v16.5.0 (TWO WORLDS: the Muse world joins Classic. ThemeSystem (verified module) owns the Theme setting — Random (default) / Classic / Muse, persisted — and rolls a new world after each game over; the new world applies at the next run start, never mid-run. Muse world: set-4 art at 100% native resolution, lossless (sky/mid 2048x1024, fg 2048x512, single-piece pipe columns 512x2048); far layer mirror-tiled via ThemeSystem.drawFar; Muse pipes drawn from the single-piece columns (source-cropped, never squashed) with silhouette collision (PipeCollision, collider built from the art's alpha at world load) fitted to the art — Kenn's demo rule; Classic rendering + collision untouched; the bird never changes. FREE FLIGHT egg threshold 10 -> 21 flap inputs (Kenn's order: in landscape the wider stage makes players flap 10+ times before pipe 1, tripping god mode unintentionally; 21 keeps the egg deliberate). Base: v16.4.3 (TEST BUILD Oct 21, 2026 — five surgical fixes on live v16.4.2: (1) pipe-20 freeze + MOVING PIPES warning DELETED per Kenn's ruling (probe verdict: no rendering hitch — the designed pause WAS the glitch); (2) billboard sized from the design band (UW*S) + by clamped ~6px, fits any screen; (3) pipe pool grows on wide screens only (VIS_W > UW) — no more pop-in on the Fold; (4) Kenn's independent parallax ramps — far 0.3->0.55, mid 0.6->0.8, never converging, FG pinned 1.0x, crowd 1->2x; (5) bg-mid/bg-fg interior alpha holes sealed (audit = 0). Base: v16.4.2 (BUILD A SHIPPED TO LIVE Oct 21, 2026 on Kenn's word; base v16.4.1 + the v16.4.1.1 counter tick carried forward) — THE LIVE FEED + THE UPDATE BUTTON. THE LIVE FEED (Kenn's design, live-feed-design.md): the billboard is a TV screen and sponsors.json is the broadcast — a same-origin PLAYLIST the loader fetches (cache-busted, cache:no-store; the SW treats sponsors.json + version.json as NETWORK-ONLY) at boot and RE-POLLS every 60 s; when the playlist changes, the rotation rebuilds LIVE in the open game — new entries join, removed entries leave, captions follow — no rebuild, no reload. Fallback stack, in order: the running list in memory → the localStorage last-good list → the baked BETA_SPONSORS → the house placeholder; a playlist entry whose image fails to load is SKIPPED for the rotation, never a broken frame. The Drive sponsor folder stays the studio (Skynet's desk sync writes the playlist); the filter stays human. THE UPDATE BUTTON: version.json is polled on the same 60 s tick; when the served version differs from BUILD_VERSION below, the game shows "🔄 UPDATE — TAP TO REFRESH" (the classic waiting-service-worker path surfaces the same button); a tap asks a waiting SW to SKIP_WAITING and reloads ONCE, sessionStorage-guarded — stale shells and ?v= rescue links are retired. SPONSORS_SOLD = 3 (the v16.4.1.1 counter tick carried forward: slots #1-#3 sold; next slot #4 at $4.00): the ladder stays code-side by design — price ticks on VERIFIED PAYMENT, desk-side in the beta, server-side at the deploy pass. (v16.4.1 — THREE SURGICAL FIXES on v16.4, nothing else moves. THE PLACEHOLDER JOINS THE ROTATION: the billboard cycle is the sponsors in purchase order PLUS one house-placeholder turn (Kenn's doctrine — the placeholder is the sales card for the next slot); the null sentinel routes through the same placeholder art + caption branch the empty board always used, on the same 3 s global clock, and an empty board is still placeholder at all times. FULLSCREEN ASKS ONCE: goFullscreenPortrait is latched (fsAsked), so requestFullscreen + the portrait lock are attempted at most once per page session, at the first run start — later run starts never re-ask, even after the player exits fullscreen, so Chrome's exit-full-screen hint stops nagging every run. CHANGE 3 — AUTO-APPLY AT SAFE MOMENTS (Kenn, later the same day: "make this more seamless"; supersedes v16.4's never-auto-reload rule): detection (the version poll or a waiting service worker) sets a pending flag; in a SAFE state (splash/menu or game-over, no modal or form open) the update applies itself through the button's exact SKIP_WAITING path after a ~1.5 s settle — at boot, before the first run starts; mid-run or with a form open it is held silently and applied the moment the game turns safe; the pill shows only in safe states as the manual accelerator; both paths share the popicoin_update_tap stamp — exactly one reload per update, and a reloaded copy that still mismatches (deploy lag) falls back to the pill instead of looping.) (v16.3 — FIRST LIVE SPONSOR: slot #1 (00TATT$, paid on-chain) rotates on the billboard from the baked-in BETA SPONSOR LIST — the beta's loader resolves to it until the server source exists; slot #2 is PAID too but its creative is PENDING, so it does not display. THE LINEAR LADDER: Kenn replaced the doubling ladder with +$1 per slot (slotUsd = $1.00 x (sold + 1)); SPONSORS_SOLD = 2 (slots #1 AND #2 both paid at the frozen $1.00 panel price and were honored at $1.00 — the panel's word is the store's word), so the panel's NEXT SLOT is #3 at $3.00. Sponsor panel gains the Drive UPLOAD LANE beside DM intake. ROTATION CADENCE 3s (was 10s): BILLBOARD_SECONDS in the config block drives drawBillboard off the same global clock, and video cards ride the same 3s clock — the USE AI prompt and all copy now say 3 seconds. (v16.2 — THE GASLIGHT RAMP: the cosmetic scroll layers (far/mid parallax + the zombie crowd's treadmill) accelerate with the score and converge to full speed by pipe 100 while the pipes and the sim NEVER change; + THE FREE FLIGHT EGG: 10 flap inputs at score 0 make the bird invincible for the run — pipes turn SOLID on a treadmill world (faces stop you, tops carry you left, only the left edge can end it) and the run earns NOTHING (no sats, no board, no stats). (v16.1: score lives in the sky strip ABOVE the billboard plate (never on the sponsor window), toast band BELOW the plate; sponsor panel gains a live CoinGecko rate + BIP21 wallet pay link + runtime QR (vendored qrcode.js); every user-visible DEMO string is now BETA (storage keys/identifiers untouched); the leaderboard records PLAYERS — one row per username, best score only, self-healing on load. v16: Family A birds + THE FLIPPENING + THE 21 CLUB + sponsor panel. v15.1: full-screen flex viewport + Kenn's coupon-frame billboard + hanging-pipe ceiling fix.) -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -37,6 +38,13 @@
     padding:calc(20px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right))
             calc(20px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left))}
   .overlay.hidden{display:none}
+  /* v16.6.2 (R5a): the game-over column starts BELOW the fixed chrome
+     instead of centering — on phone geometry the absolutely-positioned
+     brand header + account HUD sat on top of the centered column and
+     buried the CRASHED banner. 250px is the fallback only: showGameOver
+     measures the real chrome bottom and sets padding-top inline per
+     show, so every screen size clears it exactly. */
+  #gameover{justify-content:flex-start;padding-top:calc(250px + env(safe-area-inset-top))}
   .overlay h2{margin:0;font-family:Syne, system-ui, sans-serif;font-size:34px;letter-spacing:2px;color:#fff}
   .overlay h2.crash{color:var(--bad);text-shadow:0 0 16px rgba(255,82,82,.5)}
   .overlay p{margin:0;color:#bfe9cf;font-size:13px;line-height:1.55;max-width:36ch}
@@ -290,7 +298,7 @@
   </div>
 
   <footer>
-    © FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.5.2 • Trash world bg • Scrap pipes • Neon #00FF88<br>
+    <span id="footerLine">© FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.6.5 • Trash world bg • Scrap pipes • Neon #00FF88</span><br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -424,9 +432,7 @@
       <div class="row"><span>On the stage now</span><span id="setWorldNow">—</span></div>
     </div>
     <div style="display:flex;gap:6px;margin:6px 0 10px">
-      <button class="btn ghost" id="btnThemeRandom" style="flex:1">RANDOM</button>
-      <button class="btn ghost" id="btnThemeClassic" style="flex:1">CLASSIC</button>
-      <button class="btn ghost" id="btnThemeMuse" style="flex:1">MUSE</button>
+      <button class="btn ghost" id="btnThemeJunkfall" style="flex:1">JUNKFALL</button>
     </div>
     <p><b>LANDSCAPE MODE — $1.00 in BCH.</b> The game is built portrait-first.
        Landscape is a paid unlock: pay $1.00 worth of BCH once and the wide
@@ -599,7 +605,7 @@ const SPONSORS_SOLD = 3;
    cache:"no-store" — and sw.js treats both JSON files as
    network-only — so a playlist edit is the ONLY thing a sponsor
    change needs; the game itself is never rebuilt for art. */
-const BUILD_VERSION = "16.5.2";   // v16.5.1 test build Oct 22 2026 (mirrored in this copy's version.json so the update poll stays quiet)
+const BUILD_VERSION = "16.6.5";   // v16.6.5 MVP ship candidate Oct 23 2026 (mirrored in this copy's version.json so the update poll stays quiet)
 const PLAYLIST_URL = "sponsors.json";
 const VERSION_URL = "version.json";
 const FEED_POLL_MS = 60000;
@@ -617,13 +623,16 @@ let sponsorsLoadedAt = null;
    baked in here and the loader resolved to this list. v16.4: the
    LIVE FEED's sponsors.json playlist supersedes it as the source;
    this list remains as the fallback stack's baked rung (and its
-   contents mirror the shipped playlist). Slot #2 is PAID but
-   its creative is PENDING — no entry until it lands and passes
-   review (SPONSORS_SOLD still counts it: the ladder is sales; the
-   rotation is only what displays). Creative ships AS-IS: slot #1's
+   contents mirror the shipped playlist). All three sold slots are PAID and
+   their creatives are LIVE (slot #2's landed Oct 23, 2026) — this
+   rung carries all three in purchase order (v16.6.5), so the
+   rotation cycles every paid board on every rung of the stack.
+   Creative ships AS-IS: slot #1's
    banner is exactly the billboard window size, 1770x697. */
 const BETA_SPONSORS = [
-  { username: "00TATT$", imageUrl: "art/sponsor-001.png", paidSats: 358474, createdAt: "2026-10-20" }
+  { username: "00TATT$", imageUrl: "art/sponsor-001.png", paidSats: 358474, createdAt: "2026-10-20" },
+  { username: "Commitment 2 Love", imageUrl: "art/sponsor-002.jpg", paidSats: 358470, createdAt: "2026-10-20" },
+  { username: "CASPER404", imageUrl: "art/sponsor-003.png", paidSats: 1060000, createdAt: "2026-10-21" }
 ];
 
 /* v16.4 — apply a sponsor list (internal shape) from a named
@@ -1208,9 +1217,24 @@ function resetGame() {
   game.phase = "ready";
   if (window.Eggs) Eggs.onRunStart();    // v16: per-run egg state resets (phase mode persists)
 }
+let _deferredStart = null;   // v16.6.1: world id a run start is waiting on (see startGame)
 function startGame() {
   goFullscreenPortrait();   // v9.1: run start asks fullscreen + portrait lock (v16.4.1: latched — first run start of the session only)
   if (typeof Player !== "undefined" && !Player.isAuthed()) { Player.showAuth(); return; }
+  /* v16.6.1: never start a run in the wrong world. If the rolled /
+     picked world's assets are still building (holder not ready),
+     hold the start until they land — the menu stays up a beat
+     instead of a full run on the fallback stage. One deferral per
+     world: if the build lands incomplete, the next tap starts on
+     the fallback exactly as v16.6.0 did — the game can never lock. */
+  if (window.ThemeSystem) {
+    const curId = ThemeSystem.current().id, hd = WSETS[curId];
+    if (hd && !hd.ready && _deferredStart !== curId) {
+      _deferredStart = curId;
+      syncWorldAssets().then(() => { _deferredStart = null; if (game.state !== "play") startGame(); });
+      return;
+    }
+  }
   resetGame();
   game.state = "play";
   document.getElementById("splash").classList.add("hidden");
@@ -1283,9 +1307,30 @@ function showGameOver() {
   } else {
     bn.textContent = best > 0 ? "BEST — " + best + " pipes" : "";
   }
+  /* v16.6.2 (R5a): drop the column below the fixed chrome — measure
+     the brand header + account HUD and start the overlay under them
+     (+14px air), so the CRASHED banner is never clipped on any
+     geometry (the HUD wraps to ~3 rows on a phone; a fixed CSS
+     offset could not fit every screen). The v15 chrome rule hides
+     the chrome during play and syncChrome() restores it on the next
+     draw frame (state is already "over" here) — call it first so
+     the measurement reads the chrome's real menu-state geometry,
+     not its play-state display:none. */
+  {
+    if (typeof syncChrome === "function") syncChrome();
+    const goEl = document.getElementById("gameover");
+    let need = 20;
+    for (const el of [document.querySelector("header.brand"), document.getElementById("hud")]) {
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (r.height > 0) need = Math.max(need, Math.ceil(r.bottom) + 14);
+    }
+    goEl.style.paddingTop = need + "px";
+  }
+  syncFooterWorld(WORLD.applied);   // v16.6.2 (R5b): footer names the world THIS run was played in — before the roll below picks the next one
   document.getElementById("gameover").classList.remove("hidden");
   if (window.Eggs) Eggs.onGameOver();    // v16: 21 Club — death #21's screen flickers gold
-  if (window.ThemeSystem) { ThemeSystem.rollAfterGameOver(); syncWorldAssets(); }   // v16.5: roll the next world; it applies at the next run start
+  if (window.ThemeSystem) { ThemeSystem.rollAfterGameOver(); syncWorldAssets().then(() => { if (game.state !== "play") applyWorld(ThemeSystem.current().id); }); }   // v16.5: roll the next world; it applies at the next run start — v16.6.1: the menu stage also catches up when the build lands (same catch-up the boot and settings paths always had)
   sfx("swoosh");
   // score counts up 0 → final over 0.5 s (spec §6)
   const fs = document.getElementById("finalScore"), t0 = performance.now();
@@ -1565,26 +1610,74 @@ function step() {
     if (game.phase === "flying" && b.x + HIT < 0) startDeath(false);
     return;
   }
+  /* v16.6.4-demo.1 — PIXEL-TRUE BIRD CONTACT (column worlds). The
+     bird is tested as its own visible sprite: the alpha mask baked by
+     measureBird (0.25u grid, alpha>=128 — the same basis as the pipe
+     silhouette), rotated by b.angle around the hitbox centre exactly
+     as drawBirdU draws it, and point-tested against the SAME placement
+     and spans the renderer used (PipeCollision.hitTestPoints). Visual
+     contact and the crash coincide to within the 0.25u sample step
+     (~1 device px). The rotated point set is cached per tick because
+     the pipe loop calls this once per pipe. Fallbacks keep the v16.5
+     circle test: no skin/mask yet (first frames) or the vector bird. */
+  function birdHitColumn(b, sPl, hPl, p, g) {
+    const skin = birdSkinImage();
+    const mask = skin && skin.img && skin.img._mask;
+    if (mask) {
+      if (b._maskPtsFrame !== game.t || b._maskPtsSkin !== skin.img) {
+        const cx = b.x + HIT / 2, cy = b.y + HIT / 2;
+        const th = b.angle * Math.PI / 180, co = Math.cos(th), si = Math.sin(th);
+        const src = mask.pts, pts = new Float32Array(src.length);
+        for (let i = 0; i < src.length; i += 2) {
+          const dx = src[i], dy = src[i + 1];
+          pts[i] = cx + dx * co - dy * si;
+          pts[i + 1] = cy + dx * si + dy * co;
+        }
+        b._maskPts = pts; b._maskPtsFrame = game.t; b._maskPtsSkin = skin.img;
+      }
+      const pts = b._maskPts;
+      if (sPl && sPl.col.hitTestPoints(pts, { x: p.x + sPl.dx, y: (sPl.py != null ? sPl.py : g), scale: sPl.k, flipY: !!sPl.flipY })) return true;
+      if (hPl && hPl.col.hitTestPoints(pts, { x: p.x + hPl.dx, y: hPl.drawTop, scale: hPl.k, flipY: (hPl.flipY != null ? hPl.flipY : true),
+          extTop: hPl.ext ? hPl.ext.top : undefined, extBandTop: hPl.ext ? hPl.ext.bandTop : undefined, extBandBot: hPl.ext ? hPl.ext.bandBot : undefined })) return true;
+      return false;
+    }
+    const birdC = { x: b.x + HIT / 2, y: b.y + HIT / 2, r: HIT / 2 };
+    if (sPl && sPl.col.hitTest(birdC, { x: p.x + sPl.dx, y: (sPl.py != null ? sPl.py : g), scale: sPl.k, flipY: !!sPl.flipY })) return true;
+    if (hPl && hPl.col.hitTest(birdC, { x: p.x + hPl.dx, y: hPl.drawTop, scale: hPl.k, flipY: (hPl.flipY != null ? hPl.flipY : true),
+        extTop: hPl.ext ? hPl.ext.top : undefined, extBandTop: hPl.ext ? hPl.ext.bandTop : undefined, extBandBot: hPl.ext ? hPl.ext.bandBot : undefined })) return true;
+    return false;
+  }
   /* collision (spec §2/§3): bird = 20×20 AABB at (80, y); pipes = full
      52×320 rects — the narrower drawn body does NOT forgive, the box does.
      v16.5: in the MUSE world the pipe test swaps to the silhouette
      collider (PipeCollision, built from the art's alpha at world load);
      the bird is tested as the circle inscribed in its 20x20 box (r = 10
      at the box centre), through the same placement the renderer used.
-     Classic keeps the legacy rects below, byte-for-byte. */
+     Classic keeps the legacy rects below, byte-for-byte — until
+     v16.6.4-demo.3 retires them for the art itself (see the loop).
+     v16.6.4-demo.1 supersedes the circle sentence for column
+     worlds: birdHitColumn above tests the bird's drawn alpha
+     mask; the circle remains only as its no-mask fallback. */
   for (const p of game.pipes) {
     const g = p.effGap;
     if (WORLD.musePipes) {
-      const birdC = { x: b.x + HIT / 2, y: b.y + HIT / 2, r: HIT / 2 };
-      const sPl = musePlacement(p, false), hPl = musePlacement(p, true);
-      if ((sPl && sPl.col.hitTest(birdC, { x: p.x + sPl.dx, y: g, scale: sPl.k, flipY: false })) ||
-          (hPl && hPl.col.hitTest(birdC, { x: p.x + hPl.dx, y: hPl.drawTop, scale: hPl.k, flipY: true }))) { startDeath(true); return; }
+      const sPl = columnPlacement(WORLD.holder, p, false), hPl = columnPlacement(WORLD.holder, p, true);
+      if (birdHitColumn(b, sPl, hPl, p, g)) { startDeath(true); return; }
       continue;
     }
-    if (p.x + PIPE_WU <= b.x || p.x >= b.x + HIT) continue;
-    const hitTop = b.y < g - GAP_H && b.y + HIT > g - GAP_H - 320;
-    const hitBot = b.y < g + 320 && b.y + HIT > g;
-    if (hitTop || hitBot) { startDeath(true); return; }
+    /* v16.6.4-demo.3: COLLISION = THE ART in the classic world too —
+       the 52x320 spec rect is retired (it killed at invisible rect
+       corners and forgave visible art bulging past the box). The
+       classic sprites now meet the bird through the same
+       silhouette path as the column worlds: classicPlacement
+       mirrors drawPipeColumn's transform exactly, and
+       birdHitColumn tests the bird's mask against the sprites'
+       own spans. A sprite that has not loaded yet has no art and
+       no collision (its loading fallback paints flat scrap for
+       those frames only; the warm-up pass keeps that window
+       theoretical). */
+    const sPlC = classicPlacement(p, false), hPlC = classicPlacement(p, true);
+    if (birdHitColumn(b, sPlC, hPlC, p, g)) { startDeath(true); return; }
   }
   if (b.y > GROUND_Y - HIT) { b.y = GROUND_Y - HIT; startDeath(false); }
 }
@@ -1603,7 +1696,7 @@ function step() {
    nothing here touches the sim.
    ===================================================================== */
 const ART = {
-  scrollU: 0, scrollFar: 0, scrollMid: 0, scrollCrowd: 0,
+  scrollU: 0, scrollFg: 0, scrollFar: 0, scrollMid: 0, scrollMid2: 0, scrollFg2: 0, scrollFront: 0, scrollCrowd: 0,   // v16.6.3: scrollMid2/scrollFg2 — the doubled tiers' own lanes (Kenn's parallax model)
   _lastLandOff: 0, pulseA: 0.5, pulseB: 0.5,
   bgFar: null, bgMid: null, bgFg: null, pileTex: null, frameTex: null, medallion: null,
   bbFrameImg: null,   // v15: Kenn's coupon-collage billboard frame (keyed, window open)
@@ -1686,11 +1779,26 @@ function measureColumn(im) {
 }
 /* v16 — measure a Family A bird sprite's CONTENT bbox (alpha>=128),
    the same discipline as measureColumn: drawBirdU draws from this
-   box at a fixed 48u content width, so green/orange/gold — whose
+   box at a fixed BIRD_W_U content width (48u through demo.3), so green/orange/gold — whose
    source canvases pad the bird differently — sit identically on
    the hitbox anchor. Falls back silently to the full canvas when
    pixels are unreadable (rig file:// taint); harmless either way
    because the shipped PNGs are already tight-cropped. */
+/* v16.6.4-demo.4 — THE BIRD AT ORIGINAL SIZE (Kenn's Gate 1 ruling,
+   Oct 23): demo.3's bird measured 47.75u wide x 36.0u tall on its
+   collision mask — 37.5% of the 96u gap against the original Flappy
+   bird's 24% (24px in a 100px gap, same 512-tall field), so threading
+   the pipes played harder than players' muscle memory expects. The
+   bird's drawn content width drops 48u -> 32u (uniform scale 24/36 =
+   0.6667): mask height lands at 24.0u, width ~31.8u, centred
+   clearance in the 96u gap 72u. ONE constant, BIRD_W_U, feeds BOTH
+   drawBirdU (paint) and measureBird (mask) below, so paint and
+   collision scale together and cannot drift — the art FILES are
+   untouched; this is a render-time scale, the demo.3 sticker-border
+   discipline. The 20u hitbox anchor and the r=10 circle fallback are
+   unchanged. */
+const BIRD_W_U = 32;   // 48u x (24/36) — the original Flappy bird's size in this geometry
+
 function measureBird(im) {
   if (!im || !im.naturalWidth) return;
   try {
@@ -1707,7 +1815,27 @@ function measureBird(im) {
         }
       }
     }
-    if (x1 > x0 && y1 > y0) im._bb = { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+    if (x1 > x0 && y1 > y0) {
+      im._bb = { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+      /* v16.6.4-demo.1: the bird's COLLISION MASK — the sprite's own
+         alpha>=128 pixels (the pipes' silhouette basis) sampled on a
+         0.25u grid in DRAW space. drawBirdU draws the bb content BIRD_W_U
+         wide centred on the hitbox centre, so a mask point is an
+         offset (dx, dy) in units from that centre, unrotated; the
+         collision test rotates the set by b.angle (the draw's own
+         rotation) and point-tests it against the pipe spans, so the
+         crash fires on the first frame a visible bird pixel touches
+         the pipe silhouette — no earlier, no later (within the 0.25u
+         sample step, ~1 device px). */
+      const bb = im._bb, upx = BIRD_W_U / bb.w, stepSrc = 0.25 / upx, pts = [];
+      for (let gy = stepSrc / 2; gy < bb.h; gy += stepSrc) {
+        for (let gx = stepSrc / 2; gx < bb.w; gx += stepSrc) {
+          const sx = Math.min(bb.w - 1, Math.floor(gx)), sy = Math.min(bb.h - 1, Math.floor(gy));
+          if (d[((bb.y + sy) * c.width + (bb.x + sx)) * 4 + 3] >= 128) pts.push(gx * upx - BIRD_W_U / 2, gy * upx - (BIRD_W_U * bb.h / bb.w) / 2);
+        }
+      }
+      im._mask = { pts: new Float32Array(pts), step: 0.25 };
+    }
   } catch (e) { /* full-canvas fallback in birdSkinImage() */ }
 }
 function mulberry(seed) {
@@ -1736,7 +1864,14 @@ function mkCanvas(w, h) { const c = document.createElement("canvas"); c.width = 
    pipes, exactly as the sim does, because the pipes and the sim
    are the one thing the ramp never touches. With
    POPICOIN_CONFIG.GASLIGHT_RAMP off, p is 0 and every layer runs
-   at its constant base rate (0.3 / 0.6 / 1x). */
+   at its constant base rate (0.3 / 0.6 / 1x).
+   v16.6.1 SUPERSEDES the FG lock (Kenn's walkthrough order, Oct 23):
+   the foreground now rides its OWN lane, ART.scrollFg at
+   0.82 -> 0.90 on the same ramp — distinct from mid's 0.8 ceiling
+   and from the pipes' 1.0 at every score, never locked to pipe
+   speed or offset again. scrollU keeps accumulating at 1.0x (the
+   v16.4.3 lane bookkeeping is unchanged for anything that reads
+   it); the FG DRAWS read scrollFg. */
 function artAdvanceScroll() {
   let d = ART._lastLandOff - game.landOff;
   if (d < 0) d += 24;
@@ -1745,6 +1880,10 @@ function artAdvanceScroll() {
   const p = POPICOIN_CONFIG.GASLIGHT_RAMP ? Math.min(Math.max(game.score, 0) / 100, 1) : 0;
   ART.scrollFar += d * (0.3 + 0.25 * p);
   ART.scrollMid += d * (0.6 + 0.2 * p);
+  ART.scrollMid2 += d * (0.71 + 0.14 * p);   // v16.6.3: mid tier 2 — 0.71..0.85, strictly between mid1 (<=0.80) and fg1 (>=0.82) at every point of the ramp
+  ART.scrollFg += d * (0.82 + 0.08 * p);   // v16.6.1: FG's own lane — 0.82..0.90, always clear of mid (<=0.80) and pipes (1.0)
+  ART.scrollFg2 += d * (0.91 + 0.04 * p);   // v16.6.3: fg tier 2 — 0.91..0.95, always clear of fg1 (<=0.90) and the pipes (1.0)
+  ART.scrollFront += d * (0.96 + 0.03 * p);   // v16.6.4-demo: FRONT LAYER lane — 0.96..0.99, the fastest WORLD layer (nearest tier), still clear of the pipes (1.0)
   ART.scrollCrowd += d * (1 + p);
   ART._lastLandOff = game.landOff;
 }
@@ -1843,12 +1982,38 @@ function drawPipeColumn(x, y, h, isTop, p) {
   const im = isTop ? (fire ? ART.colFHang : ART.colOHang)
                    : (fire ? ART.colFStand : ART.colOStand);
   if (!im || !im.naturalWidth) return false;   // sprite not in yet — caller falls back
-  const sw = im.naturalWidth, sh = im.naturalHeight;
+  /* v16.6.2 (R2/R4): paint the SOLID twin of the CAP-CLAMPED working
+     bitmap (pipeWorkOf — hang sprites' gap-end cluster is the file's
+     BOTTOM rows, stands' is the TOP rows), and scale on the
+     SPEC-BODY basis: the classic sprites join the family rule the
+     column worlds got in this build — content width (median span of
+     the clamped bitmap) renders at exactly PIPE_WU, the widest
+     surviving row still respects WIDEST_CAP_U. This supersedes the
+     v16.4.2 mouth-cluster basis for the drawn size; the mouths ride
+     the same k (their clusters are exempt from the clamp, so the
+     accepted mouth proportions are preserved), and no row outside
+     the mouth window can render wider than 1.15x the body again.
+     The collision RECT below is untouched (fixed 52x320 spec) —
+     v16.6.4-demo.3 RETIRES that rect: collision is the art itself
+     via classicPlacement (the same numbers this function paints
+     with), and the paint below is the sticker-outlined twin of
+     the solid bake, drawn under a hard clip at the gap edge.
+     History: v10.1 scaled by content width; v16.4.2 (item 3)
+     switched to the mouth-cluster basis after Kenn's playtest found
+     the fire bottom pipe skinny and the regulars uneven (mouths at
+     47u / 23u / 45u / 37u); v16.6.2 keeps those mouths readable via
+     the clamp exemption while the BODY width — the thing R4
+     measured up to ~2.2x spec on the mouth basis — returns to the
+     content-width basis, now in all six worlds. */
+  const work = pipeWorkOf(trimOf(im), isTop ? "bottom" : "top");   // v16.6.4-demo.3: NORMALIZED source — the mouth lands exactly on the gap line
+  const bmp = pipeSolidOf(work) || work;   // v16.6.1 (Issue 7): paint the SOLID twin — of the clamped working bitmap since v16.6.2
+  const sw = im.naturalWidth, sh = work.naturalHeight || work.height || im.naturalHeight;   // v16.6.4-demo.3: source rows are the NORMALIZED working bitmap's (row trims never touch width)
   /* v10.1: uniform scale by CONTENT width — content (median alpha
-     span, im._cw) maps to exactly PIPE_WU, content centre (im._ccx)
-     sits on the collision centre. Aspect preserved. */
-  const cw = im._cw || sw;
-  const ccx = (im._ccx != null) ? im._ccx : sw / 2;
+     span, im._cw on the source; the working bitmap's own _cw now)
+     maps to exactly PIPE_WU, content centre sits on the collision
+     centre. Aspect preserved. */
+  const cw = work._cw || im._cw || sw;
+  const ccx = (work._ccx != null) ? work._ccx : ((im._ccx != null) ? im._ccx : sw / 2);
   /* v16.4.2 (item 3): MOUTH-CLUSTER SCALE BASIS replaces the
      v10.1 median basis. Kenn's playtest: the fire bottom pipe read
      skinny and the regulars uneven — measured cause: the median
@@ -1868,14 +2033,25 @@ function drawPipeColumn(x, y, h, isTop, p) {
      the median centre (_ccx), as in v10.1. Art untouched — draw
      math only. Unmeasured sprites (canvas fallback) keep the
      exact v10.1 median basis. */
-  const mw = isTop ? im._mwB : im._mwT;
+  /* v16.4.2's mouth-cluster basis lived here (k = min(50/mouth,
+     130/widest)); v16.6.2 (R4) replaces it with the spec-body
+     basis above — the widest-row cap survives, read from the
+     CLAMPED bitmap so it can only bind when the mouth cluster
+     itself is the widest thing left (it never binds below the
+     content term for the current set: widest <= ~2.5x _cw). */
   let k = PIPE_WU / cw;                      // units per source px
-  if (mw > 0) {
-    k = MOUTH_TARGET_U / mw;
-    if (im._widest > 0) k = Math.min(k, WIDEST_CAP_U / im._widest);
-  }
+  if (work._widest > 0) k = Math.min(k, WIDEST_CAP_U / work._widest);
   const dw = sw * k, dh = sh * k;              // drawn size in units
   const dx = x + PIPE_WU / 2 - ccx * k;        // content centred on the pipe
+  const ob = stickerOf(bmp, k);   // v16.6.4-demo.3: sticker-outlined twin (identical size; draw source only)
+  /* v16.6.4-demo.3: HARD CLIP at the gap edge — this call paints
+     only its own side of the gap line (stand: from y down; hang:
+     up to y + h), so no pipe pixel, art or border, enters the gap. */
+  ctx.save();
+  ctx.beginPath();
+  if (isTop) ctx.rect(dx - 500, -skyExtra - 64, 1000, (y + h) + skyExtra + 64);
+  else ctx.rect(dx - 500, y, 1000, UH - y + skyExtra + 64);
+  ctx.clip();
   if (isTop) {
     const yM = y + h;                          // gap's top edge — the mouth line
     /* v15.1: the flex viewport pours extra height into sky ABOVE the
@@ -1892,20 +2068,21 @@ function drawPipeColumn(x, y, h, isTop, p) {
     const need = yM - ceilY;                   // span the column must cover, units
     if (dh >= need) {                          // sprite covers: source-crop the far end
       const cut = (dh - need) / k;
-      ctx.drawImage(im, 0, cut, sw, sh - cut, dx, ceilY, dw, need);
+      ctx.drawImage(ob, 0, cut, sw, sh - cut, dx, ceilY, dw, need);
     } else {                                   // shortfall: whole sprite from the ceiling
-      ctx.drawImage(im, dx, ceilY, dw, dh);
+      ctx.drawImage(ob, dx, ceilY, dw, dh);
     }
   } else {
     const yM = y;                              // gap's bottom edge — the mouth line
     const stageBot = UH;                       // v15: unit-space band bottom (512)
     if (yM + dh > stageBot) {                  // body runs past the stage bottom: source-crop
       const visH = stageBot - yM;
-      ctx.drawImage(im, 0, 0, sw, visH / k, dx, yM, dw, visH);
+      ctx.drawImage(ob, 0, 0, sw, visH / k, dx, yM, dw, visH);
     } else {
-      ctx.drawImage(im, dx, yM, dw, dh);
+      ctx.drawImage(ob, dx, yM, dw, dh);
     }
   }
+  ctx.restore();
   return true;
 }
 
@@ -1982,10 +2159,40 @@ function bakeWallStrips() {
     return { frames, maxOff, phase: ri * 1.7, bob: 4.5 * (B / 246) * row.bobMul };
   });
 }
+/* v16.6.1 — the foreground art runs UNDER the crowd mass's top edge:
+   the active FG tile's bottom rows, on the FG scroll lane, drawn
+   across the wall zone before the black falls off over them (see
+   drawZombieWall). The world reads as continuing behind the horde
+   instead of ending at a slab edge. */
+function drawWallUnderlay(top) {
+  const hd = WORLD.holder;
+  let cv = null;
+  if (hd && hd.fg) cv = hd._tileFg || hd.fg;
+  else if (ART.bgFg) { if (!ART._fgTile) ART._fgTile = bakeWrapTile(ART.bgFg, 192); cv = ART._fgTile; }
+  if (!cv) return;
+  const iw = cv.width || cv.naturalWidth, ih = cv.height || cv.naturalHeight;
+  if (!iw || !ih) return;
+  const tw = FG_H_U * S * (iw / ih);            // the FG layer's own tile width
+  const srcH = ih * 0.25, destH = srcH * (FG_H_U * S / ih);
+  let off = -((ART.scrollFg * S) % tw); if (off > 0) off -= tw;
+  for (let x = off; x < W; x += tw) ctx.drawImage(cv, 0, ih - srcH, iw, srcH, x, top, tw, destH);
+}
 function drawZombieWall() {
   const top = wallTopY();
+  /* v16.6.1: the mass stays black (Kenn's approved design — heads,
+     shoulders and arms over a solid black mass) but its top edge no
+     longer sits on bare void: the FG underlay runs beneath, and the
+     black falls off over a ~64px gradient lip, so the horde reads
+     as standing IN the world. Below the lip the mass is the same
+     solid #000 as always. */
+  drawWallUnderlay(top);
+  const fade = Math.min(64, (H - top) * 0.5);
+  const grad = ctx.createLinearGradient(0, top, 0, top + fade);
+  grad.addColorStop(0, "rgba(0,0,0,0.45)");
+  grad.addColorStop(1, "rgba(0,0,0,1)");
+  ctx.fillStyle = grad; ctx.fillRect(0, top, W, fade);
   ctx.fillStyle = "#000000";
-  ctx.fillRect(0, top, W, H - top);
+  ctx.fillRect(0, top + fade, W, H - top - fade);
   if (!ART.wallStrips) return;
   /* v16.2: the crowd marches on its OWN scroll (ART.scrollCrowd) —
      translation AND the bob/pose cadence below both read it, so the
@@ -2163,6 +2370,35 @@ function goFullscreenPortrait() {
   } catch (e) { /* unsupported — full-screen stage stands */ }
 }
 
+/* v16.6.4-demo.5 — BAKE VERIFICATION (Kenn's demo.4 phone playtest,
+   Oct 23: bare-rectangle billboard, invisible pipes, sky seam — see
+   the publish guard inside bakeBillboard). Every content bake in
+   this game is one-time and cached forever, so a bake whose source
+   pixels were not drawable when it ran used to publish/cache a
+   BLANK result and suppress every fallback. These helpers let each
+   bake prove it captured real pixels; on failure the bake returns
+   its source and the caches below refuse to store the fallback, so
+   the bake retries until it lands. */
+let _bbPlateFails = 0;
+function plateHasFrame(f, x, y, w, h) {
+  try {
+    const d = f.getImageData(Math.max(0, Math.round(x)), Math.max(0, Math.round(y)), Math.round(w), Math.round(h)).data;
+    let op = 0, tot = 0;
+    for (let i = 3; i < d.length; i += 4 * 613) { tot++; if (d[i] >= 128) op++; }
+    return tot > 0 && (op / tot) >= 0.10;   // the collage ring + medallion cover far more than 10% of the rect; a missed draw reads 0%
+  } catch (e) { return true; }              // pixels unreadable: keep the AUDIT2 behavior (publish)
+}
+function bakeBlank(cv) {
+  try {
+    if (!cv || !cv.width || !cv.height) return true;
+    const p = document.createElement("canvas"); p.width = 12; p.height = 12;
+    const pg = p.getContext("2d", { willReadFrequently: true });
+    pg.drawImage(cv, 0, 0, 12, 12);
+    const d = pg.getImageData(0, 0, 12, 12).data;
+    for (let i = 3; i < d.length; i += 4) if (d[i] >= 8) return false;
+    return true;
+  } catch (e) { return false; }
+}
 function bakeBillboard() {
   if (!ART.frameTex && !ART.bbFrameImg) return;
   const { bw, bh, bx, by, win } = BB, k = BB.k, X = x => x - BB.ox, Y = y => y - BB.oy;
@@ -2184,8 +2420,30 @@ function bakeBillboard() {
      into the window first; this plate lays over it, medallion, tube
      and all, exactly as his generator painted them. */
   const fr = mkCanvas(BB.cw, BB.ch), f = fr.getContext("2d");
-  if (ART.bbFrameImg) f.drawImage(ART.bbFrameImg, X(bx), Y(by), bw, bh);
-  ART.bbFrame = fr;
+  /* v16.6.3 (AUDIT2 Finding 3): the plate publishes ONLY when the
+     frame was actually drawn into it. Through v16.6.2 the assignment
+     ran unconditionally, so any bake landing after frame-tex (a
+     small webp) but before the 2.1 MB bb-frame.png published a
+     TRANSPARENT plate — non-null, so drawBillboard's neon fallback
+     was suppressed too, and the board showed as a bare rectangle
+     until the frame's own onload re-baked (Kenn's shot1: once, on
+     the first level, cold cache). Until the frame lands ART.bbFrame
+     stays null and the neon fallback covers the board — that
+     fallback is what it is for. */
+  if (ART.bbFrameImg) {
+    f.drawImage(ART.bbFrameImg, X(bx), Y(by), bw, bh);
+    /* v16.6.4-demo.5: the AUDIT2 guard above proves the frame IMAGE
+       exists — not that its pixels were drawable when this bake ran.
+       On Kenn's phone (demo.4) the 2.1 MB frame had loaded but was
+       not yet decoded: this draw painted nothing, the plate
+       published fully transparent, the neon fallback stayed
+       suppressed, and no later bake ever re-ran — a bare sponsor
+       rectangle for the whole session. The plate now publishes only
+       when the collage provably landed; otherwise ART.bbFrame stays
+       null (the fallback covers the board) and the bake retries. */
+    if (plateHasFrame(f, X(bx), Y(by), bw, bh)) { ART.bbFrame = fr; _bbPlateFails = 0; }
+    else if (_bbPlateFails < 3) { _bbPlateFails++; setTimeout(bakeBillboard, 500); }
+  }
   ART.bbPlaceholder = bakePlaceholder();
 }
 /* placeholder creative: SPONSOR ME — YOUR LOGO HERE (Kenn's copy, exact).
@@ -2242,7 +2500,13 @@ artLoad("bgFar", "bg-far"); artLoad("bgMid", "bg-mid"); artLoad("bgFg", "bg-fg")
 artLoad("pipeCap", "pipe-cap"); artLoad("pipeBody", "pipe-body");
 artLoad("pileTex", "pile-texture");
 artLoad("frameTex", "frame-tex", bakeBillboard); artLoad("medallion", "medallion", bakeBillboard);
-artLoadPng("bbFrameImg", "bb-frame", bakeBillboard);   // v15: Kenn's coupon frame
+artLoadPng("bbFrameImg", "bb-frame", () => {   // v15: Kenn's coupon frame
+  /* v16.6.4-demo.5: decode-gate the 2.1 MB frame before any bake
+     reads it — "load" fires before the pixels are drawable, and a
+     bake that reads an undecoded image paints nothing. */
+  const im = ART.bbFrameImg;
+  if (im && im.decode) im.decode().then(bakeBillboard, bakeBillboard); else bakeBillboard();
+});
 artLoad("zoms", "zombies", buildWall); artLoad("road", "road");
 /* v10 purpose-made full columns (lossless PNG, native resolution) */
 artLoadPng("colOHang", "col-o-hang", () => measureColumn(ART.colOHang));
@@ -2262,12 +2526,405 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if
    WORLD.musePipes latches with it, so pipe art and pipe collision can
    never switch mid-run even if assets finish loading mid-run.
    Classic rendering and collision are untouched. The bird never changes. */
-const WORLD = { applied: "classic", musePipes: false };
-const MUSE = { sky: null, mid: null, fg: null, pipe: null, fire: null, pipeFlip: null, fireFlip: null, colPipe: null, colFire: null, ready: false };
+const WORLD = { applied: "classic", musePipes: false, holder: null };
+/* v16.6.0 — per-world asset holders. Every column world (single-piece
+   512x2048 pipe art + silhouette collision) owns one holder; MUSE is the
+   original (the v165 rig reads window.__worlds.muse) and WSETS registers
+   all of them by world id. The generalized column path below reads the
+   ACTIVE world's holder; the Muse-named functions stay as thin wrappers
+   over it so the v16.5.x behavior (and its verified checks) is unchanged. */
+function newWorldHolder() {
+  return { sky: null, mid: null, fg: null, pipe: null, fire: null, pipeFlip: null, fireFlip: null, colPipe: null, colFire: null, ready: false };
+}
+const MUSE = newWorldHolder();
+const WSETS = { muse: MUSE, space: newWorldHolder(), junkfall: newWorldHolder(), ewaste: newWorldHolder(), hazscrap: newWorldHolder() };
+/* v16.6.1 (Issue 6): Haz-Scrap pipes scale by content width — see columnPlacement.
+   v16.6.2 (R4): the spec-body basis is now the FAMILY rule — every
+   column world sets the flag, so the typical pipe body renders at
+   PIPE_WU in all six worlds (Kenn's playtest: Space gravel ~29u and
+   Trash sacks ~120u against the 52u spec). The metrics the basis
+   reads come from the cap-clamped working bitmaps. */
+for (const _wid of Object.keys(WSETS)) WSETS[_wid].specBody = true;
+/* v16.6.5 — THE SINGLE-WORLD LOCK (Kenn's MVP ruling, Oct 23 15:49):
+   Junkfall is the one shipped world. The manifest carries its entry
+   ONLY, so ThemeSystem cannot select, roll, or fall back to any other
+   world — a stored setting naming a removed world resolves here, the
+   sole entry. The randomizer and the other worlds are post-launch
+   work. The other worlds' art files remain in the package
+   byte-identical, off every code path. */
 const WORLD_MANIFEST = [
-  { id: "classic", name: "Classic", assets: { sky: "art/bg-far.webp", mid: "art/bg-mid.webp", fg: "art/bg-fg.webp", pipe: "art/col-o-stand.png", pipeFire: "art/col-f-stand.png" } },
-  { id: "muse", name: "Muse", assets: { sky: "art/muse-sky.png", mid: "art/muse-mid.png", fg: "art/muse-fg.png", pipe: "art/muse-pipe.png", pipeFire: "art/muse-pipe-fire.png" } }
+  { id: "junkfall", name: "Junkfall", bg: "Junkfall world", pipes: "Junk pipes", assets: { sky: "art/junk-sky.png", mid: "art/junk-mid.png", fg: "art/junk-fg.png", pipe: "art/junk-pipe.png", pipeFire: "art/junk-pipe.png" } }
 ];
+/* Junkfall note: free-gen set 1 ships NO fire column — its pipeFire entry
+   points at the regular column, so its fire phase shows the regular column.
+   No art invented. */
+/* Space Trash note (CORRECTED v16.6.3 — AUDIT2 Finding 1): the earlier
+   note described an art-lab state that is NOT what shipped. The set
+   ships hang-authored files ONLY (no regular space-pipe.png exists
+   anywhere in the tree): the monster-head cluster sits at the CONTENT
+   BOTTOM of the hang files (rows ~1400-1631 regular / ~1560-1960
+   fire), under a wide plain-trash band at the file top, with a
+   transparent tail below the content (417 rows regular). The column
+   engine's one convention is mouth-at-TOP, so through v16.6.2 Space
+   rendered upside down in both fork lanes (heads at the ceiling on
+   hangs, buried at the floor end on stands — Kenn's shots 4/5) and
+   the R2 clamp census measured the file-top trash band as the
+   "mouth" (89.1u). The manifest flags the set pipeAuthored: "hang"
+   (above) and buildColumnAssets derives the engine-facing source at
+   load — vertical flip + crop to content rows (flipCropPipeOf) —
+   landing the cluster at rows 0-231 of a 512x1632 working source,
+   the family layout. The art files stay byte-identical. */
+/* v16.6.1 (Issue 7) — SOLID PIPE TWIN: a canvas copy of a pipe bitmap
+   whose every row is backed across its full alpha span with a dark
+   shade of the art's own average color, the original art composited
+   on top unchanged. The silhouette collider already treats each row
+   as a solid span; v16.6.0's paint did not — every world's pipe set
+   has interior alpha holes inside its spans (measured: Junkfall
+   16.0% of span area, Space 14.4%, Muse 13.6%, E-Waste 11.9%,
+   Haz-Scrap 3.5%/8.5% fire), so sky and billboard showed through the
+   columns. The surface art is pixel-identical; only the see-through
+   gaps gain the backing. Falls back to the source image if the
+   pixels are unreadable. */
+function solidCanvasOf(img) {
+  try {
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    if (!w || !h) return img;
+    const probe = document.createElement("canvas"); probe.width = w; probe.height = h;
+    const pg = probe.getContext("2d", { willReadFrequently: true });
+    pg.drawImage(img, 0, 0);
+    const data = pg.getImageData(0, 0, w, h).data;
+    let rS = 0, gS = 0, bS = 0, n = 0;
+    for (let i = 0; i < data.length; i += 16) {
+      if (data[i + 3] >= 128) { rS += data[i]; gS += data[i + 1]; bS += data[i + 2]; n++; }
+    }
+    /* v16.6.4-demo.5: the source read back BLANK (its pixels were
+       not drawable when the probe drew it). The bake below would
+       manufacture a blank twin and the pipes would vanish while
+       their colliders kept scoring and killing (Kenn's demo.4
+       phone playtest). Return the source itself — pipes paint
+       un-backed but VISIBLE — and pipeSolidOf does not cache the
+       fallback, so the bake retries on the next build. */
+    if (!n) return img;
+    const shade = n ? "rgb(" + Math.round(rS / n * 0.42) + "," + Math.round(gS / n * 0.42) + "," + Math.round(bS / n * 0.42) + ")" : "#14181c";
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    const g = cv.getContext("2d");
+    g.fillStyle = shade;
+    /* v16.6.2 (R1): the fill stays FULL-SPAN, deliberately. The
+       playtest audit blamed this backing for the white "sticker
+       outline" around pipes; forensics disproved it — the in-engine
+       census shows the twin protruding 0 px beyond the source
+       silhouette in v16.6.1 and here (the fill never leaves the
+       art's own spans, and the art composites over it), and the
+       white border is inside the source PNGs themselves. A 2px
+       erode-the-backing variant was built and measured: it
+       re-opened interior holes up to 4.4% (Space fire) against the
+       Issue-7 invariant while removing nothing that exists — so it
+       was rejected. See BUILD-REPORT-v1662-FORK.md (R1). */
+    for (let y = 0; y < h; y++) {
+      let x0 = -1, x1 = -1;
+      for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] >= 128) { if (x0 < 0) x0 = x; x1 = x; }
+      }
+      if (x1 > x0) g.fillRect(x0, y, x1 - x0 + 1, 1);
+    }
+    g.drawImage(img, 0, 0);
+    cv.naturalWidth = w; cv.naturalHeight = h;   // expando: size readers (flipCanvasOf, drawColumnArt) work unchanged
+    if (bakeBlank(cv)) return img;   // demo.5: never ship a blank bake — paint the source
+    return cv;
+  } catch (e) { return img; }
+}
+const _pipeSolids = new WeakMap();
+function pipeSolidOf(im) {
+  if (!im) return null;
+  if (_pipeSolids.has(im)) return _pipeSolids.get(im);
+  const s = solidCanvasOf(im);
+  if (s !== im) _pipeSolids.set(im, s);   // demo.5: a blank-read fallback stays uncached — the bake retries next build
+  return s;
+}
+/* =====================================================================
+   v16.6.4-demo.3 — GAP INVIOLABILITY + STICKER BORDER + ART COLLISION
+   (Kenn, Gate 1, Oct 23 09:13-09:18). The gap between the pipes is a
+   sacred, uninterrupted space (GAP_H = 96u, the original Flappy gap
+   in this geometry): no pipe art may enter it, and because of that
+   the pipe ART ITSELF is the collidable.
+
+   (1) NORMALIZATION — trimPipeOf crops a pipe bitmap to its opaque
+   content rows (alpha>=128, the engine's silhouette basis) at load.
+   The placements anchor the bitmap's edge AT the gap line, so after
+   the trim the art's extreme pixel lands exactly ON the pipe end:
+   flame peaks, sack tops and skull protrusions terminate AT the
+   line — never past it, never floating short of it. (Measured pads
+   this build removes, source px at the mouth end: Junkfall 56 —
+   13.7u of float — muse-fire 8, classic fire hang 12, ewaste 3,
+   haz 2; Space's 416/87 were already cropped by the v16.6.3
+   flipCrop bake.) Lossless: pixels are copied, never resampled.
+
+   (2) STICKER BORDER — stickerCanvasOf precomputes, once per bitmap,
+   a same-size twin: the bitmap's alpha silhouette dilated in solid
+   white (a ring of offset silhouette stamps — the die-cut contour)
+   with the art composited on top unchanged. Same size is the
+   termination rule: at the pipe end the contour is flush with the
+   end row, closing along the gap edge; it has nowhere to grow past
+   the line. Both pipe draw paths additionally hard-clip at the gap
+   edge, so no pipe pixel — art or border — can ever enter the band.
+
+   (3) COLLISION = THE ART — classicPlacement (below) is the classic
+   sprites' placement transform, mirroring drawPipeColumn number for
+   number; the main collision loop tests the classic world through
+   the same silhouette path as the column worlds. The collider's
+   per-row spans run first-to-last opaque pixel, i.e. the silhouette
+   UNION the solid column core — no hollow spots inside the column.
+   ===================================================================== */
+const PIPE_OUTLINE_U = 1.6;   // sticker border thickness in design units (~6 device px at the 1080-wide reference render, S = 3.75 px/u)
+
+function trimPipeOf(img) {
+  try {
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    if (!w || !h) return img;
+    const probe = document.createElement("canvas"); probe.width = w; probe.height = h;
+    const pg = probe.getContext("2d", { willReadFrequently: true });
+    pg.drawImage(img, 0, 0);
+    const data = pg.getImageData(0, 0, w, h).data;
+    let y0 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) {
+      let any = false;
+      for (let x = 0; x < w; x++) { if (data[(y * w + x) * 4 + 3] >= 128) { any = true; break; } }
+      if (any) { if (y0 < 0) y0 = y; y1 = y; }
+    }
+    if (y0 < 0) return img;
+    if (y0 === 0 && y1 === h - 1) { try { img._trimTop = 0; img._trimBot = 0; } catch (e) {} return img; }
+    const c = document.createElement("canvas"); c.width = w; c.height = y1 - y0 + 1;
+    c.getContext("2d").drawImage(img, 0, y0, w, y1 - y0 + 1, 0, 0, w, y1 - y0 + 1);
+    c.naturalWidth = w; c.naturalHeight = y1 - y0 + 1;   // expando: size readers work unchanged
+    c._trimTop = y0; c._trimBot = h - 1 - y1;
+    return c;
+  } catch (e) { return img; }
+}
+const _pipeTrims = new WeakMap();
+function trimOf(im) {
+  if (!im) return im;
+  if (!_pipeTrims.has(im)) _pipeTrims.set(im, trimPipeOf(im));
+  return _pipeTrims.get(im);
+}
+function stickerCanvasOf(img, kU) {
+  try {
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    if (!w || !h) return img;
+    const r = Math.max(2, Math.min(24, Math.round(PIPE_OUTLINE_U / Math.max(kU, 0.05))));
+    const sil = document.createElement("canvas"); sil.width = w; sil.height = h;
+    const sg = sil.getContext("2d");
+    sg.drawImage(img, 0, 0);
+    sg.globalCompositeOperation = "source-in";
+    sg.fillStyle = "#ffffff"; sg.fillRect(0, 0, w, h);
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    const g = cv.getContext("2d");
+    const ring = (rad, alpha, steps) => {
+      g.globalAlpha = alpha;
+      for (let i = 0; i < steps; i++) {
+        const a = (i / steps) * Math.PI * 2;
+        g.drawImage(sil, Math.cos(a) * rad, Math.sin(a) * rad);
+      }
+      g.globalAlpha = 1;
+    };
+    ring(r + 1.25, 0.30, 16);   // ~1 source px soft outer falloff
+    ring(r * 0.55, 1, 10);
+    ring(r, 1, 16);
+    g.drawImage(img, 0, 0);
+    cv.naturalWidth = w; cv.naturalHeight = h;   // expando, as the other bakes stamp
+    if (bakeBlank(cv)) return img;   // demo.5: a blank twin would hide the pipe while its collider lives — paint the solid instead
+    return cv;
+  } catch (e) { return img; }
+}
+const _pipeStickers = new WeakMap();
+function stickerOf(img, kU) {
+  if (!img) return img;
+  const hit = _pipeStickers.get(img);
+  if (hit && Math.abs(hit.k - kU) < 1e-6) return hit.c;
+  const c = stickerCanvasOf(img, kU);
+  if (c !== img) _pipeStickers.set(img, { c, k: kU });   // demo.5: blank-bake fallbacks stay uncached — the bake retries next frame
+  return c;
+}
+const _workColliders = new WeakMap();
+function colliderOfWork(work) {
+  if (!work) return null;
+  let c = _workColliders.get(work);
+  if (!c) { c = colliderOf(work); _workColliders.set(work, c); }
+  return c;
+}
+/* v16.6.4-demo.3: the classic world's placement transform — the ONE
+   transform for the classic sprites, mirroring drawPipeColumn's
+   numbers exactly (same trimmed source, same working bitmap, same
+   content-width scale basis, same anchor rows), returned in
+   birdHitColumn's shape. Stand: py = the gap's bottom edge, the
+   file's rows map straight down the stage (flipY false). Hang: the
+   file is authored hang-down (mouth at its bottom rows) and
+   drawPipeColumn source-crops from its far end — drawTop here is
+   source row 0's stage y under that same crop, flipY false, so the
+   collider's spans (the file's own rows) land where the paint is. */
+function classicPlacement(p, isTop) {
+  const fire = !!(p && p.idx >= 20 && POPICOIN_CONFIG.WAVE_PIPES);
+  const im = isTop ? (fire ? ART.colFHang : ART.colOHang)
+                   : (fire ? ART.colFStand : ART.colOStand);
+  if (!im || !im.naturalWidth) return null;
+  const tim = trimOf(im);
+  const work = pipeWorkOf(tim, isTop ? "bottom" : "top");
+  if (!work) return null;
+  const col = colliderOfWork(work);
+  if (!col) return null;
+  const sw = im.naturalWidth, sh = tim.naturalHeight || tim.height;
+  const cw = work._cw || im._cw || sw;
+  const ccx = (work._ccx != null) ? work._ccx : ((im._ccx != null) ? im._ccx : sw / 2);
+  let k = PIPE_WU / cw;
+  if (work._widest > 0) k = Math.min(k, WIDEST_CAP_U / work._widest);
+  const dx = PIPE_WU / 2 - ccx * k;
+  if (!isTop) return { col, k, dx, py: p.effGap, flipY: false, ext: null };
+  const yM = p.effGap - GAP_H, ceilY = -skyExtra, need = yM - ceilY, dh = sh * k;
+  const cut = dh >= need ? (dh - need) / k : 0;
+  return { col, k, dx, drawTop: ceilY - cut * k, flipY: false, ext: null };
+}
+
+/* v16.6.2 (R2): CAP-CLAMPED WORKING BITMAPS. Kenn's playtest found
+   the pipe "caps" ballooning into mounds up to ~2.5x the body:
+   forensics showed the wide part is not the 60-row gap-end mouth
+   cluster (the part the scale basis looks at) but a DEEP cluster
+   further down the bitmap — Junkfall's plate heap, the Haz bowl,
+   the Muse head, E-Waste's robot pile — which renders at up to
+   the full WIDEST_CAP_U (130u) while the trunk under it renders at
+   32-65u. The ratio is scale-invariant (both ride the same k), so
+   no rescale can fix it; the bitmap itself must be bounded.
+   capClampCanvasOf returns a copy of the sprite whose rows OUTSIDE
+   the gap-end mouth window (the engine's own 60-row mouth
+   definition — the mouth keeps the spec family, e.g. Haz's 67.5u)
+   are trimmed symmetrically about each row's own centre to at most
+   CAP_CLAMP x the content width _cw: silhouette-cropped, never
+   resampled, so the aspect of every surviving feature is kept and
+   no art is redrawn — wide trim waste is simply not painted (and
+   not collided: the colliders are built from the clamped bitmap,
+   so paint and collision stay the same transform). The copy is
+   stamped with the family's metrics measured ON THE CLAMPED
+   bitmap (_cw/_ccx/_mwT/_mwB/_widest + naturalWidth/Height), which
+   is what the scale bases read from here on. Sprites whose widest
+   row already fits pass through untrimmed but still get a stamped
+   working copy, so every pipe in the game renders from a working
+   bitmap with clamped metrics. mouthEnd is "top" for bitmaps whose
+   gap-end cluster is the top rows (all column-world bitmaps and
+   the classic STAND sprites) and "bottom" for the classic HANG
+   sprites, whose file is authored hang-down (drawPipeColumn flips
+   it via scale(1,-1)). */
+const CAP_CLAMP = 1.15, MOUTH_ROWS = 60;
+function capClampCanvasOf(img, mouthEnd) {
+  try {
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    if (!w || !h) return img;
+    const c0 = document.createElement("canvas"); c0.width = w; c0.height = h;
+    const g0 = c0.getContext("2d", { willReadFrequently: true });
+    g0.drawImage(img, 0, 0);
+    const id = g0.getImageData(0, 0, w, h), data = id.data;
+    /* Trim in passes until the bound is self-consistent: the clamp
+       is defined against the FINAL bitmap's median span (the _cw
+       the scale basis will read), and trimming can shift that
+       median a few px — so re-measure and re-trim (at most 3
+       passes; converges immediately in practice) until no row
+       outside the mouth window exceeds floor(1.15 x final _cw). */
+    let trimmed = 0;
+    for (let pass = 0; pass < 3; pass++) {
+      const spans = new Array(h), widths = [];
+      for (let y = 0; y < h; y++) {
+        let x0 = -1, x1 = -1;
+        for (let x = 0; x < w; x++) {
+          if (data[(y * w + x) * 4 + 3] >= 128) { if (x0 < 0) x0 = x; x1 = x; }
+        }
+        spans[y] = (x0 >= 0) ? [x0, x1] : null;
+        if (x0 >= 0) widths.push(x1 - x0 + 1);
+      }
+      if (!widths.length) return img;
+      widths.sort((a, b) => a - b);
+      const cwNow = widths[Math.floor(widths.length / 2)];
+      const clampW = Math.max(2, Math.floor(cwNow * CAP_CLAMP));   // floor: the kept window never exceeds 1.15x _cw, even by rounding
+      let cut = 0;
+      for (let y = 0; y < h; y++) {
+        const s = spans[y];
+        if (!s) continue;
+        const inMouth = (mouthEnd === "bottom") ? (y >= h - MOUTH_ROWS) : (y < MOUTH_ROWS);
+        if (inMouth) continue;
+        const span = s[1] - s[0] + 1;
+        if (span <= clampW) continue;
+        const c = (s[0] + s[1]) / 2;
+        const lo = Math.round(c - clampW / 2), hi = lo + clampW - 1;   // exactly clampW px survive, centred on the row's own centre
+        for (let x = s[0]; x <= s[1]; x++) {
+          if (x >= lo && x <= hi) continue;
+          const i = (y * w + x) * 4;
+          if (data[i + 3] > 0) { data[i] = data[i + 1] = data[i + 2] = data[i + 3] = 0; cut++; }
+        }
+      }
+      trimmed += cut;
+      if (!cut) break;
+    }
+    if (trimmed) g0.putImageData(id, 0, 0);
+    /* metrics measured on the CLAMPED bitmap (measureColumn's
+       definitions: median span, median span-centre, widest span,
+       widest span within 60 rows of each end) */
+    const w2 = [], c2 = [];
+    let mwT = 0, mwB = 0, widest = 0;
+    for (let y = 0; y < h; y++) {
+      let x0 = -1, x1 = -1;
+      for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] >= 128) { if (x0 < 0) x0 = x; x1 = x; }
+      }
+      if (x0 < 0) continue;
+      const span = x1 - x0 + 1;
+      w2.push(span); c2.push(x0 + span / 2);
+      if (span > widest) widest = span;
+      if (y < MOUTH_ROWS && span > mwT) mwT = span;
+      if (y >= h - MOUTH_ROWS && span > mwB) mwB = span;
+    }
+    const med = a => { const s = a.slice().sort((p, q) => p - q); return s[Math.floor(s.length / 2)] || 0; };
+    c0._cw = med(w2); c0._ccx = med(c2); c0._mwT = mwT; c0._mwB = mwB; c0._widest = widest;
+    c0.naturalWidth = w; c0.naturalHeight = h;   // expando (flipCanvasOf/colliderOf/drawColumnArt read these)
+    c0._trimmedPx = trimmed;
+    return c0;
+  } catch (e) { return img; }
+}
+const _pipeWorks = new WeakMap();
+function pipeWorkOf(im, mouthEnd) {
+  if (!im) return null;
+  let m = _pipeWorks.get(im);
+  if (!m) { m = new Map(); _pipeWorks.set(im, m); }
+  if (!m.has(mouthEnd)) m.set(mouthEnd, capClampCanvasOf(im, mouthEnd));
+  return m.get(mouthEnd);
+}
+/* v16.6.3 (AUDIT2 Finding 1): derive the engine-facing source for a
+   hang-authored pipe set — vertical flip, then crop to the opaque
+   content rows (alpha >= 128, the engine's own threshold). The flip
+   maps the cluster from the content bottom to the top; the crop
+   removes the transparent leader the flip creates from the file's
+   transparent tail (without it the top-60 mouth window reads
+   transparent rows and the mouth metric zeroes). Lossless: pixels
+   are copied, never resampled or redrawn. */
+function flipCropPipeOf(img) {
+  try {
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    if (!w || !h) return img;
+    const probe = document.createElement("canvas"); probe.width = w; probe.height = h;
+    const pg = probe.getContext("2d", { willReadFrequently: true });
+    pg.drawImage(img, 0, 0);
+    const data = pg.getImageData(0, 0, w, h).data;
+    let y0 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) {
+      let any = false;
+      for (let x = 0; x < w; x++) { if (data[(y * w + x) * 4 + 3] >= 128) { any = true; break; } }
+      if (any) { if (y0 < 0) y0 = y; y1 = y; }
+    }
+    if (y0 < 0) return img;
+    const ch = y1 - y0 + 1;
+    const c = document.createElement("canvas"); c.width = w; c.height = ch;
+    const g = c.getContext("2d");
+    g.translate(0, ch); g.scale(1, -1);
+    g.drawImage(img, 0, y0, w, ch, 0, 0, w, ch);   // derived row r = source row (y1 - r): the cluster lands at the top
+    c.naturalWidth = w; c.naturalHeight = ch;   // expando, as the other bakes stamp
+    return c;
+  } catch (e) { return img; }
+}
 function flipCanvasOf(img) {
   const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
   const g = c.getContext("2d"); g.translate(0, c.height); g.scale(1, -1); g.drawImage(img, 0, 0);
@@ -2280,26 +2937,94 @@ function colliderOf(img) {
   for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3];
   return PipeCollision.makeCollider(a, c.width, c.height, 128);
 }
-function buildMuseAssets(images) {
-  if (!images || !images.pipe || !images.pipeFire) return;   // incomplete set: Muse pipes stay off
-  MUSE.sky = images.sky || null; MUSE.mid = images.mid || null; MUSE.fg = images.fg || null;
-  MUSE.pipe = images.pipe; MUSE.fire = images.pipeFire;
-  measureColumn(MUSE.pipe); measureColumn(MUSE.fire);   // the game's own mouth/width metrics
-  MUSE.pipeFlip = flipCanvasOf(MUSE.pipe); MUSE.fireFlip = flipCanvasOf(MUSE.fire);
-  // A canvas has no naturalWidth, so measureColumn cannot read the flips;
-  // stamp them with the source metrics instead — a vertical flip swaps
-  // the top/bottom mouth clusters, width and centre are unchanged.
-  for (const pair of [[MUSE.pipe, MUSE.pipeFlip], [MUSE.fire, MUSE.fireFlip]]) {
-    pair[1]._mwT = pair[0]._mwB; pair[1]._mwB = pair[0]._mwT;
-    pair[1]._widest = pair[0]._widest; pair[1]._ccx = pair[0]._ccx;
-  }
-  MUSE.colPipe = colliderOf(MUSE.pipe); MUSE.colFire = colliderOf(MUSE.fire);
-  MUSE.ready = true;
+/* v16.6.4-demo.5: decode-gate the world's images before the bake
+   chain reads them. ThemeSystem.preload resolves on "load", but a
+   loaded image is not necessarily DRAWABLE yet — on Kenn's phone
+   the demo.4 world bakes (working bitmap, solid twin, sticker twin,
+   wrap tiles) ran against undecoded pixels and baked blank, cached
+   forever, while the directly-drawn layers and bird painted fine.
+   decode() resolves only when the pixels can actually be drawn.
+   holder.ready still gates application, so the beat this adds is
+   absorbed by the existing wrong-world start guard. */
+function buildColumnAssets(holder, images, entry) {
+  if (!images || !images.pipe || !images.pipeFire) return;   // incomplete set: this world's pipes stay off
+  const ims = [images.pipe, images.pipeFire, images.sky, images.mid, images.fg].filter(Boolean);
+  return Promise.all(ims.map(im => (im.decode ? im.decode() : Promise.resolve()).then(() => {}, () => {})))
+    .then(() => buildColumnAssetsCore(holder, images, entry));
 }
+function buildColumnAssetsCore(holder, images, entry) {
+  if (!images || !images.pipe || !images.pipeFire) return;   // incomplete set: this world's pipes stay off
+  holder.sky = images.sky || null; holder.mid = images.mid || null; holder.fg = images.fg || null;
+  holder.pipe = images.pipe; holder.fire = images.pipeFire;
+  measureColumn(holder.pipe); measureColumn(holder.fire);   // source metrics, kept for reference — placement reads the working bitmaps'
+  /* v16.6.1 (Issue 7): bake the SOLID twins (see solidCanvasOf) and
+     stamp them with the sources' metrics; the flips are baked from
+     the solids so hanging columns are solid too.
+     v16.6.2 (R2): the twins, the flips AND the colliders now derive
+     from the CAP-CLAMPED WORKING bitmaps (capClampCanvasOf) instead
+     of the raw art — the whole asset chain shares one transform, so
+     what is painted is exactly what is collided, and the metrics
+     columnPlacement reads are the clamped bitmap's own (stamped by
+     the clamp bake; the copy loops below move them onto the twins,
+     and the flip loop swaps the mouth clusters as before). */
+  /* v16.6.3 (AUDIT2 Finding 1): a hang-authored set (the manifest's
+     pipeAuthored: "hang" — Space) is flipped + cropped to its content
+     rows BEFORE the chain below runs, so its working bitmap obeys
+     the mouth-at-top convention every other world ships natively.
+     The existing chain (measure -> cap-clamp working bitmap -> solid
+     twin -> flip -> collider -> extension band) then runs on the
+     derived source untouched, so paint and collision still derive
+     from the same working bitmap. */
+  let pipeSrc = images.pipe, fireSrc = images.pipeFire;
+  if (entry && entry.pipeAuthored === "hang") { pipeSrc = flipCropPipeOf(images.pipe); fireSrc = flipCropPipeOf(images.pipeFire); }
+  /* v16.6.4-demo.3: NORMALIZE (gap inviolability) — trim transparent
+     row padding at both ends; the hang-authored path above already
+     cropped via flipCropPipeOf, so this is a no-op there. Every
+     downstream bake (working bitmap, solid twin, flip, collider,
+     extension band) derives from the trimmed source, so paint,
+     sticker border and collision all anchor the art's extreme
+     pixel exactly at the gap line. */
+  pipeSrc = trimOf(pipeSrc); fireSrc = trimOf(fireSrc);
+  holder.pipeWork = pipeWorkOf(pipeSrc, "top"); holder.fireWork = pipeWorkOf(fireSrc, "top");
+  holder.pipeSolid = solidCanvasOf(holder.pipeWork); holder.fireSolid = solidCanvasOf(holder.fireWork);
+  for (const pair of [[holder.pipeWork, holder.pipeSolid], [holder.fireWork, holder.fireSolid]]) {
+    pair[1]._mwT = pair[0]._mwT; pair[1]._mwB = pair[0]._mwB;
+    pair[1]._widest = pair[0]._widest; pair[1]._ccx = pair[0]._ccx; pair[1]._cw = pair[0]._cw;
+  }
+  holder.pipeFlip = flipCanvasOf(holder.pipeSolid); holder.fireFlip = flipCanvasOf(holder.fireSolid);
+  // A canvas has no naturalWidth, so measureColumn cannot read the flips;
+  // stamp them with the working metrics instead — a vertical flip swaps
+  // the top/bottom mouth clusters, width and centre are unchanged.
+  for (const pair of [[holder.pipeSolid, holder.pipeFlip], [holder.fireSolid, holder.fireFlip]]) {
+    pair[1]._mwT = pair[0]._mwB; pair[1]._mwB = pair[0]._mwT;
+    pair[1]._widest = pair[0]._widest; pair[1]._ccx = pair[0]._ccx; pair[1]._cw = pair[0]._cw;
+  }
+  holder.colPipe = colliderOf(holder.pipeWork); holder.colFire = colliderOf(holder.fireWork);
+  /* v16.6.1: bake the seamless wrap tiles for this world's three
+     layers (mirror tiling retired — see bakeWrapTile) and record the
+     hanging-column trunk band in FLIP-bitmap rows: the flip's own
+     mid-trunk, repeated upward when a hanging column is too short
+     to reach its gap (see columnPlacement). Same rows for the fire
+     twin — its bitmap is the same height and the band is trunk on
+     both. */
+  holder._tileFar = images.sky ? bakeWrapTile(images.sky, 256) : null;
+  holder._tileMid = images.mid ? bakeWrapTile(images.mid, 192) : null;
+  holder._tileFg = images.fg ? bakeWrapTile(images.fg, 160) : null;
+  /* v16.6.3: the band indexes rows of the FLIP bitmap (built from the
+     working bitmap), so it is measured off the working bitmap's own
+     height — for Space that is the derived 1632-row source, not the
+     2048-row hang file. Every other world: heights are equal, values
+     identical to v16.6.2. */
+  const ph = (holder.pipeWork && (holder.pipeWork.naturalHeight || holder.pipeWork.height)) || (images.pipe.naturalHeight || images.pipe.height);
+  holder._extBand = [Math.round(ph * 0.30), Math.round(ph * 0.62)];
+  holder.ready = true;
+}
+function buildMuseAssets(images) { buildColumnAssets(MUSE, images); }   // v16.5.x name kept
 function syncWorldAssets() {
   if (!window.ThemeSystem) return Promise.resolve();
   return ThemeSystem.preload().then(images => {
-    if (ThemeSystem.current().id === "muse") buildMuseAssets(images);
+    const holder = WSETS[ThemeSystem.current().id];
+    if (holder) return buildColumnAssets(holder, images, WORLD_MANIFEST.find(e => e.id === ThemeSystem.current().id));   // demo.5: await the decode-gated build — applyWorld chains off this promise
   }).catch(() => {});
 }
 /* The ONE placement transform for a Muse column, shared by the renderer
@@ -2314,38 +3039,90 @@ function syncWorldAssets() {
    design (Kenn's demo rule: collision remaps to the art; the art is
    never squashed). Hanging: the pre-flipped bitmap with its mouth at
    the gap's top edge (effGap - GAP_H); when the drawn height cannot
-   reach the ceiling (fire twin: drawn height ~267 u vs a gap top up to
-   210 u + sky), the whole column hangs from the ceiling exactly as the
-   classic AS-IS fallback does, and collision follows the same drawTop. */
-function musePlacement(p, isTop) {
-  if (!p || !MUSE.ready) return null;
+   reach the ceiling, v16.6.1 puts the mouth ON the gap line and
+   repeats the trunk band upward to the ceiling (ext, below) — the
+   v16.6.0 ceiling-hung AS-IS dangle is gone. */
+function columnPlacement(holder, p, isTop) {
+  if (!p || !holder || !holder.ready) return null;
   const fire = !!(p.idx >= 20 && POPICOIN_CONFIG.WAVE_PIPES);
-  const src = fire ? MUSE.fire : MUSE.pipe, flip = fire ? MUSE.fireFlip : MUSE.pipeFlip;
-  const col = fire ? MUSE.colFire : MUSE.colPipe;
+  const src = fire ? (holder.fireSolid || holder.fire) : (holder.pipeSolid || holder.pipe), flip = fire ? holder.fireFlip : holder.pipeFlip;
+  const col = fire ? holder.colFire : holder.colPipe;
   if (!src || !flip || !col) return null;
   const bmp = isTop ? flip : src;
   const mouth = isTop ? bmp._mwB : bmp._mwT;
   if (!mouth || !bmp._widest || !bmp._ccx) return null;
-  const k = Math.min(MOUTH_TARGET_U / mouth, WIDEST_CAP_U / bmp._widest);
+  let k = Math.min(MOUTH_TARGET_U / mouth, WIDEST_CAP_U / bmp._widest);
+  /* v16.6.1 (Issue 6): Haz-Scrap's trunk reads thin on the mouth
+     basis — its median span is 194 px, so the body renders ~38u
+     against the 52u spec body of the cap/body family (327x270 /
+     264x560 drawn at PIPE_WU). Worlds flagged specBody scale by
+     CONTENT width instead (the v10.1 median basis): the typical
+     span renders at exactly PIPE_WU, the mouth bulges past it like
+     a cap, and the widest row still respects WIDEST_CAP_U. Haz:
+     k 0.198 -> 0.268 (fire 0.175 -> 0.221), body 38u -> 52u.
+     v16.6.2 (R4): specBody is set for EVERY column world now, so
+     this branch is the family rule — and because the clamp bake
+     bounds the widest surviving row to at most ~2.5x _cw, the
+     WIDEST_CAP_U term never binds tighter than the content term:
+     k = PIPE_WU / _cw and the typical body renders at exactly 52u
+     in all six worlds. */
+  if (holder.specBody && bmp._cw) k = Math.min(PIPE_WU / bmp._cw, WIDEST_CAP_U / bmp._widest);
   const dh = (bmp.naturalHeight || bmp.height) * k, dx = PIPE_WU / 2 - bmp._ccx * k;
-  let drawTop, need = 0;
+  let drawTop, need = 0, ext = null;
   if (!isTop) drawTop = p.effGap;
   else {
     need = (p.effGap - GAP_H) + skyExtra;   // gap top up to the visible ceiling (ceilY = -skyExtra, a global)
-    drawTop = dh >= need ? (p.effGap - GAP_H) - dh : -skyExtra;
+    if (dh >= need) drawTop = (p.effGap - GAP_H) - dh;
+    else {
+      /* v16.6.1: NEVER DANGLE. The v16.6.0 AS-IS branch hung the
+         whole column from the ceiling and left its mouth floating
+         far above the gap whenever the scaled bitmap was shorter
+         than the reach (Space Trash: dh 237u vs need up to 464u —
+         the mouth dangled ~120u over the gap; Kenn's "pipes face
+         the wrong way"). Now the mouth lands ON the gap line and
+         the flipped bitmap's trunk band repeats upward to the
+         ceiling; the collider wraps through the same band (the
+         ext fields below ride into PipeCollision.hitTest), so the
+         render and the collision still cannot drift apart. */
+      drawTop = (p.effGap - GAP_H) - dh;
+      const band = holder._extBand || [Math.round((bmp.naturalHeight || bmp.height) * 0.30), Math.round((bmp.naturalHeight || bmp.height) * 0.62)];
+      ext = { top: -skyExtra, bandTop: band[0], bandBot: band[1] };
+    }
   }
-  return { bmp, col, k, dx, dh, drawTop, need };
+  return { bmp, col, k, dx, dh, drawTop, need, ext };
 }
-function drawMuseColumn(x, y, h, isTop, p) {
-  const pl = musePlacement(p, isTop);
+function musePlacement(p, isTop) { return columnPlacement(MUSE, p, isTop); }   // v16.5.x name kept (rig handle)
+function drawColumnArt(holder, x, y, h, isTop, p) {
+  const pl = columnPlacement(holder, p, isTop);
   if (!pl) return false;
   const bmp = pl.bmp, iw = bmp.naturalWidth || bmp.width, ih = bmp.naturalHeight || bmp.height;
+  const ob = stickerOf(bmp, pl.k);   // v16.6.4-demo.3: sticker-outlined twin (identical size; draw source only — placement/collision read pl/bmp as before)
+  /* v16.6.4-demo.3: HARD CLIP at the gap edge — the column paints
+     only its own side of the gap line (stand: at/below effGap;
+     hang: at/above effGap - GAP_H), so no pipe pixel — art or
+     sticker border — can ever enter the gap band. */
+  ctx.save();
+  ctx.beginPath();
+  if (!isTop) ctx.rect(p.x - 500, p.effGap, 1000, UH - p.effGap + skyExtra + 64);
+  else ctx.rect(p.x - 500, -skyExtra - 64, 1000, (p.effGap - GAP_H) + skyExtra + 64);
+  ctx.clip();
   if (!isTop) {
-    const visH = UH - p.effGap; if (visH <= 0) return true;
+    const visH = UH - p.effGap; if (visH <= 0) { ctx.restore(); return true; }
     const sH = Math.min(ih, visH / pl.k);
-    ctx.drawImage(bmp, 0, 0, iw, sH, p.x + pl.dx, p.effGap, iw * pl.k, sH * pl.k);
-  } else if (pl.dh < pl.need) {
-    ctx.drawImage(bmp, p.x + pl.dx, -skyExtra, iw * pl.k, pl.dh);   // AS-IS whole column from the ceiling (classic fallback shape)
+    ctx.drawImage(ob, 0, 0, iw, sH, p.x + pl.dx, p.effGap, iw * pl.k, sH * pl.k);
+  } else if (pl.ext) {
+    /* v16.6.1: the mouth sits ON the gap line (whole flipped bitmap
+       at drawTop) and the trunk band repeats upward until the
+       ceiling is covered — the column always spans ceiling-to-gap. */
+    ctx.drawImage(ob, 0, 0, iw, ih, p.x + pl.dx, pl.drawTop, iw * pl.k, pl.dh);
+    const bandRows = pl.ext.bandBot - pl.ext.bandTop, bandH = bandRows * pl.k;
+    if (bandH > 0) {
+      let yTop = pl.drawTop;
+      while (yTop > -skyExtra) {
+        ctx.drawImage(ob, 0, pl.ext.bandTop, iw, bandRows, p.x + pl.dx, yTop - bandH, iw * pl.k, bandH);
+        yTop -= bandH;
+      }
+    }
   } else {
     /* v16.5.1: crop to the TRUE visible ceiling (ceilY = -skyExtra),
        exactly as the classic v15.1 hang does — v16.5.0 cropped at unit
@@ -2355,49 +3132,219 @@ function drawMuseColumn(x, y, h, isTop, p) {
        stays pixel-exact on the gap line and the mapping matches the
        collision placement (drawTop) row for row. */
     const cut = (pl.dh - pl.need) / pl.k, sH = ih - cut;
-    if (sH <= 0) return true;
-    ctx.drawImage(bmp, 0, cut, iw, sH, p.x + pl.dx, -skyExtra, iw * pl.k, pl.need);
+    if (sH <= 0) { ctx.restore(); return true; }
+    ctx.drawImage(ob, 0, cut, iw, sH, p.x + pl.dx, -skyExtra, iw * pl.k, pl.need);
   }
+  ctx.restore();
   return true;
 }
-/* v16.5.1 — the three Muse layer draws share ONE mirror-tile path: the
-   verified ThemeSystem.drawFar tiler, fed a PIXEL phase (scroll units x S)
-   and the true tile width. The v16.5.0 hand-rolled loops fed UNIT-space
-   scroll offsets into pixel tile math: the layers scrolled at 1/S speed
-   and the mirror parity (floor of a units/px quotient) teleported the
-   pattern at every tile boundary — Kenn's "midground shifts". The FG
-   loop was worse: it read ART.scrollGround, a field that does not exist
-   (the FG lane's driver is ART.scrollU), so its offset was NaN and the
-   Muse foreground NEVER DREW. Classic draws are untouched. */
-function drawMuseFar() {
-  const img = MUSE.sky, lay = LAY.bgFar, yPx = lay[0] * H, hPx = lay[1] * H;
-  const tw = hPx * (img.naturalWidth / img.naturalHeight);
-  ctx.save(); ctx.translate(0, yPx);
-  ThemeSystem.drawFar(ctx, img, -(ART.scrollFar * S), tw, hPx);
-  ctx.restore();
+function drawMuseColumn(x, y, h, isTop, p) { return drawColumnArt(MUSE, x, y, h, isTop, p); }   // v16.5.x name kept
+/* v16.6.1 — SEAMLESS WRAP TILES, NO MIRRORING. Kenn's design call in
+   the Oct 23 walkthrough: two REAL parallax layers per world, and the
+   mirrored-layer fill is banned (v16.6.0's sky/mid/fg all ran through
+   ThemeSystem.drawFar, which mirror-tiles — a perfect left-right
+   mirror was visible in Haz-Scrap's foreground). Each world's layers
+   are baked ONCE at world build (buildColumnAssets) into tiles whose
+   right edge crossfades into the art's own left edge — derived
+   entirely from the world's existing art, nothing generated — and
+   plain-wrap tiled here, each on its own scroll lane. The classic
+   layers keep their own true-wrap draw (drawTiledLayer) — they were
+   generated tiling, and never mirrored.
+   (History: v16.5.1 put the world layers on the verified drawFar
+   tiler with a pixel phase, fixing v16.5.0's unit-space offsets and
+   the never-drawn FG — the FG loop had read ART.scrollGround, a
+   field that does not exist. The tiler was right; the MIRROR was
+   the flaw.) */
+function bakeWrapTile(img, blend) {
+  if (!img) return null;
+  const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+  if (!w || !h) return null;
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+  const g = cv.getContext("2d"); g.drawImage(img, 0, 0);
+  const b = Math.min(blend || 192, Math.floor(w / 3));
+  if (b > 8) {
+    const strip = document.createElement("canvas"); strip.width = b; strip.height = h;
+    const sg = strip.getContext("2d");
+    sg.drawImage(img, 0, 0, b, h, 0, 0, b, h);
+    const grad = sg.createLinearGradient(0, 0, b, 0);
+    grad.addColorStop(0, "rgba(0,0,0,0)"); grad.addColorStop(1, "rgba(0,0,0,1)");
+    sg.globalCompositeOperation = "destination-in"; sg.fillStyle = grad; sg.fillRect(0, 0, b, h);
+    g.drawImage(strip, w - b, 0);
+  }
+  if (bakeBlank(cv)) return img;   // demo.5: a blank tile would void the layer that reads it — hand back the raw image
+  return cv;
 }
-function drawMuseMid() {
-  const img = MUSE.mid, lay = LAY.bgMid, yPx = lay[0] * H, hPx = lay[1] * H;
-  const tw = hPx * (img.naturalWidth / img.naturalHeight);
-  ctx.save(); ctx.translate(0, yPx);
-  ThemeSystem.drawFar(ctx, img, -(ART.scrollMid * S), tw, hPx);
-  ctx.restore();
+function drawWrapTiles(cv, scrollPx, tw, yPx, hPx) {
+  let off = -(scrollPx % tw); if (off > 0) off -= tw;
+  for (let x = off; x < W; x += tw) ctx.drawImage(cv, x, yPx, tw, hPx);
 }
-function drawMuseFg() {
-  const img = MUSE.fg, dhPx = FG_H_U * S, yPx = OY + FG_TOP_U * S;
-  const tw = dhPx * (img.naturalWidth / img.naturalHeight);
-  ctx.save(); ctx.translate(0, yPx);
-  ThemeSystem.drawFar(ctx, img, -(ART.scrollU * S), tw, dhPx);
-  ctx.restore();
+/* v16.6.4 — SKY HANDS OFF (Kenn's standing art directive, Oct 23 05:50):
+   the sky tier draws the authored sky file exactly as authored —
+   full-frame, centre-anchored tiling, nothing else. The v16.6.2-
+   v16.6.3 sky extension (a strip of the sky, re-sourced by scan in
+   v16.6.3, stretched from the sky band's bottom edge to the screen
+   bottom) is REMOVED: it was a synthesized band whose top edge and
+   tile joins read as rectangular seams in Kenn's playtest shots,
+   and Kenn's ruling is that the far background needs nothing done
+   to it. Below the sky's bottom edge, the mid/fg tiers and the base
+   coat carry the frame, as they did behind the extension. */
+/* ============ v16.6.3 — KENN'S PARALLAX MODEL (AUDIT2 Finding 2) ====
+   drawWorldFar/Mid/Fg (and their Muse wrappers) are RETIRED from the
+   draw path: they drew three tiers off screen-fraction rects with
+   crossfaded wrap tiles. Every world now stacks FIVE tiers built
+   from its existing three images, per Kenn's filed model
+   (playtest 2026-10-23 04:34-04:39, his own composite):
+     sky -> mid1 (the mid image) -> mid2 (the same mid image at
+     1.5x scale and a lower anchor, phase-shifted half a tile so
+     its mass straddles mid1's valleys) -> pipes -> fg1 (the fg
+     image) -> fg2 (the same fg image at 1.125x scale, phase-
+     shifted likewise, its bottom registered on fg1's bottom).
+   Rules: original art at natural aspect — NO mirroring, NO
+   stretching, NO crossfade; every tier CENTER-ANCHORED (a copy
+   centred on the screen, copies extending left and right, butt
+   joins — the tier in front overlaps the joins, which is what
+   hides them); every tier anchored in UNIT SPACE (the v15.1 FG
+   pattern extended to all tiers; BG_FAR/BG_MID leave the draw
+   path, so the stack can no longer drift against the ground line
+   on tall screens); every tier its OWN scroll lane, strictly
+   ordered far < mid1 < mid2 < fg1 < fg2 < pipes (artAdvanceScroll).
+   Tier geometry (units; yPx = topU*S + OY, the unit mapping):
+   sky bottom 267u (the design-band twin of the retired 0.521H far
+   rect), mid1 [150u, 240u tall] (= the retired [0.292H, 0.469H]
+   mid rect in units). v16.6.4 alignment pass (slot-universal —
+   the same numbers for every asset in the slot): mid2 360u tall
+   (1.5x) with its bottom at 335u — its junction art row is 0.811
+   of the mid image's height, still on the dense lower mass
+   (0.86-1.00 opaque rows begin ~0.62-0.85 per asset; simulated
+   worst-case junction union coverage with mid1 holds within
+   0.03-0.10 of the v16.6.3 450u build in every world, and the
+   rendered Haz darkRunFrac stays in the fixed 0.15-0.25 band),
+   and its base lands on mid1's own dense mass, never on bare
+   wash. fg1 unchanged at [FG_TOP_U, FG_H_U] (bottom 414u); fg2
+   168.75u tall (1.125x) with its bottom RAISED to 414u = fg1's
+   bottom, so the foreground bottoms register on one line. */
+const SKY_BOT_U = 267;
+const MID1_TOP_U = 150, MID1_H_U = 240;
+const MID2_H_U = 360, MID2_BOT_U = 375;   // v16.6.4: 450 -> 360 (1.5x of mid1); v16.6.4-demo.1 (A5): bottom 335 -> 345 — closes the 335-345u coverage hole at the mid/fg junction (mid1's full-width rows begin at ~345u); shift only, height/scale unchanged. v16.6.4-demo.2 (A5): bottom 345 -> 375 — at 345 the edge terminated in the open (fg union cover 0.29; Kenn's circled straight line); at 375 it terminates inside the fg pair's opaque mass (union cover 0.91, mid-span of the fg content) per the general rule: no tier's straight edge may sit in the open. Shift only.
+const FG2_H_U = 168.75, FG2_BOT_U = 414;   // v16.6.4: 187.5 -> 168.75 (1.125x of fg1), bottom 438 -> 414 (= fg1 bottom)
+function tierAspect(img) { const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height; return (iw && ih) ? iw / ih : 2; }
+function drawTierTiles(img, scrollPx, phasePx, tw, yPx, hPx, srcHFrac) {
+  if (!img || !(tw > 0) || !(hPx > 0)) return;
+  /* centre-anchored lattice: when scrollPx == phasePx a tile CENTRE
+     sits at screen centre; copies extend left and right from it.
+     Butt joins only — no crossfade, no mirror. */
+  let base = W / 2 - tw / 2 + phasePx - scrollPx;
+  base = ((base % tw) + tw) % tw; if (base > 0) base -= tw;
+  if (srcHFrac && srcHFrac < 1) {
+    const iw = img.naturalWidth || img.width, ih = (img.naturalHeight || img.height) * srcHFrac;
+    for (let x = base; x < W; x += tw) ctx.drawImage(img, 0, 0, iw, ih, x, yPx, tw, hPx);
+  } else {
+    for (let x = base; x < W; x += tw) ctx.drawImage(img, x, yPx, tw, hPx);
+  }
+}
+function drawSkyTier(img) {
+  if (!img) return;
+  const hPx = (SKY_BOT_U + skyExtra) * S, tw = hPx * tierAspect(img);
+  drawTierTiles(img, ART.scrollFar * S, 0, tw, 0, hPx);
+}
+/* v16.6.4-demo.1 (A5): the mid slot's draw window ends at source
+   row 1021 of 1024 — the mid files' last ~2 rows are a near-black
+   edge strip (junk-mid rows 1022-1023 mean RGB ~(16,13,9)/(4,2,2)
+   against ~(75,68,57) above it) that printed as a hard dark line
+   at whichever tier bottom edge sat in the open (the visible
+   half of Kenn's junction sliver). Same band-crop device as the
+   front layer's FRONT_SRC_FRAC on the fg slot; the window is a
+   slot property, no pixel is redrawn, tier scales unchanged. */
+const MID_SRC_H_FRAC = 1021 / 1024;
+function drawMidTiers(img) {
+  if (!img) return;
+  const a = tierAspect(img), h1 = MID1_H_U * S, h2 = MID2_H_U * S;
+  drawTierTiles(img, ART.scrollMid * S, 0, h1 * a, MID1_TOP_U * S + OY, h1, MID_SRC_H_FRAC);
+  drawTierTiles(img, ART.scrollMid2 * S, (h2 * a) / 2, h2 * a, (MID2_BOT_U - MID2_H_U) * S + OY, h2, MID_SRC_H_FRAC);
+}
+function drawFgTiers(img) {
+  if (!img) return;
+  const a = tierAspect(img), h1 = FG_H_U * S, h2 = FG2_H_U * S;
+  drawTierTiles(img, ART.scrollFg * S, 0, h1 * a, FG_TOP_U * S + OY, h1);
+  drawTierTiles(img, ART.scrollFg2 * S, (h2 * a) / 2, h2 * a, (FG2_BOT_U - FG2_H_U) * S + OY, h2);
+}
+/* v16.6.4-demo — THE FRONT LAYER (Kenn's edit, Oct 23 06:02): a dense
+   junk strip IN FRONT OF the crowd silhouette — the nearest tier in
+   the stack. Asset: the FG SLOT's own lower band (bottom 30% of the
+   active world's fg image, authored file as-is, drawn at the band's
+   native aspect) — identified from Kenn's edit, whose strip is dense
+   small-scale rubble (rusty barrels, cans, bottles) matching the fg
+   art's lower band, NOT ground-strip.webp (large tires, barbed wire,
+   pale sky band) and NOT mid-strip.webp (a misty mid-distance ridge).
+   Slot-universal: every world's front layer is its own fg's lower
+   band. It scrolls right-to-left on its own lane (ART.scrollFront,
+   0.96-0.99 — fastest world layer, under the pipes' 1.0). The crowd
+   does not move or change: same position, same opposite-direction
+   treadmill (v9/v16.2 behaviour, intentional); this layer simply
+   passes in front of its lower mass. */
+const FRONT_H_U = 80, FRONT_SRC_FRAC = 0.45;
+function drawFrontLayer() {
+  const hd = WORLD.holder;
+  const img = (hd && hd.fg) ? hd.fg : ART.bgFg;
+  if (!img || !img.naturalHeight || !img.naturalWidth) return;
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const srcH = Math.round(ih * FRONT_SRC_FRAC), sy = ih - srcH;
+  const hPx = FRONT_H_U * S, tw = hPx * (iw / srcH), yPx = H - hPx;
+  let base = W / 2 - tw / 2 - ART.scrollFront * S;
+  base = ((base % tw) + tw) % tw; if (base > 0) base -= tw;
+  for (let x = base; x < W; x += tw) ctx.drawImage(img, 0, sy, iw, srcH, x, yPx, tw, hPx);
+}
+/* The foreground pair draws from draw() BEFORE the billboard —
+   Kenn's demo stack (sky -> mids -> fgs -> billboard -> pipes ->
+   crowd -> front layer). The wall still draws over the fg bottoms
+   (v9.2), as it does the pipes'. */
+function drawForeground() {
+  const hd = WORLD.holder;
+  if (hd && hd.fg) drawFgTiers(hd.fg);
+  else if (ART.bgFg) drawFgTiers(ART.bgFg);
+}
+function drawWorldFar(holder) {   // v16.5.x names kept — the tier draws above are the live path; these wrappers now route to them
+  drawSkyTier(holder.sky);
+}
+function drawWorldMid(holder) { drawMidTiers(holder.mid); }
+function drawWorldFg(holder) { drawFgTiers(holder.fg); }
+function drawMuseFar() { drawWorldFar(MUSE); }
+function drawMuseMid() { drawWorldMid(MUSE); }
+function drawMuseFg() { drawWorldFg(MUSE); }
+/* v16.6.2 (R5b): the footer line names the world on stage. Through
+   v16.6.1 it was one static string ("Trash world bg • Scrap pipes")
+   that kept naming the classic set on every world's screens —
+   worst on the game-over screen, where it flatly contradicted the
+   run just played. Labels ride on WORLD_MANIFEST (classic keeps the
+   legacy wording exactly); showGameOver pins the played world
+   before the next-world roll, applyWorld keeps it live otherwise. */
+function syncFooterWorld(id) {
+  const el = document.getElementById("footerLine");
+  if (!el) return;
+  const m = WORLD_MANIFEST.find(e => e.id === id) || WORLD_MANIFEST[0];
+  el.textContent = "© FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v" + BUILD_VERSION +
+    " • " + m.bg + " bg • " + m.pipes + " • Neon #00FF88";
 }
 function applyWorld(id) {
-  WORLD.applied = (id === "muse" && MUSE.sky) ? "muse" : "classic";
-  WORLD.musePipes = WORLD.applied === "muse" && MUSE.ready;
-  window.__worlds = { world: WORLD, muse: MUSE, placement: musePlacement };
+  const holder = WSETS[id] || null;
+  WORLD.applied = (holder && holder.sky) ? id : "classic";
+  WORLD.holder = WORLD.applied === "classic" ? null : holder;
+  WORLD.musePipes = !!WORLD.holder && WORLD.holder.ready;   // latched: column pipes on for the applied column world
+  window.__worlds = { world: WORLD, muse: MUSE, placement: musePlacement, sets: WSETS, columnPlacement, holder: WORLD.holder, workOf: pipeWorkOf };
   try { if (window.__popicoin) window.__popicoin.worlds = window.__worlds; } catch (e) {}
+  if (game.state !== "over") syncFooterWorld(WORLD.applied);   // v16.6.2 (R5b): never relabel a game-over screen to the NEXT world — showGameOver pinned the played one
 }
 if (window.ThemeSystem) {
   ThemeSystem.init(WORLD_MANIFEST, { storageKey: "flappy.theme" });
+  /* v16.6.5 — ONE-WORLD MVP LOCK (Kenn, Oct 23 15:49): Junkfall is
+     the one shipped world. WORLD_MANIFEST above carries its entry
+     only, so no code path can select, roll, or fall back to another
+     world; this pin keeps the stored setting on junkfall outright,
+     and the Settings WORLD row presents JUNKFALL only. The other
+     worlds' art stays in the package byte-identical, off every
+     path — the randomizer and the other worlds are post-launch
+     work, not built here. */
+  ThemeSystem.setSetting("junkfall");
   syncWorldAssets().then(() => { if (game.state !== "play") applyWorld(ThemeSystem.current().id); });
 }
 
@@ -2502,44 +3449,64 @@ const FG_TOP_U = 264, FG_H_U = 150;
 function drawFgLayer(img) {
   const h = FG_H_U * S, w = h * (img.naturalWidth / img.naturalHeight);
   const y = FG_TOP_U * S + OY;
-  let off = -((ART.scrollU * S) % w); if (off > 0) off -= w;   // 1.0x — full ground speed
+  let off = -((ART.scrollFg * S) % w); if (off > 0) off -= w;   // v16.6.1: FG's own lane (0.82-0.90x) — was locked 1.0x to the pipes
   for (let x = off; x < W; x += w) ctx.drawImage(img, x, y, w, h);
 }
 function drawBackground() {
   artAdvanceScroll();
-  // v14/v15 parallax: Kenn's purpose-made layers in true wrap tiling —
-  // far sky+skyline 0.3x lane speed, mid trash fields 0.6x, foreground
-  // mounds at FULL ground speed 1.0x (v15, Kenn's playtest law:
-  // everything in the world travels right-to-left; only the crowd
-  // runs the other way). Far/mid rects are fractions of full height;
-  // FG is unit-anchored to the ground line (v15.1, see drawFgLayer).
+  // v16.6.3 — Kenn's five-tier parallax (the tier block at drawSkyTier):
+  // sky + mid1 + mid2 draw here, each centre-anchored and unit-anchored
+  // on its own scroll lane; fg1 + fg2 draw in draw() AFTER the pipes,
+  // per the stack (… mid2 -> pipes -> fg1 -> fg2). Through v16.6.2 the
+  // far/mid rects were screen fractions of H while the FG and crowd
+  // were unit-anchored — on tall screens the two anchor systems
+  // drifted apart (the audit's shot3/shot6 funk). The active column
+  // world's images win per tier; any tier whose world art has not
+  // loaded falls back to the classic image, as before.
   if (!ART.bgFar || !ART.bgMid) { drawBackgroundFallback(); return; }
   // base coat: the same deep green-black the v6 ground band used. The
   // mid/fg art is a keyed texture (real alpha holes between trash), so
   // this guarantees no void pixel ever shows through the stack.
   ctx.fillStyle = "#0c120c"; ctx.fillRect(0, 0, W, H);
-  if (WORLD.applied === "muse") {
-    // v16.5 Muse world: far = mirror tiling (ThemeSystem.drawFar), mid =
-    // mirrored tiles, fg = the classic ground anchor on mirrored tiles.
-    // Any layer whose art has not loaded falls back to the classic layer.
-    if (MUSE.sky) drawMuseFar(); else drawTiledLayer(ART.bgFar, LAY.bgFar, ART.scrollFar);
-    if (MUSE.mid) drawMuseMid(); else drawTiledLayer(ART.bgMid, LAY.bgMid, ART.scrollMid);
-    if (MUSE.fg) drawMuseFg(); else if (ART.bgFg) drawFgLayer(ART.bgFg);
-  } else {
-    drawTiledLayer(ART.bgFar, LAY.bgFar, ART.scrollFar);   // v16.4.3: ramped 0.3x -> 0.55x (own ceiling, never converges)
-    drawTiledLayer(ART.bgMid, LAY.bgMid, ART.scrollMid);   // v16.4.3: ramped 0.6x -> 0.8x (own ceiling, never converges)
-    if (ART.bgFg) drawFgLayer(ART.bgFg);
+  const hd = WORLD.holder;
+  drawSkyTier(hd && hd.sky ? hd.sky : ART.bgFar);
+  drawMidTiers(hd && hd.mid ? hd.mid : ART.bgMid);
+}
+/* v16.6.1 (Kenn's ruling, Oct 23): the billboard cycle is SHUFFLED —
+   the order (sponsors + the house placeholder turn) is Fisher-Yates
+   shuffled every time a new cycle begins and every time the playlist
+   rebuilds (membership signature change), so no sponsor holds a
+   fixed first position. Everything else is unchanged: 3 s per card
+   on the global clock, 60 s playlist polling, the fallback stack,
+   the captions. The order is stable WITHIN a cycle — a card never
+   jumps mid-turn. */
+let _bbOrder = [], _bbOrderSig = "", _bbCycleNo = -1;
+function billboardCycle(disp, t) {
+  const base = disp.length ? disp.concat([null]) : disp.slice();
+  if (!base.length) return base;
+  const sig = base.map(s => (s === null ? "<house>" : (s.imageUrl || s.name || "?"))).join("|");
+  const cycleNo = Math.floor((t / POPICOIN_CONFIG.BILLBOARD_SECONDS) / base.length);
+  if (sig !== _bbOrderSig || cycleNo !== _bbCycleNo) {
+    _bbOrder = base.slice();
+    for (let i = _bbOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = _bbOrder[i]; _bbOrder[i] = _bbOrder[j]; _bbOrder[j] = tmp;
+    }
+    _bbOrderSig = sig; _bbCycleNo = cycleNo;
   }
+  return _bbOrder;
 }
 function drawBillboard(t) {
   const { bw, bh, bx, by, win } = BB, k = BB.k, FS = win.w / 431.2;
   const disp = displaySponsors();   // v16.4: the live-feed working list (broken-image entries skipped)
   /* v16.4.1: the house placeholder holds ONE TURN per cycle — the
-     rotation is the sponsors in purchase order PLUS the placeholder
-     (the null sentinel routes to the placeholder art + caption
-     below, exactly as the empty-board case always has). An empty
-     board stays placeholder at all times, identical to v16.4. */
-  const cycle = disp.length ? disp.concat([null]) : disp;
+     rotation is the sponsors PLUS the placeholder (the null sentinel
+     routes to the placeholder art + caption below, exactly as the
+     empty-board case always has). An empty board stays placeholder
+     at all times, identical to v16.4. v16.6.1: the cycle ORDER is
+     shuffled per cycle (billboardCycle, Kenn's Oct 23 ruling) — the
+     membership is exactly what it was. */
+  const cycle = billboardCycle(disp, t);
   const idx = cycle.length ? Math.floor(t / POPICOIN_CONFIG.BILLBOARD_SECONDS) % cycle.length : -1;   // 3 s cadence, global clock
   const s = idx >= 0 ? cycle[idx] : null;
   // v15.1: the legacy posts + cross-brace are REMOVED (Kenn's
@@ -2595,7 +3562,7 @@ function drawBillboard(t) {
 function drawPipeU(x, y, h, isTop, slot, p) {
   // v16.5: the Muse world draws its own single-piece columns (silhouette
   // art at native res); the classic chain below is untouched.
-  if (WORLD.musePipes && drawMuseColumn(x, y, h, isTop, p)) return;
+  if (WORLD.musePipes && drawColumnArt(WORLD.holder, x, y, h, isTop, p)) return;
   // v10: Kenn's purpose-made full columns — one mouth-anchored sprite
   // per column (regular set / fire set). The paint conforms to the
   // spec 52x320 collision rect, never the reverse. Falls back to the
@@ -2640,7 +3607,7 @@ function drawWingU(side, angDeg) {
 /* v16 — the drawn bird is Kenn's Family A sprite for the active
    skin (Eggs.currentSkin(): 21 Club phase > selection > green).
    Content-bbox normalised (measureBird): every skin's content is
-   drawn at exactly 48u wide, content-centred on the hitbox centre,
+   drawn at exactly BIRD_W_U wide (48u through demo.3), content-centred on the hitbox centre,
    so a skin swap never moves the bird. Falls back to the green
    bird, then to the v8 vector roundel if no sprite has loaded. */
 const SKIN_ART = { green: "birdGreen", orange: "birdOrange", gold: "birdGold" };
@@ -2655,9 +3622,13 @@ function birdSkinImage() {
 function drawBirdU() {
   // The bird is Kenn's Family A character (v16; v9's painted bird-hq
   // retired) — single frame, bob + tilt only, exactly like the
-  // original's design. The visual (48u wide) is deliberately larger
-  // than the measured 20×20 hitbox: the forgiving-graze rule from
-  // the mechanics spec. Rotation follows the spec rotation machine.
+  // original's design. The visual (BIRD_W_U wide; 32u from demo.4) is larger than the
+  // 20×20 hitbox anchor; since v16.6.4-demo.1 the column-world
+  // collision tests the sprite's own alpha mask (measureBird's
+  // _mask), so the visible bird IS the collision shape there —
+  // the forgiving-graze circle survives only as the no-mask
+  // fallback and in the classic/Free-Flight tests. Rotation
+  // follows the spec rotation machine.
   // The v8 vector roundel remains only as a load fallback.
   const b = game.bird;
   const hov = (game.phase === "ready" || game.phase === "menu")
@@ -2668,7 +3639,7 @@ function drawBirdU() {
     if (game.ff.active) ctx.globalAlpha = 0.55;   // v16.2: Free Flight tell — the bird runs translucent
     ctx.translate(b.x + 10, b.y + 10 + hov);   // hitbox center
     ctx.rotate(b.angle * Math.PI / 180);
-    const BW = 48, BH = BW * skin.bb.h / skin.bb.w;
+    const BW = BIRD_W_U, BH = BW * skin.bb.h / skin.bb.w;   // v16.6.4-demo.4: BIRD_W_U — paint and mask share the one constant
     ctx.drawImage(skin.img, skin.bb.x, skin.bb.y, skin.bb.w, skin.bb.h, -BW / 2, -BH / 2, BW, BH);
     ctx.restore();
   } else {
@@ -2729,17 +3700,28 @@ function draw(tSec) {
   ART.pulseA = 0.5 + 0.5 * Math.sin(tSec * (2 * Math.PI / 2.6));
   ART.pulseB = 0.5 + 0.5 * Math.sin(tSec * (2 * Math.PI / 2.6) + Math.PI / 2);
   drawBackground();
-  drawBillboard(tSec);
   // flight-lane wash, feathered at the sides (pre-baked per layout;
   // v4's flat fill left hard vertical tonal steps at the playfield edges).
-  // Drawn over the background + billboard only — never over the wall
+  // Drawn over the background only in this build — the billboard draws
+  // later, above the pipes (the fork, below) — never over the wall
   // or the pipes (v8 relative order preserved).
   if (ART.washCv) ctx.drawImage(ART.washCv, 0, 0);
-  /* draw order (v15): background (far/mid/fg layers, inside
-     drawBackground) → billboard → wash → pipes → zombie wall → bird →
-     HUD. The foreground layer rides inside the background pass now;
-     its mounds sit behind the wall like the v6 plate's did, and the
-     spec ground LINE is unchanged. */
+  /* draw order (v16.6.4-demo — Kenn's locked stack, Oct 23 06:02-06:04):
+     sky → mid1/mid2 (inside drawBackground) → fg1/fg2 → BILLBOARD →
+     PIPES → zombie wall (crowd) → FRONT LAYER → bird → HUD.
+     The billboard renders BEHIND the pipes in the demo (Kenn 06:04:
+     'I think I like the billboard behind the pipes honestly' — the
+     v16.6.2 FRONT fork's billboard order, superseding the BEHIND
+     fork order for this build; package lineage stays the behind
+     tree). The front layer (fg slot's lower band) passes in front
+     of the crowd, which itself is unchanged. */
+  /* v16.6.4-demo: fg1 + fg2 draw BEFORE the billboard and pipes
+     (Kenn's stack: … mids -> fgs -> billboard -> pipes …). */
+  drawForeground();
+  /* v16.6.4-demo: the billboard renders BEHIND the pipes (Kenn
+     06:04) — a pipe passing the board crosses IN FRONT of the
+     sponsor card. Render layering only. */
+  drawBillboard(tSec);
   /* world pass — unit space, clipped to the playfield. Pipes draw
      BEHIND the zombie wall (v9.2, Kenn's playtest order 2026-10-20
      04:26): their bottoms run to the bottom edge and disappear
@@ -2766,6 +3748,10 @@ function draw(tSec) {
      mass + silhouette strips cover the pipe feet where they enter
      the band; the bird and particles still draw over the wall. */
   drawZombieWall();
+  /* v16.6.4-demo: the FRONT LAYER — nearest tier, in front of the
+     crowd (Kenn's edit). The crowd is untouched; this passes before
+     it. Bird + particles + HUD still draw over everything. */
+  drawFrontLayer();
   // particles (device space)
   for (const pt of game.particles) {
     const a = 1 - pt.age / pt.life;
@@ -3798,9 +4784,11 @@ function renderSettings() {
   el("setLandStatus").textContent = landscapeUnlocked() ? "UNLOCKED ✓" : "LOCKED";
   el("btnPreviewLand").textContent = land ? "← BACK TO PORTRAIT (DEFAULT)" : "PREVIEW LANDSCAPE ON THIS DEVICE →";
   if (window.ThemeSystem && el("setThemeNow")) {
-    const themeNames = { random: "Random", classic: "Classic", muse: "Muse" };
+    const themeNames = { random: "Random" };
+    for (const w of WORLD_MANIFEST) themeNames[w.id] = w.name;
     el("setThemeNow").textContent = themeNames[ThemeSystem.getSetting()] || ThemeSystem.getSetting();
-    el("setWorldNow").textContent = WORLD.applied === "muse" ? "Muse" : "Classic";
+    const appliedW = WORLD_MANIFEST.find(w => w.id === WORLD.applied);
+    el("setWorldNow").textContent = appliedW ? appliedW.name : WORLD.applied;
   }
 }
 const settingsModal = document.getElementById("settingsModal");
@@ -3814,11 +4802,14 @@ document.getElementById("btnPreviewLand").addEventListener("click", () => {
   try { localStorage.setItem("popicoin_landscape_preview", toLand ? "1" : "0"); } catch (e) {}
   applyLayout(!toLand);
 });
-["Random", "Classic", "Muse"].forEach(nm => {
-  document.getElementById("btnTheme" + nm).addEventListener("click", () => {
+[["Random", "random"], ["Classic", "classic"], ["Muse", "muse"], ["Space", "space"], ["Junkfall", "junkfall"], ["Ewaste", "ewaste"], ["Hazscrap", "hazscrap"]].forEach(([nm, val]) => {
+  const btn = document.getElementById("btnTheme" + nm);
+  if (!btn) return;
+  btn.addEventListener("click", () => {
     if (!window.ThemeSystem) return;
-    ThemeSystem.setSetting(nm.toLowerCase());
-    if (nm === "Muse") syncWorldAssets().then(() => { if (game.state !== "play") applyWorld(ThemeSystem.current().id); renderSettings(); });
+    if (BUILD_VERSION === "16.6.4-demo.5") { renderSettings(); return; }   // v16.6.4-demo(.1/.2/.3/.4/.5): world locked to the Junkfall lab stack
+    ThemeSystem.setSetting(val);
+    if (val !== "random" && val !== "classic") syncWorldAssets().then(() => { if (game.state !== "play") applyWorld(ThemeSystem.current().id); renderSettings(); });
     else if (game.state !== "play") applyWorld(ThemeSystem.current().id);
     renderSettings();
   });

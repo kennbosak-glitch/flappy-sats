@@ -67,10 +67,23 @@
 
       var flip = !!pipe.flipY;
 
+      /* v16.6.1: optional trunk-band extension (Flappy Sats hanging
+         columns whose flipped bitmap repeats a trunk band upward to
+         the ceiling when the bitmap is too short to reach its gap).
+         Opt-in via pipe.extTop / extBandTop / extBandBot (band rows
+         in FLIP-bitmap space); absent fields = exactly the old
+         behavior. The coarse gate widens to the extension top, and
+         sample rows above the bitmap wrap through the band with the
+         same mapping the renderer draws. */
+      var hasExt = flip && typeof pipe.extTop === 'number' && isFinite(pipe.extTop)
+        && typeof pipe.extBandTop === 'number' && typeof pipe.extBandBot === 'number'
+        && pipe.extBandBot > pipe.extBandTop;
+
       var gx0 = px + bbox.minX * sc;
       var gx1 = px + (bbox.maxX + 1) * sc;
       var gy0 = flip ? py + (H - bbox.maxY - 1) * sc : py + bbox.minY * sc;
       var gy1 = flip ? py + (H - bbox.minY) * sc     : py + (bbox.maxY + 1) * sc;
+      if (hasExt && pipe.extTop < gy0) gy0 = pipe.extTop;
 
       var nx = bx < gx0 ? gx0 : (bx > gx1 ? gx1 : bx);
       var ny = by < gy0 ? gy0 : (by > gy1 ? gy1 : by);
@@ -88,11 +101,24 @@
       var lo = Math.floor(iy - ir) - 1;
       var hi = Math.floor(iy + ir) + 1;
       if (lo < 0) lo = 0;
-      if (hi > H - 1) hi = H - 1;
+      if (!hasExt && hi > H - 1) hi = H - 1;
       if (lo > hi) return false;
 
       for (var y = lo; y <= hi; y++) {
-        var sp = spans[y];
+        var yy = y;
+        if (yy >= H) {
+          /* extension band: rows above the bitmap. y - H counts src
+             rows past the top; the renderer shows flip band rows
+             there, cycling — map back to the src row whose span the
+             renderer is showing (flip row f <-> src row H - f, the
+             same convention as iy above). */
+          if (!hasExt) continue;
+          var bandRows = pipe.extBandBot - pipe.extBandTop;
+          var fExt = pipe.extBandBot - ((yy - H) % bandRows);
+          yy = H - fExt;
+          if (yy < 0 || yy > H - 1) continue;
+        }
+        var sp = spans[yy];
         if (sp === null) continue;
 
         var dy;
@@ -111,13 +137,64 @@
       return false;
     }
 
+
+    /* v16.6.4-demo.1: point-set test — the point-sampling twin of
+       hitTest, with the same source-space mapping, flip convention and
+       extension-band wrap. pts is a flat [x0, y0, x1, y1, ...] array
+       of WORLD-space points (the bird's rotated alpha-mask samples);
+       returns true on the first point inside a content span, using
+       hitTest's own span convention (sp[0] <= ix <= sp[1] + 1). */
+    function hitTestPoints(pts, pipe) {
+      if (!bbox || !pts || !pipe) return false;
+
+      var px = +pipe.x, py = +pipe.y, sc = +pipe.scale;
+      if (!isFinite(px) || !isFinite(py) || !isFinite(sc) || sc <= 0) return false;
+
+      var flip = !!pipe.flipY;
+      var hasExt = flip && typeof pipe.extTop === 'number' && isFinite(pipe.extTop)
+        && typeof pipe.extBandTop === 'number' && typeof pipe.extBandBot === 'number'
+        && pipe.extBandBot > pipe.extBandTop;
+
+      var gx0 = px + bbox.minX * sc;
+      var gx1 = px + (bbox.maxX + 1) * sc;
+      var gy0 = flip ? py + (H - bbox.maxY - 1) * sc : py + bbox.minY * sc;
+      var gy1 = flip ? py + (H - bbox.minY) * sc : py + (bbox.maxY + 1) * sc;
+      if (hasExt && pipe.extTop < gy0) gy0 = pipe.extTop;
+
+      var inv = 1 / sc;
+      for (var i = 0; i + 1 < pts.length; i += 2) {
+        var x = pts[i], y = pts[i + 1];
+        if (x < gx0 || x > gx1 || y < gy0 || y > gy1) continue;
+
+        var ix = (x - px) * inv;
+        var vTop = (y - py) * inv;
+        var iy = flip ? (H - vTop) : vTop;
+        var yy = Math.floor(iy);
+
+        if (yy >= H) {
+          if (!hasExt) continue;
+          var bandRows = pipe.extBandBot - pipe.extBandTop;
+          var fExt = pipe.extBandBot - ((yy - H) % bandRows);
+          yy = H - fExt;
+          if (yy < 0 || yy > H - 1) continue;
+        }
+        if (yy < 0) continue;
+
+        var sp = spans[yy];
+        if (!sp) continue;
+        if (ix >= sp[0] && ix <= sp[1] + 1) return true;
+      }
+      return false;
+    }
+
     return {
       width: W,
       height: H,
       threshold: thr,
       spans: spans,
       bbox: bbox,
-      hitTest: hitTest
+      hitTest: hitTest,
+      hitTestPoints: hitTestPoints
     };
   }
 
