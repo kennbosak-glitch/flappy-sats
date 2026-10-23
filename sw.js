@@ -1,4 +1,4 @@
-/* FLAPPY SATS service worker — offline app shell. v16.5.2.
+/* FLAPPY SATS service worker — offline app shell. v16.6.3-behind.
    Only same-origin GETs are cached; API calls, cross-origin requests
    and non-GETs always hit the network. Bump CACHE to ship updates.
    v16.4 — THE LIVE FEED: sponsors.json (the sponsor playlist) and
@@ -9,13 +9,17 @@
    the shell cache. Offline, the last network-fetched copy (kept in
    the cache by the handler below) is the fallback. The handler also
    answers the update button's SKIP_WAITING message. */
-const CACHE = "popicoin-shell-v31";
+const CACHE = "popicoin-shell-v41";
 const SHELL = ["./", "./index.html", "./qrcode.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
   "./art/bg-far.webp", "./art/bg-mid.webp", "./art/bg-fg.webp",
   "./art/col-o-hang.png", "./art/col-o-stand.png", "./art/col-f-hang.png", "./art/col-f-stand.png",
   "./art/bird-green.png", "./art/bird-orange.png", "./art/bird-gold.png", "./art/bb-frame.png",
   "./art/sponsor-001.png", "./theme-system.js", "./pipe-collision.js",
   "./art/muse-sky.png", "./art/muse-mid.png", "./art/muse-fg.png", "./art/muse-pipe.png", "./art/muse-pipe-fire.png",
+  "./art/space-sky.png", "./art/space-mid.png", "./art/space-fg.png", "./art/space-pipe-hang.png", "./art/space-pipe-fire-hang.png",
+  "./art/junk-sky.png", "./art/junk-mid.png", "./art/junk-fg.png", "./art/junk-pipe.png",
+  "./art/ewaste-sky.png", "./art/ewaste-mid.png", "./art/ewaste-fg.png", "./art/ewaste-pipe.png", "./art/ewaste-pipe-fire.png",
+  "./art/haz-sky.png", "./art/haz-mid.png", "./art/haz-fg.png", "./art/haz-pipe.png", "./art/haz-pipe-fire.png",
   "./art/frame-tex.webp", "./art/medallion.webp", "./art/zombies.webp", "./art/road.webp",
   "./audio/wilhelm.ogg"];
 
