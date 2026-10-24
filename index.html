@@ -1190,6 +1190,7 @@
    ===================================================================== */
 const POPICOIN_CONFIG = {
   firebaseProjectId: "flappy-sats",
+  sponsorSource: "playlist",
   firebaseApiKey: "AIzaSyB9mmNo3xTbzmH3paZzik5KwDJZmg7mPEk",
   firebaseAuthDomain: "flappy-sats.firebaseapp.com",
   sponsorAddress: "bitcoincash:qz40helxvypa8u698hxl2thsypmhlqudncygfnrh3k",
@@ -1250,7 +1251,7 @@ const SPONSORS_SOLD = 3;
    cache:"no-store" — and sw.js treats both JSON files as
    network-only — so a playlist edit is the ONLY thing a sponsor
    change needs; the game itself is never rebuilt for art. */
-const BUILD_VERSION = "16.6.16";   // v16.6.5 MVP ship candidate Oct 23 2026 (mirrored in this copy's version.json so the update poll stays quiet)
+const BUILD_VERSION = "16.6.18";   // v16.6.5 MVP ship candidate Oct 23 2026 (mirrored in this copy's version.json so the update poll stays quiet)
 const PLAYLIST_URL = "sponsors.json";
 const VERSION_URL = "version.json";
 const FEED_POLL_MS = 60000;
@@ -1522,7 +1523,7 @@ function startFeed() {
 
 async function loadSponsors() {
   const pid = POPICOIN_CONFIG.firebaseProjectId;
-  if (!pid) {
+  if (POPICOIN_CONFIG.sponsorSource !== "firestore") {
     /* BETA path — v16.4: THE LIVE FEED (see the block above).
        The playlist is the rotation's source; the baked list is
        now only the third rung of the fallback stack. */
