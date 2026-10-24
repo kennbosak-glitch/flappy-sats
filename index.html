@@ -261,11 +261,11 @@
       <p style="color:var(--gold);font-size:12px">🪙 You earn 1 sat per pipe — up to $0.10 worth a day.</p>
       <div id="charRow" aria-label="Choose your bird">
         <div class="charSlot sel" id="slotGreen" role="button" aria-label="Green bird">
-          <img id="imgGreen" src="art/bird-green.png" alt="Green BCH bird">
+          <img id="imgGreen" src="art/bird-green.png?v=16616" onerror="this.onerror=null;this.src='https://kennbosak-glitch.github.io/flappy-sats/art/bird-green.png?v=16616'" alt="Green BCH bird">
           <small>BCH</small>
         </div>
         <div class="charSlot locked" id="slotOrange" role="button" aria-label="Mystery bird">
-          <img id="imgOrange" src="art/bird-orange.png" alt="Mystery bird" style="filter:brightness(0)">
+          <img id="imgOrange" src="art/bird-orange.png?v=16616" onerror="this.onerror=null;this.src='https://kennbosak-glitch.github.io/flappy-sats/art/bird-orange.png?v=16616'" alt="Mystery bird" style="filter:brightness(0)">
           <small id="orangeLabel">???</small>
         </div>
       </div>
@@ -298,7 +298,8 @@
   </div>
 
   <footer>
-    <span id="footerLine">© FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.6.5 • Trash world bg • Scrap pipes • Neon #00FF88</span><br>
+    <span id="footerLine">© FLAPPY SATS • ESCAPE FIAT TRASH • BETA — early build v16.6.16 • Trash world bg • Scrap pipes • Neon #00FF88</span><br>
+    <span id="diagLine" style="opacity:.55; font-size:11px;">DIAG —</span><br>
     Prices in Bitcoin Cash (BCH). Sponsorships are verified on-chain before they go live.
   </footer>
 </div>
@@ -528,8 +529,652 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <!-- QR generator vendored locally (qrcode-generator 1.4.4, Kazuhiko Arase, MIT) — no CDN at runtime; the sponsor panel's QR is generated on-device. -->
 <script src="qrcode.js"></script>
-<script src="theme-system.js"></script>
-<script src="pipe-collision.js"></script>
+<script>
+/* ===== theme-system.js INLINED (v16.6.12) — the installed app repeatedly failed to load this as a separate file, which silently disabled the world system AND every start gate behind it. Welded into the page: it ships with the HTML or not at all. ===== */
+/**
+ * theme-system.js
+ * Multi-world theme manager for the game. Exposes window.ThemeSystem.
+ */
+(function (global) {
+  'use strict';
+
+  var ASSET_KEYS = ['sky', 'mid', 'fg', 'pipe', 'pipeFire'];
+  var RANDOM = 'random';
+  var FALLBACK_ID = 'classic';
+  var DEFAULT_STORAGE_KEY = 'flappy.theme';
+  var MAX_TILES = 4096;
+
+  var imagePromises = new Map();
+  var worldPromises = new Map();
+
+  var state = {
+    worlds: [],
+    byId: Object.create(null),
+    setting: RANDOM,
+    active: null,
+    storageKey: DEFAULT_STORAGE_KEY,
+    pendingId: null,
+    pendingPromise: null,
+    bgStarted: false
+  };
+
+  function readStored(key) {
+    try {
+      return global.localStorage ? global.localStorage.getItem(key) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeStored(key, value) {
+    try {
+      if (global.localStorage) global.localStorage.setItem(key, value);
+    } catch (e) { /* private mode / quota: ignore */ }
+  }
+
+  function normalizeWorld(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    if (typeof raw.id !== 'string' || raw.id.length === 0) return null;
+
+    var src = raw.assets;
+    if (!src || typeof src !== 'object') return null;
+
+    var assets = {};
+    for (var i = 0; i < ASSET_KEYS.length; i++) {
+      var key = ASSET_KEYS[i];
+      var url = src[key];
+      if (typeof url !== 'string' || url.length === 0) return null;
+      assets[key] = url;
+    }
+
+    var world = {};
+    for (var k in raw) {
+      if (Object.prototype.hasOwnProperty.call(raw, k)) world[k] = raw[k];
+    }
+    world.id = raw.id;
+    world.name = (typeof raw.name === 'string' && raw.name.length) ? raw.name : raw.id;
+    world.assets = assets;
+    return world;
+  }
+
+  function validateSetting(value) {
+    if (typeof value !== 'string') return null;
+    if (value === RANDOM) return RANDOM;
+    return state.byId[value] ? value : null;
+  }
+
+  function resolveActive(setting) {
+    if (!state.worlds.length) return null;
+    if (setting === RANDOM) {
+      return state.worlds[Math.floor(Math.random() * state.worlds.length)];
+    }
+    return state.byId[setting] || state.worlds[0];
+  }
+
+  /* v16.6.14: the fetch-blob image path. fetch() demonstrably works
+     in the installed app where Image() loads error; loading the bytes
+     via fetch and handing the element a blob object URL sidesteps
+     the image pipeline's cache/worker handling entirely. */
+  global.__fetchImg = function (url) {
+    return fetch(url, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("http " + r.status);
+      return r.blob();
+    }).then(function (b) {
+      return new Promise(function (res) {
+        var im = new global.Image();
+        im.onload = function () { res(im); };
+        im.onerror = function () { res(null); };
+        im.src = global.URL.createObjectURL(b);
+      });
+    }).catch(function () { return null; });
+  };
+
+  /* v16.6.16: THE MIRROR RAIL. Kenn's 16.6.16 probe named the fault:
+     in the installed app, same-origin art loads fail in EVERY mode
+     (img=X cors=X fimg=X) while fetches return 200 with a 315k body
+     for two different files -- that 315k is this page's own index
+     (the SPA shell), not a picture. The GitHub Pages mirror passed
+     every probe in-app (gh=OK ghc=OK ghpx=OK ghf=200), canvas read
+     included. So art loads now try BOTH origins: standalone (the
+     installed app) tries the mirror first, a browser tab tries
+     same-origin first, and the loser is the fallback. Every
+     candidate gets a plain Image() attempt and then a fetch-blob
+     attempt; a fetch that returns HTML is a miss, never a picture. */
+  global.__ART_MIRROR = "https://kennbosak-glitch.github.io/flappy-sats/";
+  global.__artStandalone = function () {
+    try {
+      return (typeof matchMedia === "function" && matchMedia("(display-mode: standalone)").matches) ||
+        global.navigator.standalone === true ||
+        (document.referrer && document.referrer.indexOf("android-app://") === 0);
+    } catch (e) { return false; }
+  };
+  global.__mirrorUrl = function (url) {
+    if (typeof url !== "string") return null;
+    if (url.indexOf("art/") === 0) return global.__ART_MIRROR + url;
+    return null;
+  };
+  global.__artImg = function (url, bust) {
+    if (typeof url !== "string" || url.length === 0) return Promise.resolve(null);
+    function versioned(u) { return u + (u.indexOf("?") >= 0 ? "&" : "?") + "v=16616" + (bust ? "&fa=" + bust : ""); }
+    function plain(u, cors) {
+      return new Promise(function (res) {
+        var im = new global.Image();
+        if (cors) im.crossOrigin = "anonymous";
+        im.onload = function () { res(im); };
+        im.onerror = function () { res(null); };
+        try { im.src = u; } catch (e) { res(null); }
+      });
+    }
+    function viaFetch(u) {
+      return fetch(u, { cache: "no-store" }).then(function (r) {
+        if (!r.ok) throw new Error("http " + r.status);
+        return r.blob();
+      }).then(function (b) {
+        if (b && b.type && b.type.indexOf("text/html") === 0) return null;
+        return new Promise(function (res) {
+          var im = new global.Image();
+          im.onload = function () { res(im); };
+          im.onerror = function () { res(null); };
+          try { im.src = global.URL.createObjectURL(b); } catch (e) { res(null); }
+        });
+      }).catch(function () { return null; });
+    }
+    var mirror = global.__mirrorUrl(url);
+    var candidates;
+    if (mirror) {
+      var murl = versioned(mirror), lurl = versioned(url);
+      candidates = global.__artStandalone() ? [murl, lurl] : [lurl, murl];
+    } else {
+      candidates = [url];
+    }
+    var chain = Promise.resolve(null);
+    candidates.forEach(function (u) {
+      var cors = u.indexOf(global.__ART_MIRROR) === 0;
+      chain = chain.then(function (im) {
+        if (im) return im;
+        return plain(u, cors).then(function (im2) { return im2 || viaFetch(u); });
+      });
+    });
+    return chain;
+  };
+
+  function loadImage(url) {
+    if (typeof url !== 'string' || url.length === 0) return Promise.resolve(null);
+    if (imagePromises.has(url)) return imagePromises.get(url);
+
+    /* v16.6.16: both origins, mirror first in the installed app. */
+    var p = global.__artImg(url).then(function (im) {
+      if (!im) { try { window.__worldErr = (window.__worldErr || 0) + 1; } catch (e) {} }
+      return im || null;
+    });
+
+    imagePromises.set(url, p);
+    return p;
+  }
+
+
+  function preloadWorld(world) {
+    if (!world || !world.assets) {
+      return Promise.resolve({ ok: false, images: null });
+    }
+    var id = world.id;
+    if (worldPromises.has(id)) return worldPromises.get(id);
+
+    var jobs = ASSET_KEYS.map(function (key) {
+      return loadImage(world.assets[key]);
+    });
+
+    var p = Promise.all(jobs).then(function (list) {
+      var images = {};
+      var ok = true;
+      for (var i = 0; i < ASSET_KEYS.length; i++) {
+        var img = list[i] || null;
+        images[ASSET_KEYS[i]] = img;
+        if (!img) ok = false;
+      }
+      return { ok: ok, images: images };
+    }, function () {
+      return { ok: false, images: null };
+    });
+
+    worldPromises.set(id, p);
+    return p;
+  }
+
+  function startBackground(activeId) {
+    if (state.bgStarted) return;
+    state.bgStarted = true;
+
+    var queue = state.worlds.filter(function (w) { return w.id !== activeId; });
+    var i = 0;
+
+    function next() {
+      if (i >= queue.length) return;
+      var w = queue[i++];
+      preloadWorld(w).then(next, next);
+    }
+
+    next();
+    next();
+  }
+
+  function init(manifest, options) {
+    options = options || {};
+
+    state.storageKey = (typeof options.storageKey === 'string' && options.storageKey.length)
+      ? options.storageKey
+      : DEFAULT_STORAGE_KEY;
+
+    state.worlds = [];
+    state.byId = Object.create(null);
+    state.active = null;
+    state.pendingId = null;
+    state.pendingPromise = null;
+    state.bgStarted = false;
+    ThemeSystem.degraded = false;
+
+    var list = Array.isArray(manifest) ? manifest : [];
+    for (var i = 0; i < list.length; i++) {
+      var world = null;
+      try {
+        world = normalizeWorld(list[i]);
+      } catch (e) {
+        world = null;
+      }
+      if (!world) continue;
+      if (state.byId[world.id]) continue;
+      state.byId[world.id] = world;
+      state.worlds.push(world);
+    }
+
+    var stored = validateSetting(readStored(state.storageKey));
+    state.setting = stored || RANDOM; // SKYNET PATCH 2026-10-22: fresh players default to Random (Kenn: 'random for the win'); DeepSeek's original defaulted to the first world fixed.
+    state.active = resolveActive(state.setting);
+
+    return ThemeSystem;
+  }
+
+  function setSetting(value) {
+    var v = validateSetting(value);
+    if (!v) return state.setting;
+
+    state.setting = v;
+    writeStored(state.storageKey, v);
+
+    if (v !== RANDOM) {
+      var world = state.byId[v];
+      if (world) state.active = world;
+    } else if (!state.active) {
+      state.active = resolveActive(RANDOM);
+    }
+    return state.setting;
+  }
+
+  function getSetting() {
+    return state.setting;
+  }
+
+  function current() {
+    return state.active || null;
+  }
+
+  function rollAfterGameOver() {
+    var worlds = state.worlds;
+    if (!worlds.length) {
+      state.active = null;
+      return null;
+    }
+
+    if (state.setting === RANDOM) {
+      if (worlds.length === 1) {
+        state.active = worlds[0];
+        return state.active;
+      }
+      var currentId = state.active ? state.active.id : null;
+      var pool = worlds.filter(function (w) { return w.id !== currentId; });
+      if (!pool.length) pool = worlds;
+      state.active = pool[Math.floor(Math.random() * pool.length)];
+      return state.active;
+    }
+
+    state.active = state.byId[state.setting] || worlds[0];
+    return state.active;
+  }
+
+  function preload() {
+    var active = state.active;
+    if (!active && state.worlds.length) {
+      active = resolveActive(state.setting);
+      state.active = active;
+    }
+    if (!active) {
+      ThemeSystem.degraded = true;
+      return Promise.resolve(null);
+    }
+
+    if (state.pendingPromise && state.pendingId === active.id) {
+      return state.pendingPromise;
+    }
+
+    var promise = preloadWorld(active).then(function (res) {
+      if (res && res.ok) {
+        startBackground(active.id);
+        return res.images;
+      }
+
+      var fallback = state.byId[FALLBACK_ID];
+      if (fallback && fallback.id !== active.id) {
+        return preloadWorld(fallback).then(function (fres) {
+          if (fres && fres.ok) {
+            state.active = fallback;
+            startBackground(fallback.id);
+            return fres.images;
+          }
+          ThemeSystem.degraded = true;
+          startBackground(active.id);
+          return (fres && fres.images) || (res && res.images) || null;
+        });
+      }
+
+      ThemeSystem.degraded = true;
+      startBackground(active.id);
+      return (res && res.images) || null;
+    });
+
+    state.pendingId = active.id;
+    state.pendingPromise = promise;
+    return promise;
+  }
+
+  function drawFar(ctx, img, x, width, height) {
+    if (!ctx || !img) return;
+
+    width = +width;
+    height = +height;
+    if (!(width > 0) || !(height > 0) || !isFinite(width) || !isFinite(height)) return;
+
+    var iw = img.naturalWidth || img.width || 0;
+    if (!iw) return;
+
+    var off = (typeof x === 'number' && isFinite(x)) ? x : 0;
+    var viewW = (ctx.canvas && ctx.canvas.width) ? ctx.canvas.width : width;
+
+    var k0 = Math.floor(-off / width) - 1;
+    var k1 = Math.ceil((viewW - off) / width) + 1;
+    if (!isFinite(k0) || !isFinite(k1) || (k1 - k0) > MAX_TILES) return;
+
+    try {
+      for (var k = k0; k <= k1; k++) {
+        var dx = off + k * width;
+        var flipped = (((k % 2) + 2) % 2) === 1;
+
+        if (!flipped) {
+          ctx.drawImage(img, dx, 0, width, height);
+        } else {
+          ctx.save();
+          ctx.translate(dx + width, 0);
+          ctx.scale(-1, 1);
+          ctx.drawImage(img, 0, 0, width, height);
+          ctx.restore();
+        }
+      }
+    } catch (e) {
+      /* never break the game loop over a bad draw */
+    }
+  }
+
+  var ThemeSystem = {
+    degraded: false,
+    init: init,
+    setSetting: setSetting,
+    getSetting: getSetting,
+    current: current,
+    rollAfterGameOver: rollAfterGameOver,
+    preload: preload,
+    drawFar: drawFar
+  };
+
+  global.ThemeSystem = ThemeSystem;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/* ===== pipe-collision.js INLINED (v16.6.12) — same reason as theme-system.js above. ===== */
+(function (global) {
+  'use strict';
+
+  var DEFAULT_THRESHOLD = 128;
+
+  function toInt(v, fallback) {
+    var n = Math.floor(+v);
+    return isFinite(n) ? n : fallback;
+  }
+
+  function makeCollider(alpha, width, height, threshold) {
+    var W = toInt(width, 0);
+    var H = toInt(height, 0);
+    if (W < 0) W = 0;
+    if (H < 0) H = 0;
+
+    var thr = (typeof threshold === 'number' && isFinite(threshold)) ? threshold : DEFAULT_THRESHOLD;
+
+    var hasAlpha = !!alpha && typeof alpha.length === 'number';
+    var len = hasAlpha ? alpha.length : 0;
+
+    var spans = new Array(H);
+
+    var minXAll = -1, minYAll = -1, maxXAll = -1, maxYAll = -1;
+    var rowsWithContent = 0, widestRow = -1, widestSpan = 0;
+
+    if (hasAlpha && W > 0 && H > 0) {
+      for (var y = 0; y < H; y++) {
+        var base = y * W;
+        var lo = -1, hi = -1;
+        for (var x = 0; x < W; x++) {
+          var i = base + x;
+          if (i < len && alpha[i] >= thr) {
+            if (lo < 0) lo = x;
+            hi = x;
+          }
+        }
+        if (lo < 0) {
+          spans[y] = null;
+          continue;
+        }
+        spans[y] = [lo, hi];
+        rowsWithContent++;
+        if (minYAll < 0) minYAll = y;
+        maxYAll = y;
+        if (minXAll < 0 || lo < minXAll) minXAll = lo;
+        if (hi > maxXAll) maxXAll = hi;
+        var w = hi - lo + 1;
+        if (w > widestSpan) { widestSpan = w; widestRow = y; }
+      }
+    } else {
+      for (var y2 = 0; y2 < H; y2++) spans[y2] = null;
+    }
+
+    var bbox = rowsWithContent > 0
+      ? { minX: minXAll, minY: minYAll, maxX: maxXAll, maxY: maxYAll }
+      : null;
+
+    function hitTest(bird, pipe) {
+      if (!bbox || !bird || !pipe) return false;
+
+      var bx = +bird.x, by = +bird.y, br = +bird.r;
+      if (!isFinite(bx) || !isFinite(by) || !isFinite(br) || br <= 0) return false;
+
+      var px = +pipe.x, py = +pipe.y, sc = +pipe.scale;
+      if (!isFinite(px) || !isFinite(py) || !isFinite(sc) || sc <= 0) return false;
+
+      var flip = !!pipe.flipY;
+
+      /* v16.6.1: optional trunk-band extension (Flappy Sats hanging
+         columns whose flipped bitmap repeats a trunk band upward to
+         the ceiling when the bitmap is too short to reach its gap).
+         Opt-in via pipe.extTop / extBandTop / extBandBot (band rows
+         in FLIP-bitmap space); absent fields = exactly the old
+         behavior. The coarse gate widens to the extension top, and
+         sample rows above the bitmap wrap through the band with the
+         same mapping the renderer draws. */
+      var hasExt = flip && typeof pipe.extTop === 'number' && isFinite(pipe.extTop)
+        && typeof pipe.extBandTop === 'number' && typeof pipe.extBandBot === 'number'
+        && pipe.extBandBot > pipe.extBandTop;
+
+      var gx0 = px + bbox.minX * sc;
+      var gx1 = px + (bbox.maxX + 1) * sc;
+      var gy0 = flip ? py + (H - bbox.maxY - 1) * sc : py + bbox.minY * sc;
+      var gy1 = flip ? py + (H - bbox.minY) * sc     : py + (bbox.maxY + 1) * sc;
+      if (hasExt && pipe.extTop < gy0) gy0 = pipe.extTop;
+
+      var nx = bx < gx0 ? gx0 : (bx > gx1 ? gx1 : bx);
+      var ny = by < gy0 ? gy0 : (by > gy1 ? gy1 : by);
+      var ddx = bx - nx, ddy = by - ny;
+      if (ddx * ddx + ddy * ddy > br * br) return false;
+
+      var inv = 1 / sc;
+      var ix = (bx - px) * inv;
+      var vTop = (by - py) * inv;
+      var iy = flip ? (H - vTop) : vTop;
+      var ir = br * inv;
+
+      if (!isFinite(ix) || !isFinite(iy) || !isFinite(ir)) return false;
+
+      var lo = Math.floor(iy - ir) - 1;
+      var hi = Math.floor(iy + ir) + 1;
+      if (lo < 0) lo = 0;
+      if (!hasExt && hi > H - 1) hi = H - 1;
+      if (lo > hi) return false;
+
+      for (var y = lo; y <= hi; y++) {
+        var yy = y;
+        if (yy >= H) {
+          /* extension band: rows above the bitmap. y - H counts src
+             rows past the top; the renderer shows flip band rows
+             there, cycling — map back to the src row whose span the
+             renderer is showing (flip row f <-> src row H - f, the
+             same convention as iy above). */
+          if (!hasExt) continue;
+          var bandRows = pipe.extBandBot - pipe.extBandTop;
+          var fExt = pipe.extBandBot - ((yy - H) % bandRows);
+          yy = H - fExt;
+          if (yy < 0 || yy > H - 1) continue;
+        }
+        var sp = spans[yy];
+        if (sp === null) continue;
+
+        var dy;
+        if (y > iy) dy = y - iy;
+        else if (y + 1 < iy) dy = iy - (y + 1);
+        else dy = 0;
+        if (dy > ir) continue;
+
+        var hc2 = ir * ir - dy * dy;
+        if (hc2 < 0) continue;
+        var hc = Math.sqrt(hc2);
+
+        if (ix + hc >= sp[0] && ix - hc <= sp[1] + 1) return true;
+      }
+
+      return false;
+    }
+
+
+    /* v16.6.4-demo.1: point-set test — the point-sampling twin of
+       hitTest, with the same source-space mapping, flip convention and
+       extension-band wrap. pts is a flat [x0, y0, x1, y1, ...] array
+       of WORLD-space points (the bird's rotated alpha-mask samples);
+       returns true on the first point inside a content span, using
+       hitTest's own span convention (sp[0] <= ix <= sp[1] + 1). */
+    function hitTestPoints(pts, pipe) {
+      if (!bbox || !pts || !pipe) return false;
+
+      var px = +pipe.x, py = +pipe.y, sc = +pipe.scale;
+      if (!isFinite(px) || !isFinite(py) || !isFinite(sc) || sc <= 0) return false;
+
+      var flip = !!pipe.flipY;
+      var hasExt = flip && typeof pipe.extTop === 'number' && isFinite(pipe.extTop)
+        && typeof pipe.extBandTop === 'number' && typeof pipe.extBandBot === 'number'
+        && pipe.extBandBot > pipe.extBandTop;
+
+      var gx0 = px + bbox.minX * sc;
+      var gx1 = px + (bbox.maxX + 1) * sc;
+      var gy0 = flip ? py + (H - bbox.maxY - 1) * sc : py + bbox.minY * sc;
+      var gy1 = flip ? py + (H - bbox.minY) * sc : py + (bbox.maxY + 1) * sc;
+      if (hasExt && pipe.extTop < gy0) gy0 = pipe.extTop;
+
+      var inv = 1 / sc;
+      for (var i = 0; i + 1 < pts.length; i += 2) {
+        var x = pts[i], y = pts[i + 1];
+        if (x < gx0 || x > gx1 || y < gy0 || y > gy1) continue;
+
+        var ix = (x - px) * inv;
+        var vTop = (y - py) * inv;
+        var iy = flip ? (H - vTop) : vTop;
+        var yy = Math.floor(iy);
+
+        if (yy >= H) {
+          if (!hasExt) continue;
+          var bandRows = pipe.extBandBot - pipe.extBandTop;
+          var fExt = pipe.extBandBot - ((yy - H) % bandRows);
+          yy = H - fExt;
+          if (yy < 0 || yy > H - 1) continue;
+        }
+        if (yy < 0) continue;
+
+        var sp = spans[yy];
+        if (!sp) continue;
+        if (ix >= sp[0] && ix <= sp[1] + 1) return true;
+      }
+      return false;
+    }
+
+    return {
+      width: W,
+      height: H,
+      threshold: thr,
+      spans: spans,
+      bbox: bbox,
+      hitTest: hitTest,
+      hitTestPoints: hitTestPoints
+    };
+  }
+
+  function spansSummary(collider) {
+    var out = {
+      rowsWithContent: 0,
+      contentTop: -1,
+      contentBottom: -1,
+      widestRow: -1,
+      widestSpan: 0
+    };
+    if (!collider || !collider.spans) return out;
+
+    var spans = collider.spans;
+    var n = spans.length;
+
+    for (var y = 0; y < n; y++) {
+      var s = spans[y];
+      if (!s) continue;
+      out.rowsWithContent++;
+      if (out.contentTop < 0) out.contentTop = y;
+      out.contentBottom = y;
+      var w = s[1] - s[0] + 1;
+      if (w > out.widestSpan) {
+        out.widestSpan = w;
+        out.widestRow = y;
+      }
+    }
+    return out;
+  }
+
+  global.PipeCollision = {
+    makeCollider: makeCollider,
+    spansSummary: spansSummary
+  };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
 <script>
 "use strict";
 /* =====================================================================
@@ -544,9 +1189,9 @@
    nothing real. Passwords only ever live in Firebase Auth, never here.
    ===================================================================== */
 const POPICOIN_CONFIG = {
-  firebaseProjectId: "",
-  firebaseApiKey: "",
-  firebaseAuthDomain: "",
+  firebaseProjectId: "flappy-sats",
+  firebaseApiKey: "AIzaSyB9mmNo3xTbzmH3paZzik5KwDJZmg7mPEk",
+  firebaseAuthDomain: "flappy-sats.firebaseapp.com",
   sponsorAddress: "bitcoincash:qz40helxvypa8u698hxl2thsypmhlqudncygfnrh3k",
   baseUsd: 1,
   /* Player economy anchors (USD; sat amounts derive from the live BCH
@@ -605,7 +1250,7 @@ const SPONSORS_SOLD = 3;
    cache:"no-store" — and sw.js treats both JSON files as
    network-only — so a playlist edit is the ONLY thing a sponsor
    change needs; the game itself is never rebuilt for art. */
-const BUILD_VERSION = "16.6.5";   // v16.6.5 MVP ship candidate Oct 23 2026 (mirrored in this copy's version.json so the update poll stays quiet)
+const BUILD_VERSION = "16.6.16";   // v16.6.5 MVP ship candidate Oct 23 2026 (mirrored in this copy's version.json so the update poll stays quiet)
 const PLAYLIST_URL = "sponsors.json";
 const VERSION_URL = "version.json";
 const FEED_POLL_MS = 60000;
@@ -984,22 +1629,24 @@ function preloadBillboardImages() {
   for (const s of sponsors) {
     if (s.imageUrl && !bbImages[s.imageUrl]) {
       const im = new Image();
-      im.crossOrigin = "anonymous";
-      /* v16.4: an image that fails to load marks itself broken;
-         displaySponsors() then SKIPS the entry for the rotation —
-         the board never shows a broken frame. */
-      im.onerror = () => { im.__broken = true; };
-      im.src = s.imageUrl;
       bbImages[s.imageUrl] = im;
       /* v16.3: register with the ART warm-up pass like other
          billboard art, so the creative's first in-game draw is
-         never its first decode either. Boot order guarantees the
-         timing: loadSponsors() resolves (and lands this entry in
-         the registry) before scheduleArtWarmup() kicks the pass. */
+         never its first decode either. */
       ART_WARM_SOURCES.push({ key: "sponsor:" + s.imageUrl, im });
+      /* v16.6.16: load via the mirror rail (both origins). A total
+         miss marks the entry broken so the rotation skips it; an
+         entry still loading keeps its slot on the text card. */
+      if (window.__artImg) {
+        window.__artImg(s.imageUrl).then(fim => {
+          if (fim) { bbImages[s.imageUrl] = fim; ART_WARM_SOURCES.push({ key: "sponsor-blob:" + s.imageUrl, im: fim }); }
+          else im.__broken = true;
+        });
+      } else im.__broken = true;
     }
   }
 }
+
 
 /* v16.4 — the rotation's working list: the applied sponsors minus
    any entry whose image is KNOWN broken (errored). An entry whose
@@ -1229,12 +1876,22 @@ function startGame() {
      the fallback exactly as v16.6.0 did — the game can never lock. */
   if (window.ThemeSystem) {
     const curId = ThemeSystem.current().id, hd = WSETS[curId];
-    if (hd && !hd.ready && _deferredStart !== curId) {
+    if (!hd || !hd.ready || !ART.bgFar || !ART.bgMid || !ART.birdGreen) {   // v16.6.10: the gate covers the PAINT path too — a verified build with the ART core set missing still paints the void
+      /* v16.6.9: NO GHOST RUNS. The v16.6.1 one-shot deferral started
+         the second tap on the unverified fallback — flat posts, no
+         colliders, free sats (Gate 3, Oct 23). Now an unverified
+         world simply never starts: the tap arms a deferred start,
+         the fresh-image rebuild loop runs, and the start fires only
+         when the build verifies (onWorldVerified). */
       _deferredStart = curId;
-      syncWorldAssets().then(() => { _deferredStart = null; if (game.state !== "play") startGame(); });
+      window.__gate = "HELD " + new Date().toLocaleTimeString() + " cur=" + curId + " ready=" + (hd ? (hd.ready ? 1 : 0) : "-") + " art=" + (ART.bgFar ? ART.bgFar.naturalWidth : 0) + "/" + (ART.bgMid ? ART.bgMid.naturalWidth : 0) + "/" + (ART.birdGreen ? ART.birdGreen.naturalWidth : 0);
+      refreshPlayGate();
+      armGatePoll();
+      syncWorldAssets().then(() => { if (!hd || !hd.ready) rebuildWorldFresh(); });
       return;
     }
   }
+  window.__gate = "PASS " + new Date().toLocaleTimeString() + " cur=" + (window.ThemeSystem ? ThemeSystem.current().id : "-");
   resetGame();
   game.state = "play";
   document.getElementById("splash").classList.add("hidden");
@@ -1721,20 +2378,51 @@ const ART = {
    element) so the warm-up pass can enumerate — and the rig can
    audit — exactly what it warmed. */
 const ART_WARM_SOURCES = [];
-function artLoad(key, file, cb) {
-  const im = new Image();
-  ART_WARM_SOURCES.push({ key, im });
-  im.onload = () => { ART[key] = im; if (cb) cb(); };
-  im.src = "art/" + file + ".webp";
-  return im;
+/* v16.6.10: the ART loader RETRIES until the image is verified
+   drawable. The one-shot loader it replaces set ART[key] only in
+   onload and had no error path at all: a single failed boot load
+   (the fresh-install app profile on the owner's phone) left the
+   key null for the whole session, and every consumer fell back —
+   drawBackgroundFallback's dark void for the world, the vector
+   roundel for the bird, the neon frame for the billboard — while
+   the tab (warm cache) never missed. onload alone is not proof
+   either (demo.5): a load counts only when a probe draw + readback
+   succeeds. */
+function loadArt(key, src, cb, attempt) {
+  attempt = attempt || 0;
+  const accept = (cand) => {
+    try {
+      const c = document.createElement("canvas"); c.width = 8; c.height = 8;
+      const g = c.getContext("2d"); g.drawImage(cand, 0, 0, 8, 8); g.getImageData(0, 0, 8, 8);
+      ART[key] = cand; if (cb) cb();
+      return true;
+    } catch (e) { return false; }
+  };
+  /* v16.6.16: the mirror rail loads the candidate (both origins,
+     plain then fetch-blob per origin); the drawable probe still
+     gates acceptance, and the retry ladder still bounds attempts. */
+  if (window.__artImg) {
+    window.__artImg(src, attempt >= 2 ? attempt + "_" + Date.now() : null).then(cand => {
+      if (cand) ART_WARM_SOURCES.push({ key, im: cand });
+      if (!cand || !accept(cand)) retryArt(key, src, cb, attempt);
+    });
+  } else {
+    const im = new Image();
+    ART_WARM_SOURCES.push({ key, im });
+    im.onload = () => { if (!accept(im)) retryArt(key, src, cb, attempt); };
+    im.onerror = () => retryArt(key, src, cb, attempt);
+    im.src = src + "?" + "v=16616" + (attempt >= 2 ? "&fa=" + attempt + "_" + Date.now() : "");
+  }
+  return null;
 }
-function artLoadPng(key, file, cb) {
-  const im = new Image();
-  ART_WARM_SOURCES.push({ key, im });
-  im.onload = () => { ART[key] = im; if (cb) cb(); };
-  im.src = "art/" + file + ".png";
-  return im;
+
+function retryArt(key, src, cb, attempt) {
+  try { window.__artErr = (window.__artErr || 0) + 1; } catch (e) {}
+  if (attempt >= 8) return;   // stays null; the start gate keeps runs closed and the label explains
+  setTimeout(() => loadArt(key, src, cb, attempt + 1), Math.min(700 * (attempt + 1), 4000));
 }
+function artLoad(key, file, cb) { return loadArt(key, "art/" + file + ".webp", cb, 0); }
+function artLoadPng(key, file, cb) { return loadArt(key, "art/" + file + ".png", cb, 0); }
 /* v10.1 — measure a column sprite's CONTENT (not its canvas): the median
    per-row span of alpha>=128 pixels is the typical trash width, and the
    median span centre is where that width sits. Kenn's columns carry a
@@ -2947,10 +3635,148 @@ function colliderOf(img) {
    holder.ready still gates application, so the beat this adds is
    absorbed by the existing wrong-world start guard. */
 function buildColumnAssets(holder, images, entry) {
-  if (!images || !images.pipe || !images.pipeFire) return;   // incomplete set: this world's pipes stay off
+  if (!images || !images.pipe || !images.pipeFire) return Promise.resolve(false);   // incomplete set: build fails honestly (v16.6.9)
   const ims = [images.pipe, images.pipeFire, images.sky, images.mid, images.fg].filter(Boolean);
-  return Promise.all(ims.map(im => (im.decode ? im.decode() : Promise.resolve()).then(() => {}, () => {})))
-    .then(() => buildColumnAssetsCore(holder, images, entry));
+  return Promise.all(ims.map(im => (im.decode ? im.decode().then(() => true, () => false) : Promise.resolve(true))))
+    .then(ok => {
+      /* v16.6.9: a rejected decode() or a zero-width pipe image is a
+         FAILED build, never a blank one stamped ready. The old gate
+         swallowed decode errors and built on undrawable pixels. */
+      if (ok[0] === false || ok[1] === false) return false;
+      if (!((images.pipe.naturalWidth || 0) > 0) || !((images.pipeFire.naturalWidth || 0) > 0)) return false;
+      /* v16.6.12: the 16.6.11 photo-alpha probe is REMOVED — Kenn's
+         mid/fg art is a keyed texture with real alpha holes by design;
+         mean alpha < 200 is CORRECT for it. The probe rejected the
+         real art in every environment (tab diag: ready=0, art fine). */
+      buildColumnAssetsCore(holder, images, entry);
+      return !!holder.ready;
+    });
+}
+/* v16.6.9 — THE VERIFIED-BUILD GATE. Born at Gate 3 (Oct 23): on the
+   owner's phone the world build intermittently produced blank bitmaps
+   and empty colliders while holder.ready was stamped true anyway —
+   the game then ran a GHOST COURSE: flat fallback posts with no
+   collision that the bird flew straight through, score counting,
+   sats crediting. A build now counts as ready only when its working
+   bitmaps hold real pixels AND both colliders carry a real bounding
+   box. Anything else is a failed build: the run never starts on it,
+   and rebuildWorldFresh retries with fresh image objects until the
+   world verifies. */
+function verifyWorldBuild(holder) {
+  try {
+    if (!holder || !holder.pipeWork || !holder.fireWork) return false;
+    if (!((holder.pipeWork.naturalWidth || holder.pipeWork.width) > 0)) return false;
+    if (!((holder.fireWork.naturalWidth || holder.fireWork.width) > 0)) return false;
+    if (!holder.colPipe || !holder.colPipe.bbox || !holder.colFire || !holder.colFire.bbox) return false;
+    const c = document.createElement("canvas"); c.width = 16; c.height = 16;
+    const g = c.getContext("2d"); g.drawImage(holder.pipeWork, 0, 0, 16, 16);
+    const d = g.getImageData(0, 0, 16, 16).data;
+    let any = false;
+    for (let i = 3; i < d.length; i += 4) if (d[i] > 0) { any = true; break; }
+    if (!any) return false;
+    /* v16.6.10: TEXTURE, not silhouette. The 16.6.9 check passed a
+       flat solid-twin bake (opaque pixels + a bbox) while the game
+       painted flat posts. Real scrap art is many-coloured; a solid
+       fill is one or two buckets. Count distinct colour buckets in
+       a 32x32 sample of the working bitmap. */
+    const c2 = document.createElement("canvas"); c2.width = 32; c2.height = 32;
+    const g2 = c2.getContext("2d"); g2.drawImage(holder.pipeWork, 0, 0, 32, 32);
+    const d2 = g2.getImageData(0, 0, 32, 32).data; const seen = new Set();
+    for (let i = 0; i < d2.length; i += 16) { if (d2[i + 3] > 0) seen.add((d2[i] >> 5) + "," + (d2[i + 1] >> 5) + "," + (d2[i + 2] >> 5)); }
+    if (seen.size < 12) return false;
+    /* v16.6.12: the 16.6.11 coverage (0.30) and tile-lit probes are
+       REMOVED — the owner's tab diag (Oct 23) showed ready=0 with all
+       art present and correct widths: the probes rejected the REAL
+       art (Kenn's mid/fg are keyed textures with alpha holes by
+       design, and the pipe bitmap is sparse inside its frame). The
+       verify is: real size + real colliders (bbox) + opaque pixels +
+       real texture (>=12 colour buckets). That set passed every good
+       build and caught the silhouette bake. */
+    return true;
+  } catch (e) { return false; }
+}
+let _worldRebuild = { n: 0, busy: false };
+function refreshPlayGate() {
+  const b = document.getElementById("btnPlay"); if (!b) return;
+  const hd = window.ThemeSystem ? WSETS[ThemeSystem.current().id] : null;
+  if (hd && hd.ready && ART.bgFar && ART.bgMid && ART.birdGreen) { b.textContent = "\u25B6 PLAY GAME"; return; }
+  b.textContent = (_worldRebuild.n >= 6) ? "WORLD FAILED TO LOAD \u2014 RELOAD THE PAGE" : "LOADING WORLD\u2026";
+}
+/* v16.6.10: watcher for the deferred start — the ART loader's retries
+   land on their own timers, so the gate re-checks the full paint path
+   until it is verified, then fires the armed start exactly once. */
+/* v16.6.11 DIAG: the footer testifies. Live state, refreshed 1/s:
+   theme id, world-build readiness, the ART core set's widths (0 =
+   missing), tile state, and the gate's last decision with the values
+   it saw. Born at Gate 3 when three builds of inference failed and
+   only the game's own testimony could settle it. */
+function diagTick() {
+  const el = document.getElementById("diagLine"); if (!el) return;
+  try {
+    const id = window.ThemeSystem ? ThemeSystem.current().id : "?";
+    const hd = window.ThemeSystem ? WSETS[id] : null;
+    let tiles = "-";
+    if (hd && hd._tileFar) {
+      try {
+        const tc = document.createElement("canvas"); tc.width = 8; tc.height = 8;
+        const tg = tc.getContext("2d"); tg.drawImage(hd._tileFar, 0, 0, 8, 8);
+        const td = tg.getImageData(0, 0, 8, 8).data; tiles = "blank";
+        for (let i = 0; i < td.length; i += 4) if (td[i] + td[i + 1] + td[i + 2] > 48) { tiles = "ok"; break; }
+      } catch (e) { tiles = "err"; }
+    }
+    el.textContent = "DIAG theme=" + id + " ready=" + (hd ? (hd.ready ? 1 : 0) : "-") +
+      " art=" + (ART.bgFar ? ART.bgFar.naturalWidth : 0) + "/" + (ART.bgMid ? ART.bgMid.naturalWidth : 0) + "/" + (ART.birdGreen ? ART.birdGreen.naturalWidth : 0) +
+      " tiles=" + tiles + " rb=" + _worldRebuild.n + " ae=" + (window.__artErr || 0) + " we=" + (window.__worldErr || 0) +
+      " sw=" + ((navigator.serviceWorker && navigator.serviceWorker.controller) ? 1 : 0) + " gate=" + (window.__gate || "-");
+    let pb = document.getElementById("diagProbe");
+    if (!pb) { pb = document.createElement("div"); pb.id = "diagProbe"; pb.style.cssText = "color:#ff9d5c;white-space:pre-wrap;word-break:break-all;margin-top:2px"; el.parentNode.insertBefore(pb, el.nextSibling); }
+    pb.textContent = window.__probeTxt || "";
+  } catch (e) { el.textContent = "DIAG err"; }
+}
+setInterval(diagTick, 1000);
+let _gatePoll = null;
+function armGatePoll() {
+  if (_gatePoll) return;
+  _gatePoll = setInterval(() => {
+    const hd = window.ThemeSystem ? WSETS[ThemeSystem.current().id] : null;
+    if (hd && hd.ready && ART.bgFar && ART.bgMid && ART.birdGreen) {
+      clearInterval(_gatePoll); _gatePoll = null;
+      refreshPlayGate();
+      if (_deferredStart && game.state !== "play") { _deferredStart = null; startGame(); }
+    }
+  }, 800);
+}
+function onWorldVerified() {
+  refreshPlayGate();
+  armGatePoll();
+}
+function scheduleWorldRetry() {
+  refreshPlayGate();
+  if (_worldRebuild.n >= 6) return;   // exhausted: the label tells the player to reload; a ghost run never starts
+  setTimeout(rebuildWorldFresh, Math.min(1200 * _worldRebuild.n + 800, 10000));
+}
+function rebuildWorldFresh() {
+  if (_worldRebuild.busy || !window.ThemeSystem) return;
+  const entry = WORLD_MANIFEST.find(e => e.id === ThemeSystem.current().id) || WORLD_MANIFEST[0];
+  const holder = WSETS[entry.id];
+  if (!holder || holder.ready) { refreshPlayGate(); return; }
+  _worldRebuild.busy = true;
+  const bustN = ++_worldRebuild.n;
+  const load = src => window.__artImg ? window.__artImg(src) : Promise.resolve(null);
+  Promise.all([load(entry.assets.pipe), load(entry.assets.pipeFire), load(entry.assets.sky), load(entry.assets.mid), load(entry.assets.fg)])
+    .then(async ([pipe, pipeFire, sky, mid, fg]) => {
+      _worldRebuild.busy = false;
+      /* v16.6.14: rescue the critical pair through the fetch-blob path
+         before conceding the attempt. */
+      if ((!pipe || !pipeFire) && window.__artImg) {
+        const bustUrl = a => a + (a.indexOf("?") >= 0 ? "&" : "?") + "fwr=" + Date.now();
+        if (!pipe) pipe = await window.__artImg(bustUrl(entry.assets.pipe));
+        if (!pipeFire) pipeFire = await window.__artImg(bustUrl(entry.assets.pipeFire));
+      }
+      if (!pipe || !pipeFire) { scheduleWorldRetry(); return; }
+      buildColumnAssets(holder, { pipe, pipeFire, sky, mid, fg }, entry).then(ok => { if (ok) onWorldVerified(); else scheduleWorldRetry(); });
+    })
+    .catch(() => { _worldRebuild.busy = false; scheduleWorldRetry(); });
 }
 function buildColumnAssetsCore(holder, images, entry) {
   if (!images || !images.pipe || !images.pipeFire) return;   // incomplete set: this world's pipes stay off
@@ -3017,7 +3843,7 @@ function buildColumnAssetsCore(holder, images, entry) {
      identical to v16.6.2. */
   const ph = (holder.pipeWork && (holder.pipeWork.naturalHeight || holder.pipeWork.height)) || (images.pipe.naturalHeight || images.pipe.height);
   holder._extBand = [Math.round(ph * 0.30), Math.round(ph * 0.62)];
-  holder.ready = true;
+  holder.ready = verifyWorldBuild(holder);   // v16.6.9: ready only when VERIFIED (see verifyWorldBuild)
 }
 function buildMuseAssets(images) { buildColumnAssets(MUSE, images); }   // v16.5.x name kept
 function syncWorldAssets() {
@@ -3025,6 +3851,10 @@ function syncWorldAssets() {
   return ThemeSystem.preload().then(images => {
     const holder = WSETS[ThemeSystem.current().id];
     if (holder) return buildColumnAssets(holder, images, WORLD_MANIFEST.find(e => e.id === ThemeSystem.current().id));   // demo.5: await the decode-gated build — applyWorld chains off this promise
+  }).then(ok => {   // v16.6.9: an unverified build triggers the fresh-image rebuild loop
+    const holder = WSETS[ThemeSystem.current().id];
+    if (holder && !holder.ready) rebuildWorldFresh();
+    return ok;
   }).catch(() => {});
 }
 /* The ONE placement transform for a Muse column, shared by the renderer
@@ -4823,24 +5653,18 @@ Player.init();
 requestAnimationFrame(loop);
 scheduleArtWarmup();   // v16.2.3: art warms behind the splash (see warmArt)
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").then(reg => {
-      /* v16.4: keep the registration for the UPDATE button. A
-         worker already WAITING at load, or one that finishes
-         installing while this page lives (updatefound), surfaces
-         the same button the version poll shows — the classic
-         path, beside the poll. */
-      swRegistration = reg;
-      if (reg.waiting && navigator.serviceWorker.controller) noteUpdateDetected();
-      reg.addEventListener("updatefound", () => {
-        const nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener("statechange", () => {
-          if (nw.state === "installed" && navigator.serviceWorker.controller) noteUpdateDetected();
-        });
-      });
-    }).catch(() => {});
-  });
+  /* v16.6.14: THE WORKER IS RETIRED (bisect + cure, Oct 23 Gate 3).
+     In the installed WebAPK every image load errors while fetch/XHR
+     succeed (108 counted errors), surviving reinstall and URL
+     versioning — the surviving worker registration + its caches are
+     the prime suspect (ChatEBT + the API consult concur). The game
+     is a live online game; the offline shell is a luxury, the images
+     are not. Unregister everything, delete every cache, register
+     nothing. DIAG sw= reads 0 once a context is free of it. */
+  try {
+    navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {});
+    if (window.caches && caches.keys) caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))).catch(() => {});
+  } catch (e) {}
 }
 
 /* ---------------- v16.2.2: INSTALL APP affordance ----------------
@@ -4917,6 +5741,57 @@ if ("serviceWorker" in navigator) {
   refresh();
 })();
 /* ---- FLAPPY SATS v16.2 — end of build ---- */
+</script>
+
+<script>
+/* v16.6.16 PROBE — read-only battery that names the actual in-app art
+   failure (Kenn's 16.6.14 video: sw=0, both load paths failing, API
+   fine). Keys: fget=fetch sky status/size · fimg=fetch->blob->Image ·
+   img=plain Image · cors=Image crossOrigin · ntf=fetch bird ·
+   gh=GH-Pages mirror Image · ghc=mirror CORS · ghpx=mirror canvas
+   probe (CORS-clean?) · ghf=mirror fetch status. */
+(function () {
+  var SKY = "art/junk-sky.png", BIRD = "art/bird-green.png";
+  var GH = "https://kennbosak-glitch.github.io/flappy-sats/";
+  var KEYS = ["fget", "fimg", "img", "cors", "ntf", "gh", "ghc", "ghpx", "ghf"];
+  var out = {};
+  function render() {
+    window.__probeTxt = "PRB " + KEYS.map(function (k) { return k + "=" + (out[k] === undefined ? "." : out[k]); }).join(" ");
+  }
+  function imgLoad(src, cors) {
+    return new Promise(function (res) {
+      var im = new Image();
+      if (cors) im.crossOrigin = "anonymous";
+      im.onload = function () { res(im); };
+      im.onerror = function () { res(null); };
+      im.src = src;
+    });
+  }
+  window.addEventListener("load", function () {
+    setTimeout(async function () {
+      render();
+      try {
+        var r = await fetch(SKY + "?v=16616", { cache: "no-store" });
+        var b = await r.blob();
+        out.fget = r.status + "/" + Math.round(b.size / 1024) + "k";
+        var im = await imgLoad(URL.createObjectURL(b), false);
+        out.fimg = im ? "OK" + im.naturalWidth : "X";
+      } catch (e) { out.fget = "E:" + String((e && e.message) || e).slice(0, 16); out.fimg = "-"; }
+      render();
+      var p = await imgLoad(SKY + "?v=16616", false); out.img = p ? "OK" : "X"; render();
+      var c = await imgLoad(SKY + "?v=16616&c=1", true); out.cors = c ? "OK" : "X"; render();
+      try { var r2 = await fetch(BIRD + "?v=16616", { cache: "no-store" }); var b2 = await r2.blob(); out.ntf = r2.status + "/" + Math.round(b2.size / 1024) + "k"; }
+      catch (e) { out.ntf = "E"; }
+      render();
+      var g = await imgLoad(GH + BIRD, false); out.gh = g ? "OK" : "X"; render();
+      var gc = await imgLoad(GH + BIRD + "?c=1", true); out.ghc = gc ? "OK" : "X";
+      if (gc) { try { var cv = document.createElement("canvas"); cv.width = 8; cv.height = 8; var g2 = cv.getContext("2d"); g2.drawImage(gc, 0, 0, 8, 8); g2.getImageData(0, 0, 8, 8); out.ghpx = "OK"; } catch (e) { out.ghpx = "TAINT"; } }
+      render();
+      try { var r3 = await fetch(GH + BIRD, { cache: "no-store" }); out.ghf = String(r3.status); } catch (e) { out.ghf = "E"; }
+      render();
+    }, 1500);
+  });
+})();
 </script>
 </body>
 </html>
