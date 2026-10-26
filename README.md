@@ -18,7 +18,7 @@ with a sponsor billboard in the menu that anyone can rent on a public ladder
 - **Sponsor billboard** — rotating cards, sold publicly, verified on payment
 - **Self-updating** — the game polls `version.json` and applies updates at safe
   moments (never mid-run)
-- **Zero build step** — plain HTML/CSS/JS + a service worker; view-source is the docs
+- **Zero build step** — plain HTML/CSS/JS; view-source is the docs. (`sw.js` is a RETIRED stub kept only so stale registrations purge their caches and unregister themselves — updates ship via `version.json` polling, never a service worker.)
 
 ## Run it locally
 
